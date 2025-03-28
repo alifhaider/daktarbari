@@ -2,7 +2,7 @@ import { Img } from 'openimg/react'
 import { useRef } from 'react'
 import { Link, Form } from 'react-router'
 import { getUserImgSrc } from '#app/utils/misc.tsx'
-import { useUser } from '#app/utils/user.ts'
+import { useOptionalUser, useUser } from '#app/utils/user.ts'
 import { Button } from './ui/button'
 import {
 	DropdownMenu,
@@ -14,7 +14,8 @@ import {
 import { Icon } from './ui/icon'
 
 export function UserDropdown() {
-	const user = useUser()
+	const user = useOptionalUser()
+	const doctor = false
 	const formRef = useRef<HTMLFormElement>(null)
 	return (
 		<DropdownMenu>
@@ -25,20 +26,61 @@ export function UserDropdown() {
 			</DropdownMenuTrigger>
 			<DropdownMenuPortal>
 				<DropdownMenuContent sideOffset={8} align="end">
-					<DropdownMenuItem asChild>
-						<Link prefetch="intent" to={`/users/${user.username}`}>
-							<Icon className="text-body-md" name="avatar">
-								Profile
-							</Icon>
-						</Link>
-					</DropdownMenuItem>
-					<DropdownMenuItem asChild>
-						<Link prefetch="intent" to={`/users/${user.username}/notes`}>
-							<Icon className="text-body-md" name="pencil-2">
-								Notes
-							</Icon>
-						</Link>
-					</DropdownMenuItem>
+					{doctor ? (
+						<DropdownMenuItem asChild>
+							<Link prefetch="intent" to="/dashboard">
+								<Icon className="text-body-md" name="dashboard">
+									Dashboard
+								</Icon>
+							</Link>
+						</DropdownMenuItem>
+					) : (
+						<DropdownMenuItem asChild>
+							<Link prefetch="intent" to="/doctors/join">
+								<Icon className="text-body-md" name="doctor">
+									Become a Doctor
+								</Icon>
+							</Link>
+						</DropdownMenuItem>
+					)}
+					{user ? (
+						<>
+							<DropdownMenuItem asChild>
+								<Link prefetch="intent" to={`/users/${user.username}`}>
+									<Icon className="text-body-md" name="avatar">
+										Profile
+									</Icon>
+								</Link>
+							</DropdownMenuItem>
+							<Form action="/logout" method="POST" ref={formRef}>
+								<DropdownMenuItem asChild>
+									<button type="submit" className="w-full">
+										<Icon className="text-body-md" name="exit">
+											Logout
+										</Icon>
+									</button>
+								</DropdownMenuItem>
+							</Form>
+						</>
+					) : (
+						<>
+							<DropdownMenuItem asChild>
+								<Link prefetch="intent" to="/login">
+									<Icon className="text-body-md" name="avatar">
+										Login
+									</Icon>
+								</Link>
+							</DropdownMenuItem>
+							<DropdownMenuItem asChild>
+								<Link prefetch="intent" to="/signup">
+									<Icon className="text-body-md" name="avatar">
+										Signup
+									</Icon>
+								</Link>
+							</DropdownMenuItem>
+						</>
+					)}
+
 					{/* <DropdownMenuItem asChild>
 						<Link
 							to={`/users/${user.username}`}
@@ -58,15 +100,6 @@ export function UserDropdown() {
 							</span>
 						</Link>
 					</DropdownMenuItem> */}
-					<Form action="/logout" method="POST" ref={formRef}>
-						<DropdownMenuItem asChild>
-							<button type="submit" className="w-full">
-								<Icon className="text-body-md" name="exit">
-									Logout
-								</Icon>
-							</button>
-						</DropdownMenuItem>
-					</Form>
 				</DropdownMenuContent>
 			</DropdownMenuPortal>
 		</DropdownMenu>

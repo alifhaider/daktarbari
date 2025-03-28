@@ -2,7 +2,7 @@ import { Link } from 'react-router'
 import { Button } from '#app/components/ui/button.tsx'
 import { type Route } from './+types/index.ts'
 
-export const meta: Route.MetaFunction = () => [{ title: 'Epic Notes' }]
+export const meta: Route.MetaFunction = () => [{ title: 'Daktar Bari' }]
 
 export default function Index() {
 	return (

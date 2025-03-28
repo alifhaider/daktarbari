@@ -63,8 +63,8 @@ export const links: Route.LinksFunction = () => {
 
 export const meta: Route.MetaFunction = ({ data }) => {
 	return [
-		{ title: data ? 'Epic Notes' : 'Error | Epic Notes' },
-		{ name: 'description', content: `Your own captain's log` },
+		{ title: data ? 'Daktar Bari' : 'Error | Daktar Bari' },
+		{ name: 'description', content: `Find and book your doctor's appointment` },
 	]
 }
 
@@ -187,7 +187,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 function App() {
 	const data = useLoaderData<typeof loader>()
-	const user = useOptionalUser()
 	const theme = useTheme()
 	const matches = useMatches()
 	const isOnSearchPage = matches.find((m) => m.id === 'routes/users+/index')
@@ -203,17 +202,16 @@ function App() {
 				<header className="container py-6">
 					<nav className="flex flex-wrap items-center justify-between gap-4 sm:flex-nowrap md:gap-8">
 						<Logo />
-						<div className="ml-auto hidden max-w-sm flex-1 sm:block">
-							{searchBar}
-						</div>
+						<div className="hidden w-full max-w-sm sm:block">{searchBar}</div>
 						<div className="flex items-center gap-10">
-							{user ? (
-								<UserDropdown />
-							) : (
-								<Button asChild variant="default" size="lg">
-									<Link to="/login">Log In</Link>
-								</Button>
-							)}
+							<Button
+								asChild
+								variant="outline"
+								className="h-7 rounded-none border-primary py-0 text-sm font-bold"
+							>
+								<Link to="/doctors/join">Become a doctor</Link>
+							</Button>
+							<UserDropdown />
 						</div>
 						<div className="block w-full sm:hidden">{searchBar}</div>
 					</nav>
