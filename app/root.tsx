@@ -39,7 +39,6 @@ import { useNonce } from './utils/nonce-provider.ts'
 import { type Theme, getTheme } from './utils/theme.server.ts'
 import { makeTimings, time } from './utils/timing.server.ts'
 import { getToast } from './utils/toast.server.ts'
-import { useOptionalUser } from './utils/user.ts'
 
 export const links: Route.LinksFunction = () => {
 	return [

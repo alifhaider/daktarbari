@@ -155,6 +155,7 @@ async function seed() {
 					userId: users[index]!.id,
 					balance: Math.floor(Math.random() * 1000),
 					currency: faker.finance.currencyName(),
+					homeAddress: faker.address.streetAddress(),
 					specialties: {
 						createMany: {
 							data: Array.from({
@@ -291,70 +292,70 @@ async function seed() {
 		}),
 	)
 	console.timeEnd('🌱 Seeding reviews...')
-}
 
-console.time(`🐨 Created admin user "kody"`)
+	console.time(`🐨 Created admin user "alif"`)
 
-const kodyImages = {
-	kodyUser: { objectKey: 'user/kody.png' },
-	cuteKoala: {
-		altText: 'an adorable koala cartoon illustration',
-		objectKey: 'kody-notes/cute-koala.png',
-	},
-	koalaEating: {
-		altText: 'a cartoon illustration of a koala in a tree eating',
-		objectKey: 'kody-notes/koala-eating.png',
-	},
-	koalaCuddle: {
-		altText: 'a cartoon illustration of koalas cuddling',
-		objectKey: 'kody-notes/koala-cuddle.png',
-	},
-	mountain: {
-		altText: 'a beautiful mountain covered in snow',
-		objectKey: 'kody-notes/mountain.png',
-	},
-	koalaCoder: {
-		altText: 'a koala coding at the computer',
-		objectKey: 'kody-notes/koala-coder.png',
-	},
-	koalaMentor: {
-		altText:
-			'a koala in a friendly and helpful posture. The Koala is standing next to and teaching a woman who is coding on a computer and shows positive signs of learning and understanding what is being explained.',
-		objectKey: 'kody-notes/koala-mentor.png',
-	},
-	koalaSoccer: {
-		altText: 'a cute cartoon koala kicking a soccer ball on a soccer field ',
-		objectKey: 'kody-notes/koala-soccer.png',
-	},
-}
-
-const githubUser = await insertGitHubUser(MOCK_CODE_GITHUB)
-
-const kody = await prisma.user.create({
-	select: { id: true },
-	data: {
-		email: 'alif@daktarbari.dev',
-		username: 'alif',
-		name: 'Alif Haider',
-		password: { create: createPassword('222222') },
-		connections: {
-			create: {
-				providerName: 'github',
-				providerId: String(githubUser.profile.id),
-			},
+	const alifImages = {
+		alifUser: { objectKey: 'user/kody.png' },
+		cuteKoala: {
+			altText: 'an adorable koala cartoon illustration',
+			objectKey: 'kody-notes/cute-koala.png',
 		},
-		roles: { connect: [{ name: 'admin' }, { name: 'user' }] },
-	},
-})
+		koalaEating: {
+			altText: 'a cartoon illustration of a koala in a tree eating',
+			objectKey: 'kody-notes/koala-eating.png',
+		},
+		koalaCuddle: {
+			altText: 'a cartoon illustration of koalas cuddling',
+			objectKey: 'kody-notes/koala-cuddle.png',
+		},
+		mountain: {
+			altText: 'a beautiful mountain covered in snow',
+			objectKey: 'kody-notes/mountain.png',
+		},
+		koalaCoder: {
+			altText: 'a koala coding at the computer',
+			objectKey: 'kody-notes/koala-coder.png',
+		},
+		koalaMentor: {
+			altText:
+				'a koala in a friendly and helpful posture. The Koala is standing next to and teaching a woman who is coding on a computer and shows positive signs of learning and understanding what is being explained.',
+			objectKey: 'kody-notes/koala-mentor.png',
+		},
+		koalaSoccer: {
+			altText: 'a cute cartoon koala kicking a soccer ball on a soccer field ',
+			objectKey: 'kody-notes/koala-soccer.png',
+		},
+	}
 
-await prisma.userImage.create({
-	data: {
-		userId: kody.id,
-		objectKey: kodyImages.kodyUser.objectKey,
-	},
-})
+	const githubUser = await insertGitHubUser(MOCK_CODE_GITHUB)
 
-console.timeEnd(`🐨 Created admin user "kody"`)
+	const alif = await prisma.user.create({
+		select: { id: true },
+		data: {
+			email: 'alif@daktarbari.dev',
+			username: 'alif',
+			name: 'Alif Haider',
+			password: { create: createPassword('222222') },
+			connections: {
+				create: {
+					providerName: 'github',
+					providerId: String(githubUser.profile.id),
+				},
+			},
+			roles: { connect: [{ name: 'admin' }, { name: 'user' }] },
+		},
+	})
+
+	await prisma.userImage.create({
+		data: {
+			userId: alif.id,
+			objectKey: alifImages.alifUser.objectKey,
+		},
+	})
+
+	console.timeEnd(`🐨 Created admin user "alif"`)
+}
 
 console.timeEnd(`🌱 Database has been seeded`)
 

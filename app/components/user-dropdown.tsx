@@ -81,6 +81,14 @@ export function UserDropdown() {
 						</>
 					)}
 
+					<DropdownMenuItem asChild>
+						<Link to="/works">
+							<Icon className="text-body-md" name="avatar">
+								How it works
+							</Icon>
+						</Link>
+					</DropdownMenuItem>
+
 					{/* <DropdownMenuItem asChild>
 						<Link
 							to={`/users/${user.username}`}
