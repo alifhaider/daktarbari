@@ -188,7 +188,7 @@ function App() {
 	const data = useLoaderData<typeof loader>()
 	const theme = useTheme()
 	const matches = useMatches()
-	const isOnSearchPage = matches.find((m) => m.id === 'routes/users+/index')
+	const isOnSearchPage = matches.find((m) => m.id === 'routes/search')
 	const searchBar = isOnSearchPage ? null : <SearchBar status="idle" />
 	useToast(data.toast)
 
@@ -198,23 +198,25 @@ function App() {
 			getSrc={getImgSrc}
 		>
 			<div className="flex min-h-screen flex-col justify-between">
-				<header className="container py-6">
-					<nav className="flex flex-wrap items-center justify-between gap-4 sm:flex-nowrap md:gap-8">
-						<Logo />
-						<div className="hidden w-full max-w-sm sm:block">{searchBar}</div>
-						<div className="flex items-center gap-10">
-							<Button
-								asChild
-								variant="outline"
-								className="h-7 rounded-none border-primary py-0 text-sm font-bold"
-							>
-								<Link to="/doctors/join">Become a doctor</Link>
-							</Button>
-							<UserDropdown />
-						</div>
-						<div className="block w-full sm:hidden">{searchBar}</div>
-					</nav>
-				</header>
+				{isOnSearchPage ? null : (
+					<header className="container py-6">
+						<nav className="flex flex-wrap items-center justify-between gap-4 sm:flex-nowrap md:gap-8">
+							<Logo />
+							<div className="hidden w-full max-w-sm sm:block">{searchBar}</div>
+							<div className="flex items-center gap-10">
+								<Button
+									asChild
+									variant="outline"
+									className="h-7 rounded-none border-primary py-0 text-sm font-bold"
+								>
+									<Link to="/doctors/join">Become a doctor</Link>
+								</Button>
+								<UserDropdown />
+							</div>
+							<div className="block w-full sm:hidden">{searchBar}</div>
+						</nav>
+					</header>
+				)}
 
 				<div className="flex flex-1 flex-col">
 					<Outlet />
