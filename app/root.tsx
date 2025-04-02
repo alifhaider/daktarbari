@@ -233,7 +233,7 @@ function App() {
 	)
 }
 
-function Logo() {
+export function Logo() {
 	return (
 		<Link to="/" className="group grid leading-snug">
 			<span className="font-light transition group-hover:-translate-x-1">

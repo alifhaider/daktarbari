@@ -1,31 +1,92 @@
+import { FieldMetadata, getFormProps, useForm } from '@conform-to/react'
+import { parseWithZod } from '@conform-to/zod'
 import { searchDoctors } from '@prisma/client/sql'
 import { Img } from 'openimg/react'
-import { Link, redirect } from 'react-router'
+import {
+	data,
+	Form,
+	Link,
+	redirect,
+	useSearchParams,
+	useSubmit,
+} from 'react-router'
+import { z } from 'zod'
 import { ErrorList } from '#app/components/forms.tsx'
 import { SearchBar } from '#app/components/search-bar.tsx'
+import { UserDropdown } from '#app/components/user-dropdown.tsx'
+import { Logo } from '#app/root.tsx'
 import { prisma } from '#app/utils/db.server.ts'
 import { cn, getUserImgSrc, useDelayedIsPending } from '#app/utils/misc.tsx'
 import { type Route } from './+types/search'
+import { LocationCombobox } from './resources+/location-combobox'
+import { SpecialtyCombobox } from './resources+/specialty-combobox'
+
+export const SearchPageSchema = z.object({
+	name: z.string().optional(),
+	locationId: z.string().optional(),
+	specialtyId: z.string().optional(),
+})
 
 export async function loader({ request }: Route.LoaderArgs) {
-	const searchTerm = new URL(request.url).searchParams.get('search')
-	if (searchTerm === '') {
+	const searchParams = new URL(request.url).searchParams
+	const nameQuery = searchParams.get('name')
+	const specialtiesQuery = searchParams.get('specialty')
+	const locationQuery = searchParams.get('location')
+	if (nameQuery === '') {
 		return redirect('/search')
 	}
 
-	const name = `%${searchTerm ?? ''}%`
-	const users = await prisma.$queryRawTyped(searchDoctors(name, '', ''))
-	return { status: 'idle', users } as const
+	const name = nameQuery ?? ''
+	const specialtyId = specialtiesQuery ?? ''
+	const locationId = locationQuery ?? ''
+
+	const doctors = await prisma.$queryRawTyped(
+		searchDoctors(name, specialtyId, locationId),
+	)
+	return { status: 'idle', doctors } as const
+}
+
+export async function action({ request }: Route.ActionArgs) {
+	const formData = await request.formData()
+	const submission = parseWithZod(formData, { schema: SearchPageSchema })
+
+	if (submission.status !== 'success') {
+		return data(submission.reply({ formErrors: ['Could not submit search'] }))
+	}
 }
 
 export default function SearchRoute({ loaderData }: Route.ComponentProps) {
+	const submit = useSubmit()
+
 	const isPending = useDelayedIsPending({
 		formMethod: 'GET',
 		formAction: '/search',
 	})
 
+	const [form, fields] = useForm({
+		onValidate({ formData }) {
+			return parseWithZod(formData, { schema: SearchPageSchema })
+		},
+	})
+
 	return (
 		<>
+			<Form
+				{...getFormProps(form)}
+				method="get"
+				className="sticky top-0 z-50"
+				onChange={async (event) => {
+					event.preventDefault()
+					await submit(event.currentTarget)
+				}}
+			>
+				<SearchNavbar
+					locationField={fields.locationId}
+					specialtyField={fields.specialtyId}
+				/>
+				{/* <Filters /> */}
+				<button type="submit" className="hidden" />
+			</Form>
 			<div className="container mb-48 mt-36 flex flex-col items-center justify-center gap-6">
 				<h1 className="text-h1">Daktar Bari Doctors</h1>
 				<div className="w-full max-w-[700px]">
@@ -33,17 +94,17 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 				</div>
 				<main>
 					{loaderData.status === 'idle' ? (
-						loaderData.users.length ? (
+						loaderData.doctors.length ? (
 							<ul
 								className={cn(
 									'flex w-full flex-wrap items-center justify-center gap-4 delay-200',
 									{ 'opacity-50': isPending },
 								)}
 							>
-								{loaderData.users.map((user) => (
+								{loaderData.doctors.map((user) => (
 									<li key={user.id}>
 										<Link
-											to={user.username}
+											to={`/doctors/${user.username}`}
 											className="flex h-36 w-44 flex-col items-center justify-center rounded-lg bg-muted px-5 py-3"
 										>
 											<Img
@@ -66,7 +127,7 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 								))}
 							</ul>
 						) : (
-							<p>No users found</p>
+							<p>No doctors found</p>
 						)
 					) : loaderData.status === 'error' ? (
 						<ErrorList errors={['There was an error parsing the results']} />
@@ -74,5 +135,54 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 				</main>
 			</div>
 		</>
+	)
+}
+
+const SearchNavbar = ({
+	locationField,
+	specialtyField,
+}: {
+	locationField: FieldMetadata
+	specialtyField: FieldMetadata
+}) => {
+	const [searchParams] = useSearchParams()
+
+	const hiddenInputs = Array.from(searchParams.entries())
+		.filter(([key]) => !['name', 'locationId', 'specialtyId'].includes(key))
+		.map(([key, value]) => (
+			<input key={key} type="hidden" name={key} value={value} />
+		))
+
+	return (
+		<header>
+			<nav className="sticky inset-0 z-50 flex w-full items-center justify-between border-b bg-background px-4 py-4 lg:px-8">
+				<div className="flex w-full items-center gap-6">
+					<Logo />
+
+					<div className="flex w-full gap-8">
+						<div className="flex w-full max-w-[350px] items-center gap-2 border-b">
+							<label htmlFor="name" className="text-brand">
+								Who
+							</label>
+							<input
+								id="name"
+								name="name"
+								type="text"
+								className="w-full bg-transparent focus:outline-none"
+								placeholder="Dr. Ahmed"
+								defaultValue={searchParams.get('name') ?? ''}
+							/>
+						</div>
+
+						<LocationCombobox field={locationField} variant="search" />
+						<SpecialtyCombobox field={specialtyField} />
+					</div>
+				</div>
+
+				{hiddenInputs}
+
+				<UserDropdown />
+			</nav>
+		</header>
 	)
 }
