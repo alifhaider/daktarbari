@@ -1,0 +1,68 @@
+export type TSchedule = {
+	id: string
+	startTime: Date
+	endTime: Date
+	location: {
+		id: string
+		name: string
+		address: string
+		city: string
+		state: string | null
+		zip: string | null
+	}
+	_count: {
+		bookings: number
+	}
+	serialFee: number | null
+	discountFee: number | null
+	visitFee: number | null
+}
+
+// returns all schedules that have not ended yet
+export function getUpcomingSchedules(schedules: TSchedule[]): TSchedule[] {
+	const now = new Date()
+	return schedules.filter((schedule) => {
+		return new Date(schedule.endTime) > now
+	})
+}
+
+// TODAY: 2022-01-01 time 01:00:00
+// SCHEDULES: [
+// 	{ startTime: '2022-01-01T00:00:00.000Z', endTime: '2022-01-01T01:00:00.000Z' },
+// 	{ startTime: '2022-01-01T12:00:00.000Z', endTime: '2022-01-01T13:00:00.000Z' },
+// 	{ startTime: '2022-01-02T00:00:00.000Z', endTime: '2022-01-02T01:00:00.000Z' },
+// ]
+// EXPECTED: { startTime: '2022-01-01T12:00:00.000Z', endTime: '2022-01-01T13:00:00.000Z' }
+// since it's the next schedule after today 01:00:00
+export function getNextDateSchedules(schedules: TSchedule[]): TSchedule[] {
+	if (schedules.length === 0) return []
+
+	const now = new Date()
+	const today = new Date()
+	today.setHours(0, 0, 0, 0) // Start of today
+	const tomorrow = new Date(today)
+	tomorrow.setDate(today.getDate() + 1) // Start of tomorrow
+
+	const upcomingSchedules = schedules.filter((schedule) => {
+		const start = new Date(schedule.startTime)
+		const end = new Date(schedule.endTime)
+
+		// Only include schedules that:
+		// 1. Start today or later
+		// 2. Haven't ended yet
+		// 3. Are not tomorrow or beyond (only today's upcoming schedules)
+		return start >= today && end > now && start < tomorrow
+	})
+
+	return upcomingSchedules.sort((a, b) => {
+		return new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+	})
+}
+
+export function isScheduleHasMoreThanSixHours(schedule: TSchedule): boolean {
+	const start = new Date(schedule.startTime)
+	const end = new Date(schedule.endTime)
+	const diff = end.getTime() - start.getTime()
+	const hours = diff / 1000 / 60 / 60
+	return hours > 6
+}
