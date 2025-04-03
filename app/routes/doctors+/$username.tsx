@@ -5,22 +5,23 @@ import {
 	useForm,
 } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod'
-import { invariantResponse } from '@epic-web/invariant'
 import { format } from 'date-fns'
 import { Img } from 'openimg/react'
 import { useState } from 'react'
-import {
-	data,
-	Link,
-	useActionData,
-	useFetcher,
-	useLoaderData,
-} from 'react-router'
+import { data, Form, Link, useFetcher, useLoaderData } from 'react-router'
 import { z } from 'zod'
-import { ErrorList } from '#app/components/forms.tsx'
+import { ErrorList, TextareaField } from '#app/components/forms.tsx'
 import { Spacer } from '#app/components/spacer.tsx'
+import { Avatar } from '#app/components/ui/avatar.tsx'
 import { Button } from '#app/components/ui/button.tsx'
+import {
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from '#app/components/ui/card.tsx'
 import { Icon } from '#app/components/ui/icon.tsx'
+import { Label } from '#app/components/ui/label.tsx'
 import { getDoctor, getUserId, requireUserId } from '#app/utils/auth.server.ts'
 import { prisma } from '#app/utils/db.server.ts'
 import { getUserImgSrc } from '#app/utils/misc.tsx'
@@ -31,13 +32,7 @@ import {
 } from '#app/utils/schedule.ts'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 import { type Route } from './+types/$username'
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from '#app/components/ui/card.tsx'
-import { Avatar } from '#app/components/ui/avatar.tsx'
+import { invariantResponse } from '@epic-web/invariant'
 
 export const meta = ({ data }: Route.MetaArgs) => {
 	return [
@@ -125,10 +120,6 @@ function CreateScheduleDeleteSchema(
 				}),
 		)
 }
-
-const ScheduleDeleteSchema = z.object({
-	scheduleId: z.string(),
-})
 
 export async function loader({ request, params }: Route.LoaderArgs) {
 	const url = new URL(request.url)
@@ -457,7 +448,7 @@ export default function DoctorRoute({ loaderData }: Route.ComponentProps) {
 							</h2>
 
 							{isDoctor && isLoggedUser ? (
-								<Button asChild variant="outline">
+								<Button asChild size="outline">
 									<Link to="/profile/edit" className="flex items-center gap-2">
 										<Icon name="pencil-2" />
 										Profile Settings
@@ -579,13 +570,13 @@ export default function DoctorRoute({ loaderData }: Route.ComponentProps) {
 					<Spacer size="lg" />
 					<hr className="border-t border-gray-200 dark:border-gray-700" />
 					<Spacer size="sm" />
-					{/* <Reviews
+					<Reviews
 						reviews={user.doctor?.reviews}
 						doctorId={user.doctor?.userId}
 						userId={user.id}
 						totalReviews={user.doctor?._count?.reviews}
 						overallRating={overallRating}
-					/> */}
+					/>
 				</>
 			) : null}
 			<Spacer size="lg" />
@@ -636,7 +627,7 @@ const Schedules = ({
 			</ul>
 			{isDoctor && isOwner ? (
 				<div className="flex items-center">
-					<Button asChild variant="default" className="mt-6">
+					<Button asChild size="default" className="mt-6">
 						<Link to="/add/schedule">Create a new schedule plan</Link>
 					</Button>
 				</div>
@@ -824,7 +815,7 @@ const BookedAppointments = () => {
 										</p>
 									</div>
 									{isInThePast ? (
-										<Button asChild variant="outline">
+										<Button asChild size="outline">
 											<Link
 												to={`/profile/${booking.doctor.user.username}`}
 												className="flex w-max items-center gap-2 text-sm text-accent-foreground"
@@ -955,5 +946,156 @@ function CancelBookingButton({ bookingId }: { bookingId: string }) {
 				Cancel Booking
 			</button>
 		</deleteFetcher.Form>
+	)
+}
+
+type ReviewProps = {
+	doctorId: string
+	userId: string
+	totalReviews: number | undefined
+	overallRating: number
+	reviews:
+		| {
+				user: {
+					username: string
+					name: string | null
+				}
+				id: string
+				createdAt: Date
+				rating: number
+				comment: string
+		  }[]
+		| undefined
+}
+
+const Reviews = ({
+	reviews,
+	doctorId,
+	userId,
+	totalReviews,
+	overallRating,
+}: ReviewProps) => {
+	const [form, fields] = useForm({
+		onValidate({ formData }) {
+			return parseWithZod(formData, { schema: ReviewSchema })
+		},
+		shouldRevalidate: 'onSubmit',
+	})
+	if (!reviews) return null
+
+	return (
+		<section>
+			<h4 className="text-sm font-extrabold">RATINGS AND REVIEWS</h4>
+
+			<div>
+				<p className="flex items-center gap-2 text-6xl font-extrabold">
+					{overallRating || 0}
+					<span>
+						<Icon
+							name="star"
+							className="h-6 w-6 fill-cyan-400 stroke-cyan-400"
+						/>
+					</span>
+				</p>
+
+				<p className="mt-1 text-sm">
+					&#40;
+					{totalReviews} {Number(totalReviews) > 1 ? 'Ratings' : 'Rating'}&#41;
+				</p>
+			</div>
+
+			<Spacer size="md" />
+
+			<h6 className="text-sm font-extrabold uppercase text-secondary-foreground">
+				Reviews
+			</h6>
+			<ul className="max-w-4xl py-2">
+				{reviews.map((review) => (
+					<li
+						key={review.id}
+						className="flex items-start gap-4 border-b py-6 first:pt-0"
+					>
+						<div className="flex-1 space-y-4">
+							<div className="flex gap-2">
+								{Array.from({ length: 5 }, (_, i) => (
+									<span key={i}>
+										<Icon
+											name="star"
+											className={`h-5 w-5 text-gray-300 ${review.rating > i && 'fill-cyan-400'} stroke-cyan-400`}
+										/>
+									</span>
+								))}
+							</div>
+							<p className="font-montserrat text-xs font-semibold text-secondary-foreground">
+								{review.user.name || review.user.username}
+								<span className="ml-2 text-[11px] font-medium text-muted-foreground">
+									{format(review.createdAt, 'MMMM d, yyyy')}
+								</span>
+							</p>
+
+							<p className="text-sm text-secondary-foreground">
+								{review.comment}
+							</p>
+						</div>
+					</li>
+				))}
+			</ul>
+
+			<Spacer size="md" />
+			<div className="flex max-w-4xl items-center justify-center">
+				<Button asChild size="default">
+					<Link to="/reviews">See More</Link>
+				</Button>
+			</div>
+
+			<Spacer size="md" />
+			<h6 className="text-lg font-extrabold uppercase text-secondary-foreground">
+				Write a Review
+			</h6>
+			<Spacer size="sm" />
+			<Form method="post" {...getFormProps(form)}>
+				<input
+					{...getInputProps(fields.doctorId, { type: 'hidden' })}
+					value={doctorId}
+				/>
+				<input
+					{...getInputProps(fields.userId, { type: 'hidden' })}
+					value={userId}
+				/>
+				<Label htmlFor={fields.rating.id} className="text-sm font-semibold">
+					Rating
+				</Label>
+				<div className="flex gap-2">
+					{[1, 2, 3, 4, 5].map((star) => (
+						<label key={star} className="cursor-pointer">
+							<input
+								{...getInputProps(fields.rating, { type: 'radio' })}
+								value={star}
+								className="peer sr-only"
+							/>
+							<Icon
+								name="star"
+								className={`h-8 w-8 ${star <= Number(fields.rating.value) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300 hover:text-yellow-400'} transition-colors duration-150`}
+							/>
+						</label>
+					))}
+				</div>
+				<ErrorList errors={fields.rating.errors} />
+				<Spacer size="sm" />
+
+				<TextareaField
+					labelProps={{ htmlFor: fields.comment.id, children: 'Comment' }}
+					textareaProps={{
+						...getInputProps(fields.comment, { type: 'text' }),
+						autoComplete: 'off',
+						rows: 4,
+					}}
+					errors={fields.comment.errors}
+				/>
+				<Button type="submit" name="_action" value="create-review">
+					Submit
+				</Button>
+			</Form>
+		</section>
 	)
 }
