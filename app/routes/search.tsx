@@ -16,7 +16,12 @@ import { SearchBar } from '#app/components/search-bar.tsx'
 import { UserDropdown } from '#app/components/user-dropdown.tsx'
 import { Logo } from '#app/root.tsx'
 import { prisma } from '#app/utils/db.server.ts'
-import { cn, getUserImgSrc, useDelayedIsPending } from '#app/utils/misc.tsx'
+import {
+	cn,
+	getUserImgSrc,
+	useDebounce,
+	useDelayedIsPending,
+} from '#app/utils/misc.tsx'
 import { type Route } from './+types/search'
 import { LocationCombobox } from './resources+/location-combobox'
 import { SpecialtyCombobox } from './resources+/specialty-combobox'
@@ -30,8 +35,8 @@ export const SearchPageSchema = z.object({
 export async function loader({ request }: Route.LoaderArgs) {
 	const searchParams = new URL(request.url).searchParams
 	const nameQuery = searchParams.get('name')
-	const specialtiesQuery = searchParams.get('specialty')
-	const locationQuery = searchParams.get('location')
+	const specialtiesQuery = searchParams.get('specialtyId')
+	const locationQuery = searchParams.get('locationId')
 	if (nameQuery === '') {
 		return redirect('/search')
 	}
@@ -39,6 +44,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const name = nameQuery ?? ''
 	const specialtyId = specialtiesQuery ?? ''
 	const locationId = locationQuery ?? ''
+
+	console.log('specialtyId', specialtyId)
+	console.log('locationId', locationId)
 
 	const doctors = await prisma.$queryRawTyped(
 		searchDoctors(name, specialtyId, locationId),
@@ -56,7 +64,8 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function SearchRoute({ loaderData }: Route.ComponentProps) {
-	const submit = useSubmit()
+	// const submit = useSubmit()
+	const [searchParams, setSearchParams] = useSearchParams()
 
 	const isPending = useDelayedIsPending({
 		formMethod: 'GET',
@@ -69,6 +78,10 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 		},
 	})
 
+	// const handleFormChange = useDebounce(async (form: HTMLFormElement) => {
+	// 	 await submit(form)
+	// }, 400)
+
 	return (
 		<>
 			<Form
@@ -77,7 +90,22 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 				className="sticky top-0 z-50"
 				onChange={async (event) => {
 					event.preventDefault()
-					await submit(event.currentTarget)
+					const formData = new FormData(event.currentTarget)
+					const newSearchParams = new URLSearchParams(searchParams)
+					for (const [key, value] of formData.entries()) {
+						if (formData.has(key) && value.toString().trim()) {
+							newSearchParams.set(key, value.toString())
+						} else {
+							console.log('deleting', key)
+							newSearchParams.delete(key)
+						}
+					}
+
+					console.log('new search params', newSearchParams.toString())
+
+					setSearchParams(newSearchParams)
+
+					// handleFormChange(event.currentTarget)
 				}}
 			>
 				<SearchNavbar
@@ -89,9 +117,9 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 			</Form>
 			<div className="container mb-48 mt-36 flex flex-col items-center justify-center gap-6">
 				<h1 className="text-h1">Daktar Bari Doctors</h1>
-				<div className="w-full max-w-[700px]">
+				{/* <div className="w-full max-w-[700px]">
 					<SearchBar status={loaderData.status} autoFocus autoSubmit />
-				</div>
+				</div> */}
 				<main>
 					{loaderData.status === 'idle' ? (
 						loaderData.doctors.length ? (
@@ -147,12 +175,6 @@ const SearchNavbar = ({
 }) => {
 	const [searchParams] = useSearchParams()
 
-	const hiddenInputs = Array.from(searchParams.entries())
-		.filter(([key]) => !['name', 'locationId', 'specialtyId'].includes(key))
-		.map(([key, value]) => (
-			<input key={key} type="hidden" name={key} value={value} />
-		))
-
 	return (
 		<header>
 			<nav className="sticky inset-0 z-50 flex w-full items-center justify-between border-b bg-background px-4 py-4 lg:px-8">
@@ -178,8 +200,6 @@ const SearchNavbar = ({
 						<SpecialtyCombobox field={specialtyField} />
 					</div>
 				</div>
-
-				{hiddenInputs}
 
 				<UserDropdown />
 			</nav>

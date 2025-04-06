@@ -31,6 +31,7 @@ export function SpecialtyCombobox({ field }: { field: FieldMetadata }) {
 		items,
 		itemToString: (item) => (item ? item.name : ''),
 		onInputValueChange: async (changes) => {
+			console.log('submitting specialty fetcher')
 			await specialtyFetcher.submit(
 				{ query: changes.inputValue ?? '' },
 				{ method: 'get', action: '/resources/specialty-combobox' },
@@ -38,6 +39,7 @@ export function SpecialtyCombobox({ field }: { field: FieldMetadata }) {
 		},
 		onSelectedItemChange: (changes) => {
 			const newSearchParams = new URLSearchParams(searchParams)
+			console.log('selected item change specialty')
 			if (changes.selectedItem?.id) {
 				newSearchParams.set('specialtyId', changes.selectedItem.id)
 			} else {

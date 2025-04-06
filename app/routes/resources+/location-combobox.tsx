@@ -56,6 +56,7 @@ export function LocationCombobox({
 		itemToString: (item) => (item ? item.name : ''),
 		initialSelectedItem: selectedLocation,
 		onInputValueChange: async (changes) => {
+			console.log('submitting location fetcher')
 			await locationFetcher.submit(
 				{ query: changes.inputValue ?? '' },
 				{ method: 'get', action: '/resources/location-combobox' },
@@ -63,8 +64,10 @@ export function LocationCombobox({
 		},
 		onSelectedItemChange: (changes) => {
 			if (variant !== 'search') return
+			console.log('selected Item change on location', changes)
 			const newSearchParams = new URLSearchParams(searchParams)
 			if (changes.selectedItem?.id) {
+				console.log('setting locationId', changes.selectedItem.id)
 				newSearchParams.set('locationId', changes.selectedItem.id)
 			} else {
 				newSearchParams.delete('locationId')
