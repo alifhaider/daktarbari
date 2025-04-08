@@ -15,6 +15,7 @@ import { type Route } from './+types/root.ts'
 import appleTouchIconAssetUrl from './assets/favicons/apple-touch-icon.png'
 import faviconAssetUrl from './assets/favicons/favicon.svg'
 import { GeneralErrorBoundary } from './components/error-boundary.tsx'
+import Footer from './components/footer.tsx'
 import { EpicProgress } from './components/progress-bar.tsx'
 import { SearchBar } from './components/search-bar.tsx'
 import { useToast } from './components/toaster.tsx'
@@ -222,6 +223,7 @@ function App() {
 					<Outlet />
 				</div>
 
+				<Footer />
 				<div className="container flex justify-between pb-5">
 					<Logo />
 					<ThemeSwitch userPreference={data.requestInfo.userPrefs.theme} />
