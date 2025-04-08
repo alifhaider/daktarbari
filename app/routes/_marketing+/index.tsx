@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { Spacer } from '#app/components/spacer.tsx'
 import { Button } from '#app/components/ui/button.tsx'
 import { type Route } from './+types/index.ts'
 
@@ -7,8 +8,9 @@ export const meta: Route.MetaFunction = () => [{ title: 'Daktar Bari' }]
 export default function Index() {
 	return (
 		<main className="font-poppins grid h-full place-items-center">
+			<Spacer size="xs" />
 			<section className="mx-auto flex flex-col gap-10 md:container md:flex-row">
-				<div className="space-y-4">
+				<div className="space-y-6">
 					<h1 className="text-4xl font-extrabold md:text-6xl">
 						Find and Book Your Doctor&apos;s Appointment
 					</h1>
@@ -30,7 +32,7 @@ export default function Index() {
 					alt="Doctor Appointment"
 				/>
 			</section>
-			<section className="mt-20 bg-primary-foreground py-20">
+			<section className="mt-20 w-full bg-primary-foreground px-8 py-20">
 				<div className="container">
 					<h2 className="text-3xl font-extrabold md:text-5xl">
 						Search for Top-Rated Doctors
@@ -59,14 +61,12 @@ export default function Index() {
 				</div>
 			</section>
 
-			<section className="mx-auto max-w-7xl space-y-6 py-20">
-				<div className="px-4">
-					<h2 className="text-3xl font-extrabold md:text-5xl">
-						Simple and Fast Booking Process
-					</h2>
-				</div>
+			<section className="space-y-6 py-20 md:container">
+				<h2 className="text-3xl font-extrabold md:text-5xl">
+					Simple and Fast Booking Process
+				</h2>
 				<div className="flex flex-col-reverse md:flex-row">
-					<div className="w-full px-4 md:w-2/3">
+					<div className="w-full md:w-2/3">
 						<p className="mt-6 md:w-3/4">
 							Schedule appointments with just a few clicks. Our streamlined
 							booking system ensures you can find an available slot that fits
