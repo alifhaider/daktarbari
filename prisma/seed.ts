@@ -5,23 +5,36 @@ import { createPassword, createUser, getUserImages } from '#tests/db-utils.ts'
 import { insertGitHubUser } from '#tests/mocks/github.ts'
 
 const mock_specialties = [
-	'Cardiologist',
-	'Dermatologist',
-	'Endocrinologist',
-	'Gastroenterologist',
-	'Hematologist',
-	'Nephrologist',
-	'Neurologist',
-	'Oncologist',
-	'Ophthalmologist',
-	'Otolaryngologist',
-	'Pediatrician',
-	'Physiatrist',
-	'Psychiatrist',
-	'Pulmonologist',
-	'Radiologist',
-	'Rheumatologist',
-	'Urologist',
+	{
+		name: 'Cardiology',
+		description:
+			'Cardiology is a branch of medicine that deals with disorders of the heart and blood vessels.',
+	},
+	{
+		name: 'Dermatology',
+		description:
+			'Dermatology is a branch of medicine that deals with the diagnosis and treatment of skin disorders.',
+	},
+	{
+		name: 'Endocrinology',
+		description:
+			'Endocrinology is a branch of medicine that deals with the endocrine system and its disorders.',
+	},
+	{
+		name: 'Gastroenterology',
+		description:
+			'Gastroenterology is a branch of medicine that deals with the digestive system and its disorders.',
+	},
+	{
+		name: 'Hematology',
+		description:
+			'Hematology is a branch of medicine that deals with blood and blood disorders.',
+	},
+	{
+		name: 'Nephrology',
+		description:
+			'Nephrology is a branch of medicine that deals with the kidneys and their disorders.',
+	},
 ]
 
 const institutes = [
@@ -155,7 +168,7 @@ async function seed() {
 					userId: users[index]!.id,
 					balance: Math.floor(Math.random() * 1000),
 					currency: faker.finance.currencyName(),
-					homeAddress: faker.address.streetAddress(),
+					homeAddress: `${faker.location.streetAddress()}, ${faker.location.city()}, ${faker.location.state()}, ${faker.location.zipCode()}`,
 					specialties: {
 						createMany: {
 							data: Array.from({
@@ -163,7 +176,11 @@ async function seed() {
 							}).map(() => ({
 								name: mock_specialties[
 									Math.floor(Math.random() * mock_specialties.length)
-								]!,
+								]?.name!,
+								description:
+									mock_specialties[
+										Math.floor(Math.random() * mock_specialties.length)
+									]?.description!,
 							})),
 						},
 					},

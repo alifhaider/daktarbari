@@ -172,6 +172,8 @@ model DoctorSpecialty {
   doctorId String
 
   name String
+  description String?
+  image String?
 
   specialtyPopularty SpecialtyPopularty?
 

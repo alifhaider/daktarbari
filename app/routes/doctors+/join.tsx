@@ -1,6 +1,12 @@
 import { Link } from 'react-router'
 import { Spacer } from '#app/components/spacer.tsx'
 import { Button } from '#app/components/ui/button.tsx'
+import {
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from '#app/components/ui/card.tsx'
 import { Icon } from '#app/components/ui/icon.tsx'
 
 export default function JoinPage() {
@@ -10,7 +16,7 @@ export default function JoinPage() {
 			<div className="container space-y-12">
 				<div>
 					<h1 className="max-w-4xl text-4xl font-extrabold md:text-7xl">
-						Start getting appointments from CareHub
+						Start getting appointments from DaktarBari
 					</h1>
 					<p className="mt-4 max-w-2xl text-muted-foreground">
 						Streamline your practice, reach more patients, and provide better
@@ -18,17 +24,17 @@ export default function JoinPage() {
 					</p>
 				</div>
 				<Button size="lg" asChild className="font-bold">
-					<Link to="/doctor/onboarding">Get Started</Link>
+					<Link to="/doctors/onboarding">Get Started</Link>
 				</Button>
 
 				<p className="text-muted-foreground">
 					<span className="font-extrabold">C</span>reate your profile and start
-					getting appointments from CareHub.
+					getting appointments from DaktarBari.
 				</p>
-				{/* <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+				<div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
 					<Card>
 						<CardHeader>
-							<Clock className="mb-2 h-8 w-8 text-primary" />
+							<Icon name="clock" className="mb-2 h-8 w-8 text-primary" />
 							<CardTitle>Flexible Scheduling</CardTitle>
 						</CardHeader>
 						<CardContent>
@@ -39,7 +45,7 @@ export default function JoinPage() {
 					</Card>
 					<Card>
 						<CardHeader>
-							<Users className="mb-2 h-8 w-8 text-primary" />
+							<Icon name="avatar" className="mb-2 h-8 w-8 text-primary" />
 							<CardTitle>Expand Your Patient Base</CardTitle>
 						</CardHeader>
 						<CardContent>
@@ -49,7 +55,7 @@ export default function JoinPage() {
 					</Card>
 					<Card>
 						<CardHeader>
-							<Calendar className="mb-2 h-8 w-8 text-primary" />
+							<Icon name="calendar" className="mb-2 h-8 w-8 text-primary" />
 							<CardTitle>Efficient Practice Management</CardTitle>
 						</CardHeader>
 						<CardContent>
@@ -57,11 +63,11 @@ export default function JoinPage() {
 							place. Spend less time on admin and more time on patient care.
 						</CardContent>
 					</Card>
-				</div> */}
+				</div>
 
 				<div className="mb-12 text-center">
 					<Button size="lg" asChild className="font-bold">
-						<Link to="/doctor/onboarding">Get Started</Link>
+						<Link to="/doctors/onboarding">Get Started</Link>
 					</Button>
 				</div>
 
