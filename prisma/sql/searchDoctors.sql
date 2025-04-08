@@ -1,6 +1,6 @@
 -- @param {String} $1:name
--- @param {String} $2:specialty
--- @param {String} $3:location
+-- @param {String} $2:specialtyId
+-- @param {String} $3:locationId
 SELECT 
   "User".id,
   "User".username,
@@ -34,29 +34,28 @@ JOIN "Doctor" ON "User".id = "Doctor"."userId"
 LEFT JOIN "UserImage" ON "User".id = "UserImage"."userId"
 WHERE 
   (
-    :name IS NULL OR 
-    LOWER("User".name) LIKE '%' || LOWER(:name) || '%' OR 
-    LOWER("User".username) LIKE '%' || LOWER(:name) || '%'
+    $1::text IS NULL OR 
+    $1::text = '' OR
+    LOWER("User".name) LIKE '%' || LOWER($1::text) || '%' OR 
+    LOWER("User".username) LIKE '%' || LOWER($1::text) || '%'
   )
   AND (
-    :specialty IS NULL OR 
+    $2::text IS NULL OR 
+    $2::text = '' OR
     EXISTS (
       SELECT 1 FROM "DoctorSpecialty"
       WHERE "DoctorSpecialty"."doctorId" = "Doctor"."userId"
-      AND LOWER("DoctorSpecialty".name) LIKE '%' || LOWER(:specialty) || '%'
+      AND "DoctorSpecialty".id = $2::text
     )
   )
   AND (
-    :location IS NULL OR 
+    $3::text IS NULL OR 
+    $3::text = '' OR
     EXISTS (
       SELECT 1 FROM "Schedule"
       JOIN "ScheduleLocation" ON "Schedule"."locationId" = "ScheduleLocation".id
       WHERE "Schedule"."doctorId" = "Doctor"."userId"
-      AND (
-        LOWER("ScheduleLocation".name) LIKE '%' || LOWER(:location) || '%' OR
-        LOWER("ScheduleLocation".city) LIKE '%' || LOWER(:location) || '%' OR
-        LOWER("ScheduleLocation".address) LIKE '%' || LOWER(:location) || '%'
-      )
+      AND "ScheduleLocation".id = $3::text
     )
   )
 GROUP BY 

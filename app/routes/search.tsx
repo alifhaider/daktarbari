@@ -45,9 +45,6 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const specialtyId = specialtiesQuery ?? ''
 	const locationId = locationQuery ?? ''
 
-	console.log('specialtyId', specialtyId)
-	console.log('locationId', locationId)
-
 	const doctors = await prisma.$queryRawTyped(
 		searchDoctors(name, specialtyId, locationId),
 	)
@@ -96,12 +93,9 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 						if (formData.has(key) && value.toString().trim()) {
 							newSearchParams.set(key, value.toString())
 						} else {
-							console.log('deleting', key)
 							newSearchParams.delete(key)
 						}
 					}
-
-					console.log('new search params', newSearchParams.toString())
 
 					setSearchParams(newSearchParams)
 
