@@ -1,27 +1,14 @@
-import { FieldMetadata, getFormProps, useForm } from '@conform-to/react'
+import { type FieldMetadata, getFormProps, useForm } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod'
 import { searchDoctors } from '@prisma/client/sql'
 import { Img } from 'openimg/react'
-import {
-	data,
-	Form,
-	Link,
-	redirect,
-	useSearchParams,
-	useSubmit,
-} from 'react-router'
+import { data, Form, Link, redirect, useSearchParams } from 'react-router'
 import { z } from 'zod'
 import { ErrorList } from '#app/components/forms.tsx'
-import { SearchBar } from '#app/components/search-bar.tsx'
 import { UserDropdown } from '#app/components/user-dropdown.tsx'
 import { Logo } from '#app/root.tsx'
 import { prisma } from '#app/utils/db.server.ts'
-import {
-	cn,
-	getUserImgSrc,
-	useDebounce,
-	useDelayedIsPending,
-} from '#app/utils/misc.tsx'
+import { cn, getUserImgSrc, useDelayedIsPending } from '#app/utils/misc.tsx'
 import { type Route } from './+types/search'
 import { LocationCombobox } from './resources+/location-combobox'
 import { SpecialtyCombobox } from './resources+/specialty-combobox'
