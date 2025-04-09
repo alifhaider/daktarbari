@@ -446,7 +446,10 @@ export default function DoctorRoute({ loaderData }: Route.ComponentProps) {
 
 							{isDoctor && isLoggedUser ? (
 								<Button asChild variant="outline">
-									<Link to="/profile/edit" className="flex items-center gap-2">
+									<Link
+										to="/settings/profile"
+										className="flex items-center gap-2"
+									>
 										<Icon name="pencil-2" />
 										Profile Settings
 									</Link>
@@ -849,10 +852,10 @@ const BookedAppointments = () => {
 
 	return (
 		<section className="mx-auto w-full">
-			<Spacer size="lg" />
+			<Spacer size="md" />
 			<h2>Booked Appointments</h2>
 
-			<Spacer size="sm" />
+			<Spacer size="2xs" />
 
 			{bookings.length === 0 ? (
 				<p className="text-lg text-accent-foreground">
