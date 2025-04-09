@@ -20,7 +20,7 @@ export function UserDropdown() {
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button asChild variant="secondary">
+				<Button variant="secondary">
 					<Icon name="menu" className="text-body-md" />
 				</Button>
 			</DropdownMenuTrigger>
@@ -29,7 +29,7 @@ export function UserDropdown() {
 					{doctor ? (
 						<DropdownMenuItem asChild>
 							<Link prefetch="intent" to="/dashboard">
-								<Icon className="text-body-md" name="dashboard">
+								<Icon className="text-body-md" name="layout-dashboard">
 									Dashboard
 								</Icon>
 							</Link>
@@ -37,7 +37,7 @@ export function UserDropdown() {
 					) : (
 						<DropdownMenuItem asChild>
 							<Link prefetch="intent" to="/doctors/join">
-								<Icon className="text-body-md" name="doctor">
+								<Icon className="text-body-md" name="stethoscope">
 									Become a Doctor
 								</Icon>
 							</Link>
@@ -66,7 +66,7 @@ export function UserDropdown() {
 						<>
 							<DropdownMenuItem asChild>
 								<Link prefetch="intent" to="/login">
-									<Icon className="text-body-md" name="avatar">
+									<Icon className="text-body-md" name="log-in">
 										Login
 									</Icon>
 								</Link>
@@ -83,7 +83,7 @@ export function UserDropdown() {
 
 					<DropdownMenuItem asChild>
 						<Link to="/works">
-							<Icon className="text-body-md" name="avatar">
+							<Icon className="text-body-md" name="brain-cog">
 								How it works
 							</Icon>
 						</Link>
