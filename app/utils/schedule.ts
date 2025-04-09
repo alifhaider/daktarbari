@@ -2,6 +2,7 @@ export type TSchedule = {
 	id: string
 	startTime: Date
 	endTime: Date
+	maxAppointments: number
 	location: {
 		id: string
 		name: string
@@ -16,6 +17,7 @@ export type TSchedule = {
 	serialFee: number | null
 	discountFee: number | null
 	visitFee: number | null
+	depositAmount: number | null
 }
 
 // returns all schedules that have not ended yet
@@ -59,10 +61,9 @@ export function getNextDateSchedules(schedules: TSchedule[]): TSchedule[] {
 	})
 }
 
-export function isScheduleHasMoreThanSixHours(schedule: TSchedule): boolean {
-	const start = new Date(schedule.startTime)
-	const end = new Date(schedule.endTime)
-	const diff = end.getTime() - start.getTime()
-	const hours = diff / 1000 / 60 / 60
-	return hours > 6
+export function isScheduleHasMoreThanSixHours(startTime: Date): boolean {
+	const now = new Date()
+	const start = new Date(startTime)
+	const diffInHours = (start.getTime() - now.getTime()) / (1000 * 60 * 60)
+	return diffInHours > 6
 }

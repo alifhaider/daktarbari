@@ -5,18 +5,28 @@ import {
 	useForm,
 } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod'
+import { invariantResponse } from '@epic-web/invariant'
 import { format } from 'date-fns'
 import { Img } from 'openimg/react'
 import { useState } from 'react'
-import { data, Form, Link, useFetcher, useLoaderData } from 'react-router'
+import {
+	data,
+	Form,
+	Link,
+	useActionData,
+	useFetcher,
+	useLoaderData,
+} from 'react-router'
 import { z } from 'zod'
 import { ErrorList, TextareaField } from '#app/components/forms.tsx'
 import { Spacer } from '#app/components/spacer.tsx'
 import { Avatar } from '#app/components/ui/avatar.tsx'
+import { Badge } from '#app/components/ui/badge.tsx'
 import { Button } from '#app/components/ui/button.tsx'
 import {
 	Card,
 	CardContent,
+	CardDescription,
 	CardHeader,
 	CardTitle,
 } from '#app/components/ui/card.tsx'
@@ -32,7 +42,6 @@ import {
 } from '#app/utils/schedule.ts'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 import { type Route } from './+types/$username'
-import { invariantResponse } from '@epic-web/invariant'
 
 export const meta = ({ data }: Route.MetaArgs) => {
 	return [
@@ -134,9 +143,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			image: { select: { id: true, objectKey: true } },
 			doctor: {
 				include: {
-					_count: {
-						select: { reviews: true },
-					},
+					_count: { select: { reviews: true } },
 					specialties: { select: { id: true, name: true } },
 					education: {
 						select: {
@@ -148,9 +155,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 					},
 					schedules: {
 						include: {
-							_count: {
-								select: { bookings: true },
-							},
+							_count: { select: { bookings: true } },
 							location: {
 								select: {
 									id: true,
@@ -170,12 +175,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 							id: true,
 							rating: true,
 							comment: true,
-							user: {
-								select: {
-									username: true,
-									name: true,
-								},
-							},
+							user: { select: { username: true, name: true } },
 							createdAt: true,
 						},
 					},
@@ -189,11 +189,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 								select: {
 									username: true,
 									name: true,
-									image: {
-										select: {
-											objectKey: true,
-										},
-									},
+									image: { select: { objectKey: true } },
 								},
 							},
 						},
@@ -203,6 +199,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 							createdAt: true,
 							startTime: true,
 							endTime: true,
+							maxAppointments: true,
 							location: {
 								select: {
 									name: true,
@@ -236,8 +233,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		0,
 	)
 	const overallRating =
-		totalRating && totalReviewsCount
-			? Number(totalRating) / totalReviewsCount
+		totalReviewsCount && totalRating && totalReviewsCount > 0
+			? Math.round((totalRating / totalReviewsCount) * 10) / 10
 			: 0
 
 	return {
@@ -448,7 +445,7 @@ export default function DoctorRoute({ loaderData }: Route.ComponentProps) {
 							</h2>
 
 							{isDoctor && isLoggedUser ? (
-								<Button asChild size="outline">
+								<Button asChild variant="outline">
 									<Link to="/profile/edit" className="flex items-center gap-2">
 										<Icon name="pencil-2" />
 										Profile Settings
@@ -457,12 +454,10 @@ export default function DoctorRoute({ loaderData }: Route.ComponentProps) {
 							) : null}
 						</div>
 						{!isDoctor ? (
-							<>
-								<p className="flex items-center gap-2 text-sm text-accent-foreground">
-									<Icon name="mail" />
-									{user.email}
-								</p>
-							</>
+							<p className="flex items-center gap-2 text-sm text-accent-foreground">
+								<Icon name="mail" />
+								{user.email}
+							</p>
 						) : null}
 
 						{isDoctor ? (
@@ -597,24 +592,31 @@ const Schedules = ({
 	isOwner,
 	username,
 }: ScheduleProps) => {
+	const scheduleDate = format(
+		schedules[0]?.startTime ?? new Date(),
+		'dd MMMM, yyyy',
+	)
 	return (
 		<div className="col-span-1 lg:col-span-3">
 			{schedules && schedules?.length > 0 && (
 				<div className="relative flex items-center">
 					<span className="h-0.5 w-full border"></span>
 					<h5 className="mx-1 text-nowrap text-4xl font-bold text-secondary-foreground">
-						{format(schedules[0]?.startTime ?? new Date(), 'dd MMMM, yyyy')}
+						{scheduleDate}
 					</h5>
 					<span className="h-0.5 w-full border"></span>
 				</div>
 			)}
-			<Spacer size="sm" />
+			<CardDescription>
+				{schedules.length} schedule(s) active on {scheduleDate}
+			</CardDescription>
+			<Spacer size="3xs" />
 
 			{schedules && schedules?.length === 0 ? (
 				<p className="text-lg text-accent-foreground">No available schedules</p>
 			) : null}
 
-			<ul className="max-h-[40rem] space-y-4 overflow-y-auto">
+			<ul className="max-h-[40rem] space-y-8 overflow-y-auto">
 				{schedules?.map((schedule) => (
 					<ScheduleItem
 						key={schedule.id}
@@ -648,6 +650,7 @@ const ScheduleItem = ({
 	username: string
 }) => {
 	const deleteFetcher = useFetcher()
+	const actionData = useActionData<typeof action>()
 	const [form, fields] = useForm({
 		onValidate({ formData }) {
 			return parseWithZod(formData, {
@@ -657,82 +660,174 @@ const ScheduleItem = ({
 		shouldRevalidate: 'onSubmit',
 	})
 	const isDeleting = deleteFetcher.formData?.get('scheduleId') === schedule.id
+
+	const getTimeOfDay = (timeString: Date) => {
+		const hour = new Date(timeString).getHours()
+		if (hour < 12) return 'Morning'
+		if (hour < 17) return 'Afternoon'
+		return 'Evening'
+	}
+
+	const getTimeOfDayStyles = (timeOfDay: string) => {
+		switch (timeOfDay) {
+			case 'Morning':
+				return 'bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-950 dark:text-sky-300 dark:border-sky-900'
+			case 'Afternoon':
+				return 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-900'
+			case 'Evening':
+				return 'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-950 dark:text-indigo-300 dark:border-indigo-900'
+			default:
+				return 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+		}
+	}
+
+	const timeOfDayStyles = getTimeOfDayStyles(getTimeOfDay(schedule.startTime))
+	const timeOfDay = getTimeOfDay(schedule.startTime)
+
 	return (
 		<li
 			hidden={isDeleting}
-			className="flex items-center rounded-md border transition-all"
+			className="overflow-hidden rounded-sm border shadow-md transition-all hover:shadow-lg"
 		>
-			<div className="h-full w-full px-4 py-6">
-				<div className="flex items-center justify-between">
-					<div className="flex items-start gap-2">
-						<Icon name="map" className="h-8 w-8" />
-						<div>
-							<h6 className="flex items-end text-2xl font-bold leading-none">
-								{schedule.location.name}
-								<span className="text-xs font-normal">
-									/{format(schedule.startTime, 'hh:mm a')} -{' '}
-									{format(schedule.endTime, 'hh:mm a')}
-								</span>
-							</h6>
-							<div className="mt-2 text-sm text-accent-foreground">
-								{schedule.location.address}, {schedule.location.city},{' '}
-								{schedule.location.state}, {schedule.location.zip}
-							</div>
-							<div className="mt-4">
-								{!isOwner && (
-									<Link
-										to={`/profile/${username}/schedule/${schedule.id}`}
-										className="flex w-max items-start rounded-md bg-amber-300 px-2 py-1 text-secondary"
-									>
-										Book Now
-									</Link>
-								)}
-								{isOwner && isDoctor && (
-									<div className="space-y-2">
-										<div className="flex gap-2 text-sm">
-											<button className="flex w-max items-start rounded-md border border-secondary-foreground bg-secondary px-2 py-1 text-secondary-foreground">
-												<Link to={`/edit/schedule/${schedule.id}`}>
-													Edit Schedule
-												</Link>
-											</button>
-											<deleteFetcher.Form method="POST" {...getFormProps(form)}>
-												<input
-													{...getInputProps(fields.scheduleId, {
-														type: 'hidden',
-													})}
-													value={schedule.id}
-												/>
-												<ErrorList errors={fields.scheduleId.errors} />
-												<button
-													name="_action"
-													value="delete-schedule"
-													type="submit"
-													className="flex w-max items-start rounded-md border border-destructive bg-destructive px-2 py-1 text-destructive-foreground transition-all"
-												>
-													Remove Schedule
-												</button>
-											</deleteFetcher.Form>
-										</div>
-										<ErrorList errors={form.errors} />
+			<div className="flex items-start justify-between border-b bg-accent/50 p-3 dark:bg-accent/20">
+				<div>
+					<h3 className="font-semibold text-primary">
+						{schedule.location.name}
+					</h3>
+					<div className="mt-0.5 flex items-center text-xs text-muted-foreground">
+						<Icon name="map-pin" className="mr-1 h-3 w-3" />
+						{schedule.location.address}
+					</div>
+				</div>
 
-										<p>Bookings: {schedule._count?.bookings}</p>
-									</div>
-								)}
+				<div className="flex flex-col items-end gap-1">
+					<Badge
+						variant="outline"
+						className={`px-2 py-0.5 text-xs font-medium ${timeOfDayStyles}`}
+					>
+						{timeOfDay}
+					</Badge>
+					<Badge
+						variant="outline"
+						className="bg-primary/10 text-primary dark:bg-primary/20"
+					>
+						{schedule._count.bookings}/{schedule.maxAppointments}
+					</Badge>
+				</div>
+			</div>
+
+			<div className="flex items-center border-b bg-muted/50 p-3 dark:bg-muted/20">
+				<Icon name="clock" className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+				<div className="text-sm font-medium">
+					{format(schedule.startTime, 'hh:mm a')} -{' '}
+					{format(schedule.endTime, 'hh:mm a')}
+				</div>
+			</div>
+
+			<div className="p-3">
+				<div className="flex flex-wrap gap-2 text-sm">
+					<div className="min-w-[180px] flex-1">
+						<div className="mb-1 flex items-center justify-between">
+							<span className="text-xs text-muted-foreground">Date:</span>
+							<span className="text-xs font-medium">
+								{format(schedule.startTime, 'dd MMMM, yyyy')}
+							</span>
+						</div>
+						<div className="flex items-center justify-between">
+							<span className="text-xs text-muted-foreground">
+								Availability:
+							</span>
+							<div className="flex items-center gap-1">
+								<div className="h-1.5 w-16 rounded-full bg-muted">
+									<div
+										className="h-1.5 rounded-full bg-primary"
+										style={{
+											width: `${100 - (schedule._count.bookings / schedule.maxAppointments) * 100}%`,
+										}}
+									></div>
+								</div>
+								<span className="text-xs font-medium">
+									{schedule.maxAppointments - schedule._count.bookings} left
+								</span>
 							</div>
 						</div>
 					</div>
-					<div>
-						<div className="font-bold text-accent-foreground">
-							Visit Fee: {schedule.visitFee}tk
+
+					{/* Compact fee section */}
+					<div className="flex min-w-[180px] flex-1 gap-2">
+						<div className="grid w-full grid-cols-2 gap-2">
+							<div className="rounded border bg-muted/50 p-1.5 text-center dark:bg-muted/20">
+								<p className="text-[10px] text-muted-foreground">Serial</p>
+								<p className="font-bold">{schedule.serialFee} tk</p>
+							</div>
+							<div className="rounded border bg-muted/50 p-1.5 text-center dark:bg-muted/20">
+								<p className="text-[10px] text-muted-foreground">Visit</p>
+								<p className="font-bold">{schedule.visitFee} tk</p>
+							</div>
 						</div>
-						<div className="text-secondary-foreground">
-							Serial Fee: {schedule.serialFee}tk
-						</div>
-						<div className="text-sm text-secondary-foreground">
-							Discount: {schedule.discountFee}tk
+						<div className="grid w-full grid-cols-2 gap-2">
+							<div className="rounded border bg-muted/50 p-1.5 text-center dark:bg-muted/20">
+								<p className="text-[10px] text-muted-foreground">Discount</p>
+								<p className="font-bold">{schedule.discountFee} tk</p>
+							</div>
+							<div className="rounded border bg-muted/50 p-1.5 text-center dark:bg-muted/20">
+								<p className="text-[10px] text-muted-foreground">Deposit</p>
+								<p className="font-bold">{schedule.depositAmount} tk</p>
+							</div>
 						</div>
 					</div>
 				</div>
+			</div>
+
+			<div className="border-t bg-muted/50 p-2 dark:bg-muted/20">
+				{isOwner && isDoctor ? (
+					<div className="space-y-2">
+						<div className="flex w-full gap-2">
+							<Button asChild variant="outline" size="sm" className="flex-1">
+								<Link to={`/edit/schedule/${schedule.id}`}>
+									<Icon name="pencil-2" className="mr-1 h-3 w-3" />
+									Edit
+								</Link>
+							</Button>
+							<deleteFetcher.Form
+								method="POST"
+								{...getFormProps(form)}
+								className="flex-1"
+							>
+								<input
+									{...getInputProps(fields.scheduleId, {
+										type: 'hidden',
+									})}
+									value={schedule.id}
+								/>
+								<ErrorList errors={fields.scheduleId.errors} />
+								<Button
+									name="_action"
+									value="delete-schedule"
+									variant="destructive"
+									size="sm"
+									type="submit"
+									className="w-full flex-1"
+								>
+									<Icon name="trash" className="mr-1 h-3 w-3" />
+									Remove
+								</Button>
+							</deleteFetcher.Form>
+						</div>
+						<ErrorList errors={form.errors} />
+					</div>
+				) : (
+					<Button
+						asChild
+						size="sm"
+						className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+					>
+						<Link to={`/profile/${username}/schedule/${schedule.id}`}>
+							<Icon name="calendar-check" className="mr-1 h-3 w-3" />
+							Book Now
+						</Link>
+					</Button>
+				)}
 			</div>
 		</li>
 	)
@@ -815,7 +910,7 @@ const BookedAppointments = () => {
 										</p>
 									</div>
 									{isInThePast ? (
-										<Button asChild size="outline">
+										<Button asChild variant="outline">
 											<Link
 												to={`/profile/${booking.doctor.user.username}`}
 												className="flex w-max items-center gap-2 text-sm text-accent-foreground"
@@ -825,7 +920,7 @@ const BookedAppointments = () => {
 										</Button>
 									) : null}
 									{!isInThePast &&
-									!isScheduleHasMoreThanSixHours(booking.schedule) ? (
+									!isScheduleHasMoreThanSixHours(booking.schedule.startTime) ? (
 										<CancelBookingButton bookingId={booking.id} />
 									) : null}
 								</CardHeader>
@@ -871,7 +966,7 @@ const BookedAppointments = () => {
 										</div>
 										<div className="flex items-center gap-2">
 											<Icon
-												name="money"
+												name="coins"
 												className="h-4 w-4 text-muted-foreground"
 											/>
 											<span>
@@ -1004,7 +1099,7 @@ const Reviews = ({
 				</p>
 			</div>
 
-			<Spacer size="md" />
+			<Spacer size="xs" />
 
 			<h6 className="text-sm font-extrabold uppercase text-secondary-foreground">
 				Reviews
@@ -1021,7 +1116,7 @@ const Reviews = ({
 									<span key={i}>
 										<Icon
 											name="star"
-											className={`h-5 w-5 text-gray-300 ${review.rating > i && 'fill-cyan-400'} stroke-cyan-400`}
+											className={`h-5 w-5 text-gray-300 ${review.rating > i ? 'fill-cyan-400 text-cyan-400' : ''}`}
 										/>
 									</span>
 								))}
@@ -1052,7 +1147,7 @@ const Reviews = ({
 			<h6 className="text-lg font-extrabold uppercase text-secondary-foreground">
 				Write a Review
 			</h6>
-			<Spacer size="sm" />
+			<Spacer size="3xs" />
 			<Form method="post" {...getFormProps(form)}>
 				<input
 					{...getInputProps(fields.doctorId, { type: 'hidden' })}
@@ -1081,7 +1176,7 @@ const Reviews = ({
 					))}
 				</div>
 				<ErrorList errors={fields.rating.errors} />
-				<Spacer size="sm" />
+				<Spacer size="3xs" />
 
 				<TextareaField
 					labelProps={{ htmlFor: fields.comment.id, children: 'Comment' }}

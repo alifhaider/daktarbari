@@ -12,6 +12,7 @@ const sampleLocation = {
 	},
 }
 const sampleFee = {
+	maxAppointments: 10,
 	serialFee: 100,
 	discountFee: 90,
 	visitFee: 80,
