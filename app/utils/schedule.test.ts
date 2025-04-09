@@ -16,6 +16,7 @@ const sampleFee = {
 	serialFee: 100,
 	discountFee: 90,
 	visitFee: 80,
+	depositAmount: 50,
 }
 
 const pastSchedules = [
