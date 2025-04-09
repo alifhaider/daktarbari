@@ -21,7 +21,9 @@ export type TSchedule = {
 }
 
 // returns all schedules that have not ended yet
-export function getUpcomingSchedules(schedules: TSchedule[]): TSchedule[] {
+export function getUpcomingSchedules<
+	T extends { startTime: Date | string; endTime: Date | string },
+>(schedules: T[]): T[] {
 	const now = new Date()
 	return schedules.filter((schedule) => {
 		return new Date(schedule.endTime) > now
@@ -36,7 +38,9 @@ export function getUpcomingSchedules(schedules: TSchedule[]): TSchedule[] {
 // ]
 // EXPECTED: { startTime: '2022-01-01T12:00:00.000Z', endTime: '2022-01-01T13:00:00.000Z' }
 // since it's the next schedule after today 01:00:00
-export function getNextDateSchedules(schedules: TSchedule[]): TSchedule[] {
+export function getNextDateSchedules<
+	T extends { startTime: Date | string; endTime: Date | string },
+>(schedules: T[]): T[] {
 	if (schedules.length === 0) return []
 
 	const now = new Date()
