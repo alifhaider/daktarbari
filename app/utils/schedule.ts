@@ -1,25 +1,3 @@
-export type TSchedule = {
-	id: string
-	startTime: Date
-	endTime: Date
-	maxAppointments: number
-	location: {
-		id: string
-		name: string
-		address: string
-		city: string
-		state: string | null
-		zip: string | null
-	}
-	_count: {
-		bookings: number
-	}
-	serialFee: number | null
-	discountFee: number | null
-	visitFee: number | null
-	depositAmount: number | null
-}
-
 // returns all schedules that have not ended yet
 export function getUpcomingSchedules<
 	T extends { startTime: Date | string; endTime: Date | string },

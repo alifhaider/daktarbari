@@ -38,7 +38,6 @@ import { getUserImgSrc } from '#app/utils/misc.tsx'
 import {
 	getUpcomingSchedules,
 	isScheduleHasMoreThanSixHours,
-	type TSchedule,
 } from '#app/utils/schedule.ts'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 import { type Route } from './+types/$username'
@@ -242,6 +241,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		userJoinedDisplay: user.createdAt.toLocaleDateString(),
 		isLoggedUser,
 		isDoctor,
+		schedules: user.doctor?.schedules ?? [],
 		overallRating,
 	}
 }
@@ -385,10 +385,15 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function DoctorRoute({ loaderData }: Route.ComponentProps) {
-	const { isDoctor, isLoggedUser, user, userJoinedDisplay, overallRating } =
-		loaderData
+	const {
+		isDoctor,
+		isLoggedUser,
+		user,
+		userJoinedDisplay,
+		overallRating,
+		schedules,
+	} = loaderData
 	const [selectedDate, setSelectedDate] = useState<Date | undefined>()
-	const schedules = user.doctor?.schedules ?? []
 
 	const scheduleTimes = schedules?.map((schedule) => ({
 		id: schedule.id,
@@ -553,7 +558,6 @@ export default function DoctorRoute({ loaderData }: Route.ComponentProps) {
 							<Schedules
 								schedules={displayedSchedules}
 								isOwner={isLoggedUser}
-								isDoctor={isDoctor && true}
 								username={user.username}
 							/>
 						) : null}
@@ -583,18 +587,12 @@ export default function DoctorRoute({ loaderData }: Route.ComponentProps) {
 }
 
 type ScheduleProps = {
-	schedules: TSchedule[]
-	isDoctor: boolean
+	schedules: Route.ComponentProps['loaderData']['schedules']
 	isOwner: boolean
 	username: string
 }
 
-const Schedules = ({
-	schedules,
-	isDoctor,
-	isOwner,
-	username,
-}: ScheduleProps) => {
+const Schedules = ({ schedules, isOwner, username }: ScheduleProps) => {
 	const scheduleDate = format(
 		schedules[0]?.startTime ?? new Date(),
 		'dd MMMM, yyyy',
@@ -624,13 +622,12 @@ const Schedules = ({
 					<ScheduleItem
 						key={schedule.id}
 						schedule={schedule}
-						isDoctor={isDoctor}
 						isOwner={isOwner}
 						username={username}
 					/>
 				))}
 			</ul>
-			{isDoctor && isOwner ? (
+			{isOwner ? (
 				<div className="flex items-center">
 					<Button asChild size="default" className="mt-6">
 						<Link to="/add/schedule">Create a new schedule plan</Link>
@@ -644,12 +641,10 @@ const Schedules = ({
 const ScheduleItem = ({
 	schedule,
 	isOwner,
-	isDoctor,
 	username,
 }: {
-	schedule: TSchedule
+	schedule: Route.ComponentProps['loaderData']['schedules'][number]
 	isOwner: boolean
-	isDoctor: boolean
 	username: string
 }) => {
 	const deleteFetcher = useFetcher()
@@ -783,7 +778,7 @@ const ScheduleItem = ({
 			</div>
 
 			<div className="border-t bg-muted/50 p-2 dark:bg-muted/20">
-				{isOwner && isDoctor ? (
+				{isOwner ? (
 					<div className="space-y-2">
 						<div className="flex w-full gap-2">
 							<Button asChild variant="outline" size="sm" className="flex-1">
