@@ -9,6 +9,9 @@ import { Spinner } from '#app/components/spinner.tsx'
 import { prisma } from '#app/utils/db.server.ts'
 import { type Route } from './+types/specialty-combobox'
 
+// TODO: 1. spinner is not visible
+//       2. when user types in the input, the specialtyId is not removed from the searchParams
+
 export async function loader({ request }: Route.LoaderArgs) {
 	const searchParams = new URL(request.url).searchParams
 	const query = searchParams.get('specialty')?.toLocaleLowerCase()

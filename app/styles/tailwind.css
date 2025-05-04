@@ -8,6 +8,7 @@
 		/* --font-mono: here if you got it... */
 
 		/* prefixed with foreground because it should look good on the background */
+		--brand: 187.94, 85.71%, 53.33%;
 		--foreground-destructive: 345 82.7% 40.8%;
 
 		--background: 0 0% 100%;
@@ -44,6 +45,7 @@
 	}
 
 	.dark {
+		--brand: 187.94, 85.71%, 53.33%;
 		--background: 222.2 84% 4.9%;
 		--foreground: 210 40% 98%;
 

@@ -8,7 +8,8 @@ import { parseWithZod } from '@conform-to/zod'
 import { invariantResponse } from '@epic-web/invariant'
 import { format } from 'date-fns'
 import { Img } from 'openimg/react'
-import { useState } from 'react'
+import React, { useState } from 'react'
+import { type DayProps } from 'react-day-picker'
 import {
 	data,
 	Form,
@@ -23,6 +24,7 @@ import { Spacer } from '#app/components/spacer.tsx'
 import { Avatar } from '#app/components/ui/avatar.tsx'
 import { Badge } from '#app/components/ui/badge.tsx'
 import { Button } from '#app/components/ui/button.tsx'
+import { Calendar, CustomCell } from '#app/components/ui/calendar.tsx'
 import {
 	Card,
 	CardContent,
@@ -62,6 +64,11 @@ const ReviewSchema = z.object({
 	userId: z.string(),
 	comment: z.string().min(10, 'Comment must be at least 10 characters'),
 })
+
+export const SelectedDateContext = React.createContext<{
+	selected?: Date
+	setSelected?: React.Dispatch<React.SetStateAction<Date | undefined>>
+}>({})
 
 function CreateScheduleDeleteSchema(
 	intent: Intent | null,
@@ -520,40 +527,48 @@ export default function DoctorRoute({ loaderData }: Route.ComponentProps) {
 				<>
 					<Spacer size="lg" />
 					<section className="grid grid-cols-1 gap-8 lg:grid-cols-5">
-						<div className="col-span-1 place-content-center p-0 lg:col-span-2 lg:items-start"></div>
-						{/* <Calendar
-							className="col-span-1 place-content-center p-0 lg:col-span-2 lg:items-start"
-							onDayClick={handleDateClick}
-							modifiers={{
-								selectedDate: (date) =>
-									!!selectedDate &&
-									date.getDate() === selectedDate.getDate() &&
-									date.getMonth() === selectedDate.getMonth() &&
-									date.getFullYear() === selectedDate.getFullYear(),
-								schedules: (date) =>
-									scheduleTimes.some(
-										(schedule) =>
-											date.getDate() === schedule.date.getDate() &&
-											date.getMonth() === schedule.date.getMonth() &&
-											date.getFullYear() === schedule.date.getFullYear(),
-									),
-							}}
-							components={{
-								Day: (props: DayProps) => (
-									<CustomCell
-										scheduleTimes={scheduleTimes}
-										highlightedDate={
-											highlightedDate ? new Date(highlightedDate) : undefined
-										}
-										{...props}
-									/>
-								),
-							}}
-							formatters={{
-								formatCaption: (date: Date) => format(date, 'MMMM yyyy'),
-							}}
-							mode="single"
-						/> */}
+						<div className="col-span-1 place-content-center p-0 lg:col-span-2 lg:items-start">
+							<SelectedDateContext.Provider
+								value={{ selected: selectedDate, setSelected: setSelectedDate }}
+							>
+								<Calendar
+									className="col-span-1 place-content-center p-0 lg:col-span-2 lg:items-start"
+									onDayClick={handleDateClick}
+									modifiers={{
+										selectedDate: (date) =>
+											!!selectedDate &&
+											date.getDate() === selectedDate.getDate() &&
+											date.getMonth() === selectedDate.getMonth() &&
+											date.getFullYear() === selectedDate.getFullYear(),
+										schedules: (date) =>
+											scheduleTimes.some(
+												(schedule) =>
+													date.getDate() === schedule.startTime.getDate() &&
+													date.getMonth() === schedule.startTime.getMonth() &&
+													date.getFullYear() ===
+														schedule.startTime.getFullYear(),
+											),
+									}}
+									components={{
+										Day: (props: DayProps) => (
+											<CustomCell
+												scheduleTimes={scheduleTimes}
+												highlightedDate={
+													highlightedDate
+														? new Date(highlightedDate)
+														: undefined
+												}
+												{...props}
+											/>
+										),
+									}}
+									formatters={{
+										formatCaption: (date: Date) => format(date, 'MMMM yyyy'),
+									}}
+									mode="single"
+								/>
+							</SelectedDateContext.Provider>
+						</div>
 						{displayedSchedules && isDoctor ? (
 							<Schedules
 								schedules={displayedSchedules}

@@ -12,6 +12,9 @@ import { Label } from '#app/components/ui/label.tsx'
 import { prisma } from '#app/utils/db.server.ts'
 import { type Route } from './+types/location-combobox'
 
+// TODO: 1. spinner is not visible
+//       2. when user types in the input, the locationId is not removed from the searchParams
+
 export async function loader({ request }: Route.LoaderArgs) {
 	const searchParams = new URL(request.url).searchParams
 	const query = searchParams.get('query')?.toLocaleLowerCase()
@@ -55,20 +58,26 @@ export function LocationCombobox({
 		items,
 		itemToString: (item) => (item ? item.name : ''),
 		initialSelectedItem: selectedLocation,
-		onInputValueChange: async (changes) => {
-			console.log('submitting location fetcher')
-			await locationFetcher.submit(
-				{ query: changes.inputValue ?? '' },
-				{ method: 'get', action: '/resources/location-combobox' },
-			)
+		onInputValueChange: async ({ inputValue }) => {
+			// TODO: remove locationId from searchParams when user changes input value of location-combobox
+
+			// if (variant === 'search' && searchParams.has('locationId')) {
+			// 	const newParams = new URLSearchParams(searchParams)
+			// 	newParams.delete('locationId')
+			// 	setSearchParams(newParams)
+			// }
+			if (inputValue) {
+				await locationFetcher.submit(
+					{ query: inputValue ?? '' },
+					{ method: 'get', action: '/resources/location-combobox' },
+				)
+			}
 		},
-		onSelectedItemChange: (changes) => {
+		onSelectedItemChange: ({ selectedItem }) => {
 			if (variant !== 'search') return
-			console.log('selected Item change on location', changes)
 			const newSearchParams = new URLSearchParams(searchParams)
-			if (changes.selectedItem?.id) {
-				console.log('setting locationId', changes.selectedItem.id)
-				newSearchParams.set('locationId', changes.selectedItem.id)
+			if (selectedItem?.id) {
+				newSearchParams.set('locationId', selectedItem.id)
 			} else {
 				newSearchParams.delete('locationId')
 			}
@@ -120,6 +129,7 @@ export function LocationCombobox({
 							})}
 						/>
 						<div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center justify-center">
+							{/* TODO: spinner is not visible */}
 							<Spinner showSpinner={showSpinner} />
 						</div>
 					</div>
