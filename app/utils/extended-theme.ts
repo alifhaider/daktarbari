@@ -11,6 +11,10 @@ export const extendedTheme = {
 			DEFAULT: 'hsl(var(--ring))',
 			invalid: 'hsl(var(--foreground-destructive))',
 		},
+		brand: {
+			DEFAULT: 'hsl(var(--brand))',
+			foreground: 'hsl(var(--brand-foreground))',
+		},
 		background: 'hsl(var(--background))',
 		foreground: {
 			DEFAULT: 'hsl(var(--foreground))',
