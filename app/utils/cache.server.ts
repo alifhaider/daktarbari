@@ -1,6 +1,5 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { DatabaseSync } from 'node:sqlite'
 import {
 	cachified as baseCachified,
 	verboseReporter,
@@ -13,6 +12,7 @@ import {
 	type CreateReporter,
 } from '@epic-web/cachified'
 import { remember } from '@epic-web/remember'
+import Database, { type Database as SQDatabase } from 'better-sqlite3'
 import { LRUCache } from 'lru-cache'
 import { z } from 'zod'
 import { cachifiedTimingReporter, type Timings } from './timing.server.ts'
@@ -21,11 +21,11 @@ const CACHE_DATABASE_PATH = process.env.CACHE_DATABASE_PATH
 
 const cacheDb = remember('cacheDb', createDatabase)
 
-function createDatabase(tryAgain = true): DatabaseSync {
+function createDatabase(tryAgain = true): SQDatabase {
 	const parentDir = path.dirname(CACHE_DATABASE_PATH)
 	fs.mkdirSync(parentDir, { recursive: true })
 
-	const db = new DatabaseSync(CACHE_DATABASE_PATH)
+	const db = new Database(CACHE_DATABASE_PATH)
 
 	try {
 		// create cache table with metadata JSON column and value JSON column if it does not exist already
