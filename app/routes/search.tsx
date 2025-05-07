@@ -1,10 +1,13 @@
 import { type FieldMetadata, getFormProps, useForm } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod'
 import { searchDoctors } from '@prisma/client/sql'
+import { SlidersHorizontal } from 'lucide-react'
 import { Img } from 'openimg/react'
 import { data, Form, Link, redirect, useSearchParams } from 'react-router'
 import { z } from 'zod'
 import { ErrorList } from '#app/components/forms.tsx'
+import { Button } from '#app/components/ui/button.tsx'
+import { Icon } from '#app/components/ui/icon.tsx'
 import { UserDropdown } from '#app/components/user-dropdown.tsx'
 import { Logo } from '#app/root.tsx'
 import { prisma } from '#app/utils/db.server.ts'
@@ -35,6 +38,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const doctors = await prisma.$queryRawTyped(
 		searchDoctors(name, specialtyId, locationId),
 	)
+	console.log(doctors)
 	return { status: 'idle', doctors } as const
 }
 
@@ -93,56 +97,74 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 					locationField={fields.locationId}
 					specialtyField={fields.specialtyId}
 				/>
-				{/* <Filters /> */}
+
 				<button type="submit" className="hidden" />
 			</Form>
-			<div className="container mb-48 mt-36 flex flex-col items-center justify-center gap-6">
-				<h1 className="text-h1">Daktar Bari Doctors</h1>
-				{/* <div className="w-full max-w-[700px]">
-					<SearchBar status={loaderData.status} autoFocus autoSubmit />
-				</div> */}
-				<main>
-					{loaderData.status === 'idle' ? (
-						loaderData.doctors.length ? (
-							<ul
-								className={cn(
-									'flex w-full flex-wrap items-center justify-center gap-4 delay-200',
-									{ 'opacity-50': isPending },
-								)}
-							>
-								{loaderData.doctors.map((user) => (
-									<li key={user.id}>
-										<Link
-											to={`/doctors/${user.username}`}
-											className="flex h-36 w-44 flex-col items-center justify-center rounded-lg bg-muted px-5 py-3"
+
+			<main className="flex flex-grow divide-x overflow-y-hidden">
+				<div className="flex-1 overflow-y-auto shadow-md">
+					<div className="container mx-auto h-full overflow-y-scroll">
+						<div className="h-[100vh - 100px]">
+							{isPending ? <SearchLoadingSkeleton /> : null}
+							{loaderData.status === 'idle' ? (
+								loaderData.doctors.length ? (
+									<>
+										<div className="my-4">
+											<h4 className="text-xl font-medium leading-7">
+												{loaderData.doctors.length} Doctors Available
+											</h4>
+											<p className="text-xs font-medium">
+												These doctors are located around
+											</p>
+										</div>
+										<ul
+											className={cn('space-y-4 delay-200', {
+												'opacity-50': isPending,
+											})}
 										>
-											<Img
-												alt={user.name ?? user.username}
-												src={getUserImgSrc(user.imageObjectKey)}
-												className="h-16 w-16 rounded-full"
-												width={256}
-												height={256}
-											/>
-											{user.name ? (
-												<span className="w-full overflow-hidden text-ellipsis whitespace-nowrap text-center text-body-md">
-													{user.name}
-												</span>
-											) : null}
-											<span className="w-full overflow-hidden text-ellipsis text-center text-body-sm text-muted-foreground">
-												{user.username}
-											</span>
-										</Link>
-									</li>
-								))}
-							</ul>
-						) : (
-							<p>No doctors found</p>
-						)
-					) : loaderData.status === 'error' ? (
-						<ErrorList errors={['There was an error parsing the results']} />
-					) : null}
-				</main>
-			</div>
+											{loaderData.doctors.map((user) => (
+												<li key={user.id}>
+													<Link
+														to={`/doctors/${user.username}`}
+														className="flex w-full flex-col items-center justify-center rounded-lg bg-muted px-5 py-3"
+													>
+														<Img
+															alt={user.name ?? user.username}
+															src={getUserImgSrc(user.imageObjectKey)}
+															className="h-16 w-16 rounded-full"
+															width={256}
+															height={256}
+														/>
+														{user.name ? (
+															<span className="w-full overflow-hidden text-ellipsis whitespace-nowrap text-center text-body-md">
+																{user.name}
+															</span>
+														) : null}
+														<span className="w-full overflow-hidden text-ellipsis text-center text-body-sm text-muted-foreground">
+															{user.username}
+														</span>
+													</Link>
+												</li>
+											))}
+										</ul>
+									</>
+								) : (
+									<p>No doctors found</p>
+								)
+							) : loaderData.status === 'error' ? (
+								<ErrorList
+									errors={['There was an error parsing the results']}
+								/>
+							) : null}
+						</div>
+					</div>
+				</div>
+				<div className="w-full flex-1">
+					<div className="flex h-full items-center justify-center bg-gray-500 p-4">
+						<p className="text-lg font-semibold">Google Map Placeholder</p>
+					</div>
+				</div>
+			</main>
 		</>
 	)
 }
@@ -157,8 +179,8 @@ const SearchNavbar = ({
 	const [searchParams] = useSearchParams()
 
 	return (
-		<header>
-			<nav className="sticky inset-0 z-50 flex w-full items-center justify-between border-b bg-background px-4 py-4 lg:px-8">
+		<header className="border-b">
+			<nav className="sticky inset-0 z-50 flex w-full items-center justify-between bg-background px-4 py-2 lg:px-8">
 				<div className="flex w-full items-center gap-6">
 					<Logo />
 
@@ -184,6 +206,56 @@ const SearchNavbar = ({
 
 				<UserDropdown />
 			</nav>
+			<Filters />
 		</header>
+	)
+}
+
+const FilterWrapper = ({ children }: { children: React.ReactNode }) => {
+	return (
+		<Button
+			variant="outline"
+			className="flex h-8 items-center gap-2 rounded-lg px-[11px] py-[7px]"
+		>
+			{children}
+		</Button>
+	)
+}
+
+const Filters = () => {
+	return (
+		<div className="flex items-center gap-2 bg-background px-4 pb-2 shadow-sm lg:px-8">
+			<FilterWrapper>
+				<SlidersHorizontal
+					width={16}
+					height={16}
+					className="text-muted-foreground"
+				/>
+				<div className="sr-only">Filters</div>
+			</FilterWrapper>
+
+			<FilterItem />
+			<FilterItem />
+			<FilterItem />
+		</div>
+	)
+}
+
+const FilterItem = () => {
+	return (
+		<FilterWrapper>
+			<span className="text-xs font-bold text-accent-foreground">Sex</span>
+			<Icon name="arrow-down" className="h-4 w-4 text-primary" />
+		</FilterWrapper>
+	)
+}
+
+const SearchLoadingSkeleton = () => {
+	return (
+		<div className="flex h-full animate-pulse flex-col items-center justify-center gap-4">
+			<div className="h-16 w-16 rounded-full bg-muted" />
+			<div className="h-4 w-1/2 rounded-md bg-muted" />
+			<div className="h-4 w-1/3 rounded-md bg-muted" />
+		</div>
 	)
 }

@@ -11,7 +11,6 @@ SELECT
   "Doctor".id AS doctorId,
   "Doctor".bio,
   "Doctor".rating,
-  "Doctor".balance,
   "Doctor".currency,
   (
     SELECT GROUP_CONCAT(DISTINCT "DoctorSpecialty".name)
@@ -28,7 +27,23 @@ SELECT
     FROM "Schedule"
     JOIN "ScheduleLocation" ON "Schedule"."locationId" = "ScheduleLocation".id
     WHERE "Schedule"."doctorId" = "Doctor"."userId"
-  ) AS locations
+  ) AS locations,
+  (
+    SELECT JSON_GROUP_ARRAY(
+      JSON_OBJECT(
+        'id', "Schedule".id,
+        'startTime', "Schedule"."startTime",
+        'endTime', "Schedule"."endTime",
+        'locationId', "Schedule"."locationId",
+        'locationName', "ScheduleLocation".name
+      )
+    )
+    FROM "Schedule"
+    JOIN "ScheduleLocation" ON "Schedule"."locationId" = "ScheduleLocation".id
+    WHERE "Schedule"."doctorId" = "Doctor"."userId"
+    AND "Schedule"."startTime" > CURRENT_TIMESTAMP
+    ORDER BY "Schedule"."startTime" ASC
+  ) AS upcomingSchedules
 FROM "User"
 JOIN "Doctor" ON "User".id = "Doctor"."userId"
 LEFT JOIN "UserImage" ON "User".id = "UserImage"."userId"

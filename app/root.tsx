@@ -223,11 +223,12 @@ function App() {
 					<Outlet />
 				</div>
 
-				<Footer />
-				<div className="container flex justify-between pb-5">
+				{isOnSearchPage ? null : <Footer />}
+
+				{/* <div className="container flex justify-between pb-5">
 					<Logo />
 					<ThemeSwitch userPreference={data.requestInfo.userPrefs.theme} />
-				</div>
+				</div> */}
 			</div>
 			<EpicToaster closeButton position="top-center" theme={theme} />
 			<EpicProgress />
