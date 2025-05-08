@@ -15,6 +15,10 @@ export const extendedTheme = {
 			DEFAULT: 'hsl(var(--brand))',
 			foreground: 'hsl(var(--brand-foreground))',
 		},
+		badge: {
+			DEFAULT: 'hsl(var(--badge))',
+			foreground: 'hsl(var(--badge-foreground))',
+		},
 		background: 'hsl(var(--background))',
 		foreground: {
 			DEFAULT: 'hsl(var(--foreground))',

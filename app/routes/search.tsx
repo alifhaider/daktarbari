@@ -113,8 +113,8 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 
 			<main className="flex grow divide-x overflow-y-hidden">
 				<div className="flex-1 overflow-y-auto shadow-md">
-					<div className="container mx-auto h-full overflow-y-scroll">
-						<div className="h-[100vh - 100px]">
+					<div className="search-container container mx-auto overflow-y-scroll">
+						<div>
 							{isPending ? <SearchLoadingSkeleton /> : null}
 							{loaderData.status === 'idle' ? (
 								loaderData.doctors.length ? (
@@ -128,7 +128,7 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 											</p>
 										</div>
 										<ul
-											className={cn('space-y-4 delay-200', {
+											className={cn('mb-4 space-y-4 delay-200', {
 												'opacity-50': isPending,
 											})}
 										>
@@ -147,19 +147,21 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 																height={256}
 															/>
 														</div>
-														<div className="w-full space-y-2">
+														<div className="w-full space-y-1.5">
 															<div className="flex w-full justify-between">
 																<span className="text-body-md text-accent-foreground overflow-hidden text-center font-bold text-ellipsis whitespace-nowrap">
 																	{user.name ? user.name : user.username}
 																</span>
-																<div className="bg-muted flex items-center gap-1 rounded-md px-2 py-1">
+																<div className="bg-muted flex items-center gap-0.5 rounded-md px-2 py-1">
 																	<Icon
 																		name="star"
-																		className="fill-primary text-primary h-4 w-4"
+																		className="fill-brand text-brand h-3 w-3"
 																	/>
-																	<span className="text-accent-foreground text-sm font-bold">
-																		{user.averageRating} &#40;{user.reviewCount}
-																		&#41;
+																	<span className="text-brand text-sm font-bold">
+																		{user.averageRating}
+																		<span className="text-accent-foreground text-xs">
+																			&#47;{user.reviewCount}
+																		</span>
 																	</span>
 																</div>
 															</div>
@@ -182,24 +184,63 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 																</div>
 															)}
 															{user.upcomingSchedules.length > 0 && (
-																<div className="flex items-center gap-1">
-																	<Icon
-																		name="map-pin"
-																		className="text-primary h-3 w-3"
-																	/>
-																	<ul className="text-muted-foreground flex items-center gap-1">
-																		<li className="text-accent-foreground text-xs">
-																			{user.upcomingSchedules[0]?.location.name}
-																		</li>
-																		{user.upcomingSchedules.length > 1 && (
-																			<li className="text-muted-foreground text-xs">
-																				+{user.upcomingSchedules.length - 1}{' '}
-																				more
+																<>
+																	<div className="flex items-center gap-1">
+																		<Icon
+																			name="map-pin"
+																			className="text-primary h-3 w-3"
+																		/>
+																		<ul className="text-muted-foreground flex items-center gap-1">
+																			<li className="text-accent-foreground text-xs">
+																				{
+																					user.upcomingSchedules[0]?.location
+																						.name
+																				}
 																			</li>
-																		)}
-																	</ul>
-																</div>
+																			{user.upcomingSchedules.length > 1 && (
+																				<li className="text-muted-foreground text-xs">
+																					+{user.upcomingSchedules.length - 1}{' '}
+																					more
+																				</li>
+																			)}
+																		</ul>
+																	</div>
+																	<div className="flex items-center gap-1">
+																		<Icon
+																			name="calendar-check"
+																			className="text-primary h-3 w-3"
+																		/>
+																		<p className="text-muted-foreground text-xs">
+																			{user.upcomingSchedules.length} available
+																			schedules
+																		</p>
+																	</div>
+																</>
 															)}
+															<div className="mt-3 flex items-center justify-between">
+																<p className="bg-muted text-brand text-body-2xs flex items-center gap-1 rounded-sm px-1 py-0.5">
+																	<Icon
+																		name="tag"
+																		className="h-3 w-3 rotate-90"
+																	/>
+																	<span>
+																		Save{' '}
+																		<span className="font-semibold">
+																			{user.priceInfo.discount}tk
+																		</span>
+																	</span>
+																</p>
+																<p className="flex items-center gap-1">
+																	<span className="text-accent-foreground line-through">
+																		{user.priceInfo.discount +
+																			user.priceInfo.startsFrom}
+																		tk
+																	</span>
+																	<span className="text-primary font-bold underline">
+																		{user.priceInfo.startsFrom}tk total
+																	</span>
+																</p>
+															</div>
 														</div>
 													</Link>
 												</li>
@@ -217,7 +258,7 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 						</div>
 					</div>
 				</div>
-				<div className="w-full flex-1">
+				<div className="w-2/5">
 					<div className="flex h-full items-center justify-center bg-gray-500 p-4">
 						<p className="text-lg font-semibold">Google Map Placeholder</p>
 					</div>

@@ -332,18 +332,20 @@ type UpcomingSchedule = {
 		name: string
 	}
 }
-// First, let's define more specific types based on your Doctor type
 type Education = {
 	degree: string
 	institute: string
-	// ... other fields if they exist
 }
 
 type DoctorSpecialty = {
 	id: string
 	name: string
 	description: string
-	// ... other fields if they exist
+}
+
+type PriceInfo = {
+	startsFrom: number
+	discount: number
 }
 
 // Enhanced Doctor type with null/undefined handling
@@ -351,6 +353,7 @@ type Doctor = {
 	degrees: Education[]
 	specialties: DoctorSpecialty[]
 	upcomingSchedules: UpcomingSchedule[]
+	priceInfo: PriceInfo
 	id: string
 	username: string
 	name: string | null
@@ -455,9 +458,13 @@ export function parseDoctor(rawDoctor: unknown): Doctor {
 				? doctorData.averageRating
 				: 0,
 		reviewCount:
-			typeof doctorData.reviewCount === 'number' ? doctorData.reviewCount : 0,
+			typeof Number(doctorData.reviewCount) === 'number'
+				? Number(doctorData.reviewCount)
+				: 0,
 		doctorCount:
-			typeof doctorData.doctorCount === 'number' ? doctorData.doctorCount : 0,
+			typeof Number(doctorData.doctorCount) === 'number'
+				? Number(doctorData.doctorCount)
+				: 0,
 		currency:
 			typeof doctorData.currency === 'string' ? doctorData.currency : '',
 		specialties: safeJsonParse<Array<DoctorSpecialty>>(
@@ -477,6 +484,17 @@ export function parseDoctor(rawDoctor: unknown): Doctor {
 			[],
 			(data): data is UpcomingSchedule[] =>
 				Array.isArray(data) && data.every(isUpcomingSchedule),
+		),
+		priceInfo: safeJsonParse<PriceInfo>(
+			doctorData.priceInfo,
+			{
+				startsFrom: 0,
+				discount: 0,
+			},
+			(data): data is PriceInfo =>
+				data &&
+				typeof Number(data.startsFrom) === 'number' &&
+				typeof Number(data.discount) === 'number',
 		),
 	}
 }

@@ -167,7 +167,6 @@ async function seed() {
 					bio: faker.person.bio(),
 					userId: users[index]!.id,
 					balance: Math.floor(Math.random() * 1000),
-					currency: faker.finance.currencyName(),
 					homeAddress: `${faker.location.streetAddress()}, ${faker.location.city()}, ${faker.location.state()}, ${faker.location.zipCode()}`,
 					specialties: {
 						createMany: {

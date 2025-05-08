@@ -12,7 +12,23 @@ SELECT
   "Doctor".bio,
   "Doctor".currency,
   (
-      SELECT CAST(COUNT(*) AS REAL) FROM "Review"
+    SELECT JSON_OBJECT(
+      'startsFrom', min_price.calculated_price,
+      'discount', min_price.discountFee
+    )
+    FROM (
+      SELECT 
+        (COALESCE(serialFee, 0) + COALESCE(visitFee, 0) - COALESCE(discountFee, 0)) AS calculated_price,
+        discountFee
+      FROM "Schedule"
+      WHERE "Schedule"."doctorId" = "Doctor"."userId"
+      AND (serialFee IS NOT NULL OR visitFee IS NOT NULL)
+      ORDER BY calculated_price ASC
+      LIMIT 1
+    ) AS min_price
+  ) AS priceInfo,
+  (
+      SELECT COUNT(*) FROM "Review"
     WHERE "Review"."doctorId" = "Doctor"."userId"
   ) as reviewCount,
   (
@@ -20,10 +36,10 @@ SELECT
     WHERE "Review"."doctorId" = "Doctor"."userId"
   ) as averageRating,
   (
-      SELECT CAST(COUNT(*) AS REAL) FROM "User"
+    SELECT COUNT(*) FROM "User"
     JOIN "Doctor" ON "User".id = "Doctor"."userId"
     WHERE "User".id = "Doctor"."userId"
-    ) as doctorCount,
+  ) as doctorCount,
   (
     SELECT JSON_GROUP_ARRAY(JSON_OBJECT(
       'id', "DoctorSpecialty".id, 
@@ -60,6 +76,7 @@ SELECT
     AND "Schedule"."startTime" > CAST((strftime('%s','now') * 1000 ) AS INTEGER)
     ORDER BY "Schedule"."startTime" ASC
   ) AS upcomingSchedules
+
 FROM "User"
 JOIN "Doctor" ON "User".id = "Doctor"."userId"
 LEFT JOIN "UserImage" ON "User".id = "UserImage"."userId"
