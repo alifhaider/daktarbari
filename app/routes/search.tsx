@@ -47,7 +47,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 	console.log('doctors', doctors)
 
 	const parsedDoctors = doctors.map(parseDoctor)
-	console.log('doctors', parsedDoctors)
+	console.log('parsed doctors', parsedDoctors)
 
 	return { status: 'idle', doctors: parsedDoctors } as const
 }
@@ -120,7 +120,7 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 								loaderData.doctors.length ? (
 									<>
 										<div className="my-4">
-											<h4 className="text-xl font-medium leading-7">
+											<h4 className="text-xl leading-7 font-medium">
 												{loaderData.doctors.length} Doctors Available
 											</h4>
 											<p className="text-xs font-medium">
@@ -136,7 +136,7 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 												<li key={user.id}>
 													<Link
 														to={`/doctors/${user.username}`}
-														className="flex w-full gap-4 overflow-hidden rounded-lg border border-muted px-4 py-2 hover:shadow-sm dark:shadow-muted lg:gap-6"
+														className="border-muted dark:shadow-muted flex w-full gap-4 overflow-hidden rounded-lg border px-4 py-2 hover:shadow-sm lg:gap-6"
 													>
 														<div className="h-20 w-20 overflow-hidden rounded-full lg:h-24 lg:w-24">
 															<Img
@@ -149,16 +149,17 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 														</div>
 														<div className="w-full space-y-2">
 															<div className="flex w-full justify-between">
-																<span className="overflow-hidden text-ellipsis whitespace-nowrap text-center text-body-md font-bold text-accent-foreground">
+																<span className="text-body-md text-accent-foreground overflow-hidden text-center font-bold text-ellipsis whitespace-nowrap">
 																	{user.name ? user.name : user.username}
 																</span>
-																<div className="flex items-center gap-1 rounded-md bg-muted px-2 py-1">
+																<div className="bg-muted flex items-center gap-1 rounded-md px-2 py-1">
 																	<Icon
 																		name="star"
-																		className="h-4 w-4 fill-primary text-primary"
+																		className="fill-primary text-primary h-4 w-4"
 																	/>
-																	<span className="text-sm font-bold text-accent-foreground">
-																		{user.rating}
+																	<span className="text-accent-foreground text-sm font-bold">
+																		{user.averageRating} &#40;{user.reviewCount}
+																		&#41;
 																	</span>
 																</div>
 															</div>
@@ -166,13 +167,13 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 																<div className="flex items-center gap-1">
 																	<Icon
 																		name="stethoscope"
-																		className="h-3 w-3 text-primary"
+																		className="text-primary h-3 w-3"
 																	/>
-																	<ul className="flex items-center gap-1 text-xs text-muted-foreground">
+																	<ul className="text-muted-foreground flex items-center gap-1 text-xs">
 																		{user.specialties.map((specialty) => (
 																			<li
 																				key={specialty.id}
-																				className="rounded-md bg-muted px-1 py-0.5 text-xs text-accent-foreground"
+																				className="bg-muted text-accent-foreground rounded-md px-1 py-0.5 text-xs"
 																			>
 																				{specialty.name}
 																			</li>
@@ -184,14 +185,14 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 																<div className="flex items-center gap-1">
 																	<Icon
 																		name="map-pin"
-																		className="h-3 w-3 text-primary"
+																		className="text-primary h-3 w-3"
 																	/>
-																	<ul className="flex items-center gap-1 text-muted-foreground">
-																		<li className="text-xs text-accent-foreground">
+																	<ul className="text-muted-foreground flex items-center gap-1">
+																		<li className="text-accent-foreground text-xs">
 																			{user.upcomingSchedules[0]?.location.name}
 																		</li>
 																		{user.upcomingSchedules.length > 1 && (
-																			<li className="text-xs text-muted-foreground">
+																			<li className="text-muted-foreground text-xs">
 																				+{user.upcomingSchedules.length - 1}{' '}
 																				more
 																			</li>
@@ -237,7 +238,7 @@ const SearchNavbar = ({
 
 	return (
 		<header className="border-b">
-			<nav className="sticky inset-0 z-50 flex w-full items-center justify-between bg-background px-4 py-2 lg:px-8">
+			<nav className="bg-background sticky inset-0 z-50 flex w-full items-center justify-between px-4 py-2 lg:px-8">
 				<div className="flex w-full items-center gap-6">
 					<Logo />
 
@@ -281,7 +282,7 @@ const FilterWrapper = ({ children }: { children: React.ReactNode }) => {
 
 const Filters = () => {
 	return (
-		<div className="flex items-center gap-2 bg-background px-4 pb-2 shadow-xs lg:px-8">
+		<div className="bg-background flex items-center gap-2 px-4 pb-2 shadow-xs lg:px-8">
 			<FilterWrapper>
 				<SlidersHorizontal
 					width={16}
@@ -301,8 +302,8 @@ const Filters = () => {
 const FilterItem = () => {
 	return (
 		<FilterWrapper>
-			<span className="text-xs font-bold text-accent-foreground">Sex</span>
-			<Icon name="arrow-down" className="h-4 w-4 text-primary" />
+			<span className="text-accent-foreground text-xs font-bold">Sex</span>
+			<Icon name="arrow-down" className="text-primary h-4 w-4" />
 		</FilterWrapper>
 	)
 }
@@ -310,9 +311,9 @@ const FilterItem = () => {
 const SearchLoadingSkeleton = () => {
 	return (
 		<div className="flex h-full animate-pulse flex-col items-center justify-center gap-4">
-			<div className="h-16 w-16 rounded-full bg-muted" />
-			<div className="h-4 w-1/2 rounded-md bg-muted" />
-			<div className="h-4 w-1/3 rounded-md bg-muted" />
+			<div className="bg-muted h-16 w-16 rounded-full" />
+			<div className="bg-muted h-4 w-1/2 rounded-md" />
+			<div className="bg-muted h-4 w-1/3 rounded-md" />
 		</div>
 	)
 }

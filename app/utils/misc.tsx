@@ -359,7 +359,9 @@ type Doctor = {
 	imageObjectKey: string
 	doctorId: string
 	bio: string
-	rating: number
+	averageRating: number
+	reviewCount: number
+	doctorCount: number
 	currency: string
 }
 
@@ -448,7 +450,14 @@ export function parseDoctor(rawDoctor: unknown): Doctor {
 		doctorId:
 			typeof doctorData.doctorId === 'string' ? doctorData.doctorId : '',
 		bio: typeof doctorData.bio === 'string' ? doctorData.bio : '',
-		rating: typeof doctorData.rating === 'number' ? doctorData.rating : 0,
+		averageRating:
+			typeof doctorData.averageRating === 'number'
+				? doctorData.averageRating
+				: 0,
+		reviewCount:
+			typeof doctorData.reviewCount === 'number' ? doctorData.reviewCount : 0,
+		doctorCount:
+			typeof doctorData.doctorCount === 'number' ? doctorData.doctorCount : 0,
 		currency:
 			typeof doctorData.currency === 'string' ? doctorData.currency : '',
 		specialties: safeJsonParse<Array<DoctorSpecialty>>(

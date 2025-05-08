@@ -208,7 +208,7 @@ function App() {
 								<Button
 									asChild
 									variant="outline"
-									className="h-7 rounded-none border-primary py-0 text-sm font-bold"
+									className="border-primary h-7 rounded-none py-0 text-sm font-bold"
 								>
 									<Link to="/doctors/join">Become a doctor</Link>
 								</Button>
@@ -243,7 +243,7 @@ export function Logo() {
 				Daktar
 			</span>
 			<span className="font-bold transition group-hover:translate-x-1">
-				Bari
+				Bari.com
 			</span>
 		</Link>
 	)

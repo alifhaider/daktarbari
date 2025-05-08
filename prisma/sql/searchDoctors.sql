@@ -10,8 +10,20 @@ SELECT
   "UserImage".objectKey AS imageObjectKey,
   "Doctor".id AS doctorId,
   "Doctor".bio,
-  "Doctor".rating,
   "Doctor".currency,
+  (
+      SELECT CAST(COUNT(*) AS REAL) FROM "Review"
+    WHERE "Review"."doctorId" = "Doctor"."userId"
+  ) as reviewCount,
+  (
+    SELECT ROUND(AVG("Review".rating)) FROM "Review" 
+    WHERE "Review"."doctorId" = "Doctor"."userId"
+  ) as averageRating,
+  (
+      SELECT CAST(COUNT(*) AS REAL) FROM "User"
+    JOIN "Doctor" ON "User".id = "Doctor"."userId"
+    WHERE "User".id = "Doctor"."userId"
+    ) as doctorCount,
   (
     SELECT JSON_GROUP_ARRAY(JSON_OBJECT(
       'id', "DoctorSpecialty".id, 
