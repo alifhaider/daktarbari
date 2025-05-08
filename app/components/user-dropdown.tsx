@@ -22,6 +22,7 @@ export function UserDropdown() {
 			<DropdownMenuTrigger asChild>
 				<Button variant="secondary">
 					<Icon name="menu" className="text-body-md" />
+					<span className="sr-only">User menu</span>
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuPortal>
