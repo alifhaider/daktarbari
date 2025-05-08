@@ -120,12 +120,12 @@ async function seed() {
 
 	console.timeEnd('🧹 Clean up database...')
 
-	const totalUsers = 10
-	const totalDoctors = 5
-	const totalAppointments = 10
-	const totalScheduleLocations = 3
-	const totalSchedules = 10
-	const totalReviews = 10
+	const totalUsers = 20
+	const totalDoctors = 15
+	const totalAppointments = 20
+	const totalScheduleLocations = 10
+	const totalSchedules = 20
+	const totalReviews = 20
 	console.time(`👤 Created ${totalUsers} users...`)
 	const userImages = await getUserImages()
 
