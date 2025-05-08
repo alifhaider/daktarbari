@@ -13,35 +13,39 @@ SELECT
   "Doctor".rating,
   "Doctor".currency,
   (
-    SELECT GROUP_CONCAT(DISTINCT "DoctorSpecialty".name)
+    SELECT JSON_GROUP_ARRAY(JSON_OBJECT(
+      'id', "DoctorSpecialty".id, 
+      'name', "DoctorSpecialty".name,
+      'description', "DoctorSpecialty".description
+    ))
     FROM "DoctorSpecialty"
     WHERE "DoctorSpecialty"."doctorId" = "Doctor"."userId"
   ) AS specialties,
   (
-    SELECT GROUP_CONCAT(DISTINCT "Education".degree)
+    SELECT JSON_GROUP_ARRAY(JSON_OBJECT(
+      'id', "Education".id,
+      'degree', "Education".degree,
+      'institution', "Education".institute
+    ))
     FROM "Education"
     WHERE "Education"."doctorId" = "Doctor"."userId"
   ) AS degrees,
-  (
-    SELECT GROUP_CONCAT(DISTINCT "ScheduleLocation".name)
-    FROM "Schedule"
-    JOIN "ScheduleLocation" ON "Schedule"."locationId" = "ScheduleLocation".id
-    WHERE "Schedule"."doctorId" = "Doctor"."userId"
-  ) AS locations,
   (
     SELECT JSON_GROUP_ARRAY(
       JSON_OBJECT(
         'id', "Schedule".id,
         'startTime', "Schedule"."startTime",
         'endTime', "Schedule"."endTime",
-        'locationId', "Schedule"."locationId",
-        'locationName', "ScheduleLocation".name
+        'location', JSON_OBJECT(
+          'id', "Schedule"."locationId",
+          'name', "ScheduleLocation".name
+        )
       )
     )
     FROM "Schedule"
     JOIN "ScheduleLocation" ON "Schedule"."locationId" = "ScheduleLocation".id
     WHERE "Schedule"."doctorId" = "Doctor"."userId"
-    AND "Schedule"."startTime" > CURRENT_TIMESTAMP
+    AND "Schedule"."startTime" > CAST((strftime('%s','now') * 1000 ) AS INTEGER)
     ORDER BY "Schedule"."startTime" ASC
   ) AS upcomingSchedules
 FROM "User"

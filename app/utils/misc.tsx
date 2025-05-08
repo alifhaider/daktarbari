@@ -322,3 +322,152 @@ export async function downloadFile(url: string, retries: number = 0) {
 		return downloadFile(url, retries + 1)
 	}
 }
+
+type UpcomingSchedule = {
+	id: string
+	startTime: Date
+	endTime: Date
+	location: {
+		id: string
+		name: string
+	}
+}
+// First, let's define more specific types based on your Doctor type
+type Education = {
+	degree: string
+	institute: string
+	// ... other fields if they exist
+}
+
+type DoctorSpecialty = {
+	id: string
+	name: string
+	description: string
+	// ... other fields if they exist
+}
+
+// Enhanced Doctor type with null/undefined handling
+type Doctor = {
+	degrees: Education[]
+	specialties: DoctorSpecialty[]
+	upcomingSchedules: UpcomingSchedule[]
+	id: string
+	username: string
+	name: string | null
+	email: string
+	imageId: string
+	imageObjectKey: string
+	doctorId: string
+	bio: string
+	rating: number
+	currency: string
+}
+
+// Type guard for DoctorSpecialty
+function isDoctorSpecialty(
+	data: any,
+): data is Pick<DoctorSpecialty, 'id' | 'name' | 'description'> {
+	return (
+		data &&
+		typeof data.id === 'string' &&
+		typeof data.name === 'string' &&
+		typeof data.description === 'string'
+	)
+}
+
+// Type guard for Education
+function isEducation(
+	data: any,
+): data is Pick<Education, 'degree' | 'institute'> {
+	return (
+		data &&
+		typeof data.degree === 'string' &&
+		typeof data.institute === 'string'
+	)
+}
+
+// Type guard for UpcomingSchedule
+function isUpcomingSchedule(data: any): data is UpcomingSchedule {
+	return (
+		data &&
+		typeof data.id === 'string' &&
+		typeof data.startTime === 'number' &&
+		typeof data.endTime === 'number' &&
+		data.location &&
+		typeof data.location.id === 'string' &&
+		typeof data.location.name === 'string'
+	)
+}
+
+// Enhanced safeJsonParse with type checking
+function safeJsonParse<T>(
+	jsonString: unknown,
+	fallback: T,
+	typeGuard?: (data: any) => data is T,
+): T {
+	try {
+		if (jsonString === undefined || jsonString === null) {
+			return fallback
+		}
+
+		const parsed =
+			typeof jsonString === 'string' ? JSON.parse(jsonString) : jsonString
+
+		// If type guard provided, validate the parsed data
+		if (typeGuard && !typeGuard(parsed)) {
+			return fallback
+		}
+
+		return parsed as T
+	} catch (error) {
+		console.error('Parsing error:', error)
+		return fallback
+	}
+}
+
+// Final parseDoctor function with complete type safety
+export function parseDoctor(rawDoctor: unknown): Doctor {
+	// First validate rawDoctor is an object
+	if (typeof rawDoctor !== 'object' || rawDoctor === null) {
+		throw new Error('Invalid doctor data')
+	}
+
+	const doctorData = rawDoctor as Record<string, unknown>
+
+	return {
+		id: typeof doctorData.id === 'string' ? doctorData.id : '',
+		username:
+			typeof doctorData.username === 'string' ? doctorData.username : '',
+		name: typeof doctorData.name === 'string' ? doctorData.name : null,
+		email: typeof doctorData.email === 'string' ? doctorData.email : '',
+		imageId: typeof doctorData.imageId === 'string' ? doctorData.imageId : '',
+		imageObjectKey:
+			typeof doctorData.imageObjectKey === 'string'
+				? doctorData.imageObjectKey
+				: '',
+		doctorId:
+			typeof doctorData.doctorId === 'string' ? doctorData.doctorId : '',
+		bio: typeof doctorData.bio === 'string' ? doctorData.bio : '',
+		rating: typeof doctorData.rating === 'number' ? doctorData.rating : 0,
+		currency:
+			typeof doctorData.currency === 'string' ? doctorData.currency : '',
+		specialties: safeJsonParse<Array<DoctorSpecialty>>(
+			doctorData.specialties,
+			[],
+			(data): data is Array<DoctorSpecialty> =>
+				Array.isArray(data) && data.every(isDoctorSpecialty),
+		),
+		degrees: safeJsonParse<Array<Pick<Education, 'degree' | 'institute'>>>(
+			doctorData.degrees,
+			[],
+			(data): data is Array<Education> =>
+				Array.isArray(data) && data.every(isEducation),
+		),
+		upcomingSchedules: safeJsonParse<UpcomingSchedule[]>(
+			doctorData.upcomingSchedules,
+			[],
+			(data): data is UpcomingSchedule[] =>
+				Array.isArray(data) && data.every(isUpcomingSchedule),
+		),
+	}
+}

@@ -11,7 +11,12 @@ import { Icon } from '#app/components/ui/icon.tsx'
 import { UserDropdown } from '#app/components/user-dropdown.tsx'
 import { Logo } from '#app/root.tsx'
 import { prisma } from '#app/utils/db.server.ts'
-import { cn, getUserImgSrc, useDelayedIsPending } from '#app/utils/misc.tsx'
+import {
+	cn,
+	getUserImgSrc,
+	parseDoctor,
+	useDelayedIsPending,
+} from '#app/utils/misc.tsx'
 import { type Route } from './+types/search'
 import { LocationCombobox } from './resources+/location-combobox'
 import { SpecialtyCombobox } from './resources+/specialty-combobox'
@@ -38,8 +43,13 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const doctors = await prisma.$queryRawTyped(
 		searchDoctors(name, specialtyId, locationId),
 	)
-	console.log(doctors)
-	return { status: 'idle', doctors } as const
+
+	console.log('doctors', doctors)
+
+	const parsedDoctors = doctors.map(parseDoctor)
+	console.log('doctors', parsedDoctors)
+
+	return { status: 'idle', doctors: parsedDoctors } as const
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -126,23 +136,70 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 												<li key={user.id}>
 													<Link
 														to={`/doctors/${user.username}`}
-														className="flex w-full flex-col items-center justify-center rounded-lg bg-muted px-5 py-3"
+														className="flex w-full gap-4 overflow-hidden rounded-lg border border-muted px-4 py-2 hover:shadow-sm dark:shadow-muted lg:gap-6"
 													>
-														<Img
-															alt={user.name ?? user.username}
-															src={getUserImgSrc(user.imageObjectKey)}
-															className="h-16 w-16 rounded-full"
-															width={256}
-															height={256}
-														/>
-														{user.name ? (
-															<span className="w-full overflow-hidden text-ellipsis whitespace-nowrap text-center text-body-md">
-																{user.name}
-															</span>
-														) : null}
-														<span className="w-full overflow-hidden text-ellipsis text-center text-body-sm text-muted-foreground">
-															{user.username}
-														</span>
+														<div className="h-20 w-20 overflow-hidden rounded-full lg:h-24 lg:w-24">
+															<Img
+																alt={user.name ?? user.username}
+																src={getUserImgSrc(user.imageObjectKey)}
+																className="h-20 w-20 rounded-full object-cover lg:h-24 lg:w-24"
+																width={256}
+																height={256}
+															/>
+														</div>
+														<div className="w-full space-y-2">
+															<div className="flex w-full justify-between">
+																<span className="overflow-hidden text-ellipsis whitespace-nowrap text-center text-body-md font-bold text-accent-foreground">
+																	{user.name ? user.name : user.username}
+																</span>
+																<div className="flex items-center gap-1 rounded-md bg-muted px-2 py-1">
+																	<Icon
+																		name="star"
+																		className="h-4 w-4 fill-primary text-primary"
+																	/>
+																	<span className="text-sm font-bold text-accent-foreground">
+																		{user.rating}
+																	</span>
+																</div>
+															</div>
+															{user.specialties.length > 0 && (
+																<div className="flex items-center gap-1">
+																	<Icon
+																		name="stethoscope"
+																		className="h-3 w-3 text-primary"
+																	/>
+																	<ul className="flex items-center gap-1 text-xs text-muted-foreground">
+																		{user.specialties.map((specialty) => (
+																			<li
+																				key={specialty.id}
+																				className="rounded-md bg-muted px-1 py-0.5 text-xs text-accent-foreground"
+																			>
+																				{specialty.name}
+																			</li>
+																		))}
+																	</ul>
+																</div>
+															)}
+															{user.upcomingSchedules.length > 0 && (
+																<div className="flex items-center gap-1">
+																	<Icon
+																		name="map-pin"
+																		className="h-3 w-3 text-primary"
+																	/>
+																	<ul className="flex items-center gap-1 text-muted-foreground">
+																		<li className="text-xs text-accent-foreground">
+																			{user.upcomingSchedules[0]?.location.name}
+																		</li>
+																		{user.upcomingSchedules.length > 1 && (
+																			<li className="text-xs text-muted-foreground">
+																				+{user.upcomingSchedules.length - 1}{' '}
+																				more
+																			</li>
+																		)}
+																	</ul>
+																</div>
+															)}
+														</div>
 													</Link>
 												</li>
 											))}
