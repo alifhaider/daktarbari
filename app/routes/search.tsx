@@ -3,7 +3,14 @@ import { parseWithZod } from '@conform-to/zod'
 import { searchDoctors } from '@prisma/client/sql'
 import { SlidersHorizontal } from 'lucide-react'
 import { Img } from 'openimg/react'
-import { data, Form, Link, redirect, useSearchParams } from 'react-router'
+import {
+	data,
+	Form,
+	Link,
+	redirect,
+	useFetcher,
+	useSearchParams,
+} from 'react-router'
 import { z } from 'zod'
 import { ErrorList } from '#app/components/forms.tsx'
 import { Button } from '#app/components/ui/button.tsx'
@@ -20,6 +27,7 @@ import {
 import { type Route } from './+types/search'
 import { LocationCombobox } from './resources+/location-combobox'
 import { SpecialtyCombobox } from './resources+/specialty-combobox'
+import { useEffect, useRef, useState } from 'react'
 
 export const SearchPageSchema = z.object({
 	name: z.string().optional(),
@@ -32,6 +40,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const nameQuery = searchParams.get('name')
 	const specialtiesQuery = searchParams.get('specialtyId')
 	const locationQuery = searchParams.get('locationId')
+	const page = Number(searchParams.get('page')) || 2
+	const pageSize = 5
 	if (nameQuery === '') {
 		return redirect('/search')
 	}
@@ -40,8 +50,21 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const specialtyId = specialtiesQuery ?? ''
 	const locationId = locationQuery ?? ''
 
+	console.log(
+		'name',
+		name,
+		'specialtyId',
+		specialtyId,
+		'locationId',
+		locationId,
+		'page',
+		page,
+		'pageSize',
+		pageSize,
+	)
+
 	const doctors = await prisma.$queryRawTyped(
-		searchDoctors(name, specialtyId, locationId),
+		searchDoctors(name, specialtyId, locationId, page, pageSize),
 	)
 
 	console.log('doctors', doctors)
@@ -49,7 +72,12 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const parsedDoctors = doctors.map(parseDoctor)
 	console.log('parsed doctors', parsedDoctors)
 
-	return { status: 'idle', doctors: parsedDoctors } as const
+	return {
+		status: 'idle',
+		doctors: parsedDoctors,
+		hasMore: parsedDoctors.length === pageSize,
+		nextPage: parsedDoctors.length === pageSize ? page + 1 : null,
+	} as const
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -63,6 +91,8 @@ export async function action({ request }: Route.ActionArgs) {
 
 export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 	// const submit = useSubmit()
+	const [items, setItems] = useState(loaderData.doctors)
+	const fetcher = useFetcher()
 	const [searchParams, setSearchParams] = useSearchParams()
 
 	const isPending = useDelayedIsPending({
@@ -75,6 +105,18 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 			return parseWithZod(formData, { schema: SearchPageSchema })
 		},
 	})
+
+	useEffect(() => {
+		if (!fetcher.data || fetcher.state === 'loading') {
+			return
+		}
+		// If we have new data - append it
+		if (fetcher.data) {
+			const newItems = fetcher.data.data
+			console.log('new items', newItems)
+			setItems((prevAssets) => [...prevAssets, ...newItems])
+		}
+	}, [fetcher.data, fetcher.state])
 
 	// const handleFormChange = useDebounce(async (form: HTMLFormElement) => {
 	// 	 await submit(form)
@@ -127,125 +169,136 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 												These doctors are located around
 											</p>
 										</div>
-										<ul
-											className={cn('mb-4 space-y-4 delay-200', {
-												'opacity-50': isPending,
-											})}
+										<InfiniteScroller
+											loadNext={async () => {
+												const page = fetcher.data ? fetcher.data.nextPage : 0
+												// const query = `?index&page=${page}`
+
+												// await fetcher.load(query)
+											}}
+											loading={fetcher.state === 'loading'}
 										>
-											{loaderData.doctors.map((user) => (
-												<li key={user.id}>
-													<Link
-														to={`/doctors/${user.username}`}
-														className="border-muted dark:shadow-muted flex w-full gap-4 overflow-hidden rounded-lg border px-4 py-2 hover:shadow-sm lg:gap-6"
-													>
-														<div className="h-20 w-20 overflow-hidden rounded-full lg:h-24 lg:w-24">
-															<Img
-																alt={user.name ?? user.username}
-																src={getUserImgSrc(user.imageObjectKey)}
-																className="h-20 w-20 rounded-full object-cover lg:h-24 lg:w-24"
-																width={256}
-																height={256}
-															/>
-														</div>
-														<div className="w-full space-y-1.5">
-															<div className="flex w-full justify-between">
-																<span className="text-body-md text-accent-foreground overflow-hidden text-center font-bold text-ellipsis whitespace-nowrap">
-																	{user.name ? user.name : user.username}
-																</span>
-																<div className="bg-muted flex items-center gap-0.5 rounded-md px-2 py-1">
-																	<Icon
-																		name="star"
-																		className="fill-brand text-brand h-3 w-3"
-																	/>
-																	<span className="text-brand text-sm font-bold">
-																		{user.averageRating}
-																		<span className="text-accent-foreground text-xs">
-																			&#47;{user.reviewCount}
-																		</span>
-																	</span>
-																</div>
+											<ul
+												className={cn('mb-4 space-y-4 delay-200', {
+													'opacity-50': isPending,
+												})}
+											>
+												{loaderData.doctors.map((user) => (
+													<li key={user.id}>
+														<Link
+															to={`/doctors/${user.username}`}
+															className="border-muted dark:shadow-muted flex w-full gap-4 overflow-hidden rounded-lg border px-4 py-2 hover:shadow-sm lg:gap-6"
+														>
+															<div className="h-20 w-20 overflow-hidden rounded-full lg:h-24 lg:w-24">
+																<Img
+																	alt={user.name ?? user.username}
+																	src={getUserImgSrc(user.imageObjectKey)}
+																	className="h-20 w-20 rounded-full object-cover lg:h-24 lg:w-24"
+																	width={256}
+																	height={256}
+																/>
 															</div>
-															{user.specialties.length > 0 && (
-																<div className="flex items-center gap-1">
-																	<Icon
-																		name="stethoscope"
-																		className="text-primary h-3 w-3"
-																	/>
-																	<ul className="text-muted-foreground flex items-center gap-1 text-xs">
-																		{user.specialties.map((specialty) => (
-																			<li
-																				key={specialty.id}
-																				className="bg-muted text-accent-foreground rounded-md px-1 py-0.5 text-xs"
-																			>
-																				{specialty.name}
-																			</li>
-																		))}
-																	</ul>
+															<div className="w-full space-y-1.5">
+																<div className="flex w-full justify-between">
+																	<span className="text-body-md text-accent-foreground overflow-hidden text-center font-bold text-ellipsis whitespace-nowrap">
+																		{user.name ? user.name : user.username}
+																	</span>
+																	<div className="bg-muted flex items-center gap-0.5 rounded-md px-2 py-1">
+																		<Icon
+																			name="star"
+																			className="fill-brand text-brand h-3 w-3"
+																		/>
+																		<span className="text-brand text-sm font-bold">
+																			{user.averageRating}
+																			<span className="text-accent-foreground text-xs">
+																				&#47;{user.reviewCount}
+																			</span>
+																		</span>
+																	</div>
 																</div>
-															)}
-															{user.upcomingSchedules.length > 0 && (
-																<>
+																{user.specialties.length > 0 && (
 																	<div className="flex items-center gap-1">
 																		<Icon
-																			name="map-pin"
+																			name="stethoscope"
 																			className="text-primary h-3 w-3"
 																		/>
-																		<ul className="text-muted-foreground flex items-center gap-1">
-																			<li className="text-accent-foreground text-xs">
-																				{
-																					user.upcomingSchedules[0]?.location
-																						.name
-																				}
-																			</li>
-																			{user.upcomingSchedules.length > 1 && (
-																				<li className="text-muted-foreground text-xs">
-																					+{user.upcomingSchedules.length - 1}{' '}
-																					more
+																		<ul className="text-muted-foreground flex items-center gap-1 text-xs">
+																			{user.specialties.map((specialty) => (
+																				<li
+																					key={specialty.id}
+																					className="bg-muted text-accent-foreground rounded-md px-1 py-0.5 text-xs"
+																				>
+																					{specialty.name}
 																				</li>
-																			)}
+																			))}
 																		</ul>
 																	</div>
-																	<div className="flex items-center gap-1">
+																)}
+																{user.upcomingSchedules.length > 0 && (
+																	<>
+																		<div className="flex items-center gap-1">
+																			<Icon
+																				name="map-pin"
+																				className="text-primary h-3 w-3"
+																			/>
+																			<ul className="text-muted-foreground flex items-center gap-1">
+																				<li className="text-accent-foreground text-xs">
+																					{
+																						user.upcomingSchedules[0]?.location
+																							.name
+																					}
+																				</li>
+																				{user.upcomingSchedules.length > 1 && (
+																					<li className="text-muted-foreground text-xs">
+																						+{user.upcomingSchedules.length - 1}{' '}
+																						more
+																					</li>
+																				)}
+																			</ul>
+																		</div>
+																		<div className="flex items-center gap-1">
+																			<Icon
+																				name="calendar-check"
+																				className="text-primary h-3 w-3"
+																			/>
+																			<p className="text-muted-foreground text-xs">
+																				{user.upcomingSchedules.length}{' '}
+																				available schedules
+																			</p>
+																		</div>
+																	</>
+																)}
+																<div className="mt-3 flex items-center justify-between">
+																	<p className="bg-muted text-brand text-body-2xs flex items-center gap-1 rounded-sm px-1 py-0.5">
 																		<Icon
-																			name="calendar-check"
-																			className="text-primary h-3 w-3"
+																			name="tag"
+																			className="h-3 w-3 rotate-90"
 																		/>
-																		<p className="text-muted-foreground text-xs">
-																			{user.upcomingSchedules.length} available
-																			schedules
-																		</p>
-																	</div>
-																</>
-															)}
-															<div className="mt-3 flex items-center justify-between">
-																<p className="bg-muted text-brand text-body-2xs flex items-center gap-1 rounded-sm px-1 py-0.5">
-																	<Icon
-																		name="tag"
-																		className="h-3 w-3 rotate-90"
-																	/>
-																	<span>
-																		Save{' '}
-																		<span className="font-semibold">
-																			{user.priceInfo.discount}tk
+																		<span>
+																			Save{' '}
+																			<span className="font-semibold">
+																				{user.priceInfo.discount}tk
+																			</span>
 																		</span>
-																	</span>
-																</p>
-																<p className="flex items-center gap-1">
-																	<span className="text-accent-foreground line-through">
-																		{user.priceInfo.discount +
-																			user.priceInfo.startsFrom}
-																		tk
-																	</span>
-																	<span className="text-primary font-bold underline">
-																		{user.priceInfo.startsFrom}tk total
-																	</span>
-																</p>
+																	</p>
+																	<p className="flex items-center gap-1">
+																		<span className="text-muted-foreground line-through">
+																			{user.priceInfo.discount +
+																				user.priceInfo.startsFrom}
+																			tk
+																		</span>
+																		<span className="text-primary font-bold underline">
+																			{user.priceInfo.startsFrom}tk{' '}
+																			<span className="text-sm">total</span>
+																		</span>
+																	</p>
+																</div>
 															</div>
-														</div>
-													</Link>
-												</li>
-											))}
-										</ul>
+														</Link>
+													</li>
+												))}
+											</ul>
+										</InfiniteScroller>
 									</>
 								) : (
 									<p>No doctors found</p>
@@ -357,4 +410,39 @@ const SearchLoadingSkeleton = () => {
 			<div className="bg-muted h-4 w-1/3 rounded-md" />
 		</div>
 	)
+}
+
+const InfiniteScroller = (props: {
+	children: any
+	loading: boolean
+	loadNext: () => void
+}) => {
+	const { children, loading, loadNext } = props
+	const scrollListener = useRef(loadNext)
+
+	useEffect(() => {
+		scrollListener.current = loadNext
+	}, [loadNext])
+
+	const onScroll = () => {
+		const documentHeight = document.documentElement.scrollHeight
+		const scrollDifference = Math.floor(window.innerHeight + window.scrollY)
+		const scrollEnded = documentHeight == scrollDifference
+
+		if (scrollEnded && !loading) {
+			scrollListener.current()
+		}
+	}
+
+	useEffect(() => {
+		if (typeof window !== 'undefined') {
+			window.addEventListener('scroll', onScroll)
+		}
+
+		return () => {
+			window.removeEventListener('scroll', onScroll)
+		}
+	}, [])
+
+	return <>{children}</>
 }

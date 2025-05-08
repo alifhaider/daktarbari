@@ -1,6 +1,8 @@
 -- @param {String} $1:name
 -- @param {String} $2:specialtyId
 -- @param {String} $3:locationId
+-- @param {Int} $4:page 
+-- @param {Int} $5:pageSize
 SELECT 
   "User".id,
   "User".username,
@@ -114,4 +116,4 @@ GROUP BY
 ORDER BY 
   "Doctor".rating DESC,
   "User".name ASC
-LIMIT 50;
+LIMIT $5::int OFFSET ($4::int) * $5::int;
