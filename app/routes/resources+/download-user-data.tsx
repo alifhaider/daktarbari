@@ -21,18 +21,18 @@ export async function loader({ request }: Route.LoaderArgs) {
 					objectKey: true,
 				},
 			},
-			notes: {
-				include: {
-					images: {
-						select: {
-							id: true,
-							createdAt: true,
-							updatedAt: true,
-							objectKey: true,
-						},
-					},
-				},
-			},
+			// notes: {
+			// 	include: {
+			// 		images: {
+			// 			select: {
+			// 				id: true,
+			// 				createdAt: true,
+			// 				updatedAt: true,
+			// 				objectKey: true,
+			// 			},
+			// 		},
+			// 	},
+			// },
 			password: false, // <-- intentionally omit password
 			sessions: true,
 			roles: true,
@@ -50,13 +50,13 @@ export async function loader({ request }: Route.LoaderArgs) {
 						url: domain + getUserImgSrc(user.image.objectKey),
 					}
 				: null,
-			notes: user.notes.map((note) => ({
-				...note,
-				images: note.images.map((image) => ({
-					...image,
-					url: domain + getNoteImgSrc(image.objectKey),
-				})),
-			})),
+			// notes: user.notes.map((note) => ({
+			// 	...note,
+			// 	images: note.images.map((image) => ({
+			// 		...image,
+			// 		url: domain + getNoteImgSrc(image.objectKey),
+			// 	})),
+			// })),
 		},
 	})
 }
