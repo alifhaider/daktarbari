@@ -77,7 +77,7 @@ export default function JoinPage() {
 						<li className="flex items-start">
 							<Icon
 								name="check"
-								className="mr-2 h-6 w-6 flex-shrink-0 text-primary"
+								className="mr-2 h-6 w-6 shrink-0 text-primary"
 							/>
 							<span>
 								<strong>Create Your Profile:</strong> Sign up and complete your
@@ -88,7 +88,7 @@ export default function JoinPage() {
 						<li className="flex items-start">
 							<Icon
 								name="check"
-								className="mr-2 h-6 w-6 flex-shrink-0 text-primary"
+								className="mr-2 h-6 w-6 shrink-0 text-primary"
 							/>
 
 							<span>
@@ -100,7 +100,7 @@ export default function JoinPage() {
 						<li className="flex items-start">
 							<Icon
 								name="check"
-								className="mr-2 h-6 w-6 flex-shrink-0 text-primary"
+								className="mr-2 h-6 w-6 shrink-0 text-primary"
 							/>
 							<span>
 								<strong>Manage Appointments:</strong> Patients can book
@@ -112,7 +112,7 @@ export default function JoinPage() {
 						<li className="flex items-start">
 							<Icon
 								name="check"
-								className="mr-2 h-6 w-6 flex-shrink-0 text-primary"
+								className="mr-2 h-6 w-6 shrink-0 text-primary"
 							/>
 							<span>
 								<strong>Provide Care:</strong> Use the platform to access

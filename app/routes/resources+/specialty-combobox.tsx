@@ -69,7 +69,7 @@ export function SpecialtyCombobox({ field }: { field: FieldMetadata }) {
 				</label>
 				<div className="relative w-full">
 					<input
-						className="relative w-full bg-transparent outline-none"
+						className="relative w-full bg-transparent outline-hidden"
 						{...cb.getInputProps({
 							id,
 							placeholder: 'Cardiologist, Dentist...',

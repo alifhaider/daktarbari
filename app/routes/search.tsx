@@ -101,7 +101,7 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 				<button type="submit" className="hidden" />
 			</Form>
 
-			<main className="flex flex-grow divide-x overflow-y-hidden">
+			<main className="flex grow divide-x overflow-y-hidden">
 				<div className="flex-1 overflow-y-auto shadow-md">
 					<div className="container mx-auto h-full overflow-y-scroll">
 						<div className="h-[100vh - 100px]">
@@ -193,7 +193,7 @@ const SearchNavbar = ({
 								id="name"
 								name="name"
 								type="text"
-								className="w-full bg-transparent focus:outline-none"
+								className="w-full bg-transparent focus:outline-hidden"
 								placeholder="Dr. Ahmed"
 								defaultValue={searchParams.get('name') ?? ''}
 							/>
@@ -224,7 +224,7 @@ const FilterWrapper = ({ children }: { children: React.ReactNode }) => {
 
 const Filters = () => {
 	return (
-		<div className="flex items-center gap-2 bg-background px-4 pb-2 shadow-sm lg:px-8">
+		<div className="flex items-center gap-2 bg-background px-4 pb-2 shadow-xs lg:px-8">
 			<FilterWrapper>
 				<SlidersHorizontal
 					width={16}
