@@ -105,7 +105,7 @@ export function LocationCombobox({
 						<Input
 							aria-invalid={errorId ? true : undefined}
 							aria-describedby={errorId}
-							className="relative caret-black outline-none"
+							className="relative caret-black outline-hidden"
 							{...cb.getInputProps({ id, placeholder: 'Choose a location' })}
 						/>
 						<div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center justify-center">
@@ -122,7 +122,7 @@ export function LocationCombobox({
 						<input
 							aria-invalid={errorId ? true : undefined}
 							aria-describedby={errorId}
-							className="relative w-full bg-transparent outline-none"
+							className="relative w-full bg-transparent outline-hidden"
 							{...cb.getInputProps({
 								id,
 								placeholder: 'District, Division or Zip Code',

@@ -445,7 +445,7 @@ export default function DoctorRoute({ loaderData }: Route.ComponentProps) {
 							height={832}
 						/>
 					) : (
-						<div className="h-32 w-32 rounded-sm bg-primary-foreground shadow-sm">
+						<div className="h-32 w-32 rounded-sm bg-primary-foreground shadow-xs">
 							<Icon name="avatar" className="h-32 w-32 text-primary" />
 						</div>
 					)}
