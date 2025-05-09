@@ -45,7 +45,9 @@ test('onboarding with link', async ({ page, getOnboardingData }) => {
 
 	await page.goto('/')
 
-	await page.getByRole('link', { name: /log in/i }).click()
+	await page.getByRole('button', { name: /user menu/i }).click()
+
+	await page.getByRole('menuitem', { name: /login/i }).click()
 	await expect(page).toHaveURL(`/login`)
 
 	const createAccountLink = page.getByRole('link', {
@@ -71,7 +73,7 @@ test('onboarding with link', async ({ page, getOnboardingData }) => {
 	invariant(onboardingUrl, 'Onboarding URL not found')
 	await page.goto(onboardingUrl)
 
-	await expect(page).toHaveURL(/\/verify/)
+	await expect(page).toHaveURL(/verify/)
 
 	await page
 		.getByRole('main')
@@ -99,12 +101,11 @@ test('onboarding with link', async ({ page, getOnboardingData }) => {
 
 	await expect(page).toHaveURL(`/`)
 
-	await page.getByRole('link', { name: onboardingData.name }).click()
+	await page.getByRole('button', { name: /user menu/i }).click()
 	await page.getByRole('menuitem', { name: /profile/i }).click()
 
 	await expect(page).toHaveURL(`/users/${onboardingData.username}`)
-
-	await page.getByRole('link', { name: onboardingData.name }).click()
+	await page.getByRole('button', { name: /user menu/i }).click()
 	await page.getByRole('menuitem', { name: /logout/i }).click()
 	await expect(page).toHaveURL(`/`)
 })
@@ -332,7 +333,8 @@ test('login as existing user', async ({ page, insertNewUser }) => {
 	await page.getByRole('button', { name: /log in/i }).click()
 	await expect(page).toHaveURL(`/`)
 
-	await expect(page.getByRole('link', { name: user.name })).toBeVisible()
+	await page.getByRole('button', { name: /user menu/i }).click()
+	await expect(page.getByRole('menuitem', { name: /profile/i })).toBeVisible()
 })
 
 test('reset password with a link', async ({ page, insertNewUser }) => {
@@ -386,7 +388,8 @@ test('reset password with a link', async ({ page, insertNewUser }) => {
 
 	await expect(page).toHaveURL(`/`)
 
-	await expect(page.getByRole('link', { name: user.name })).toBeVisible()
+	await page.getByRole('button', { name: /user menu/i }).click()
+	await expect(page.getByRole('menuitem', { name: /profile/i })).toBeVisible()
 })
 
 test('reset password with a short code', async ({ page, insertNewUser }) => {

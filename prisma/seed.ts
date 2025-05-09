@@ -312,7 +312,7 @@ async function seed() {
 	console.time(`🐨 Created admin user "alif"`)
 
 	const alifImages = {
-		alifUser: { objectKey: 'user/kody.png' },
+		alifUser: { objectKey: 'user/alif.png' },
 		cuteKoala: {
 			altText: 'an adorable koala cartoon illustration',
 			objectKey: 'kody-notes/cute-koala.png',

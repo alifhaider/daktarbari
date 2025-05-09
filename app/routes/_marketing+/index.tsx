@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import healthImg from '#app/assets/images/health.png'
 import Reminder from '#app/components/reminder.tsx'
 import { Spacer } from '#app/components/spacer.tsx'
 import { Button } from '#app/components/ui/button.tsx'
@@ -72,7 +73,7 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 					alt="Doctor Appointment"
 				/>
 			</section>
-			<section className="mt-20 w-full bg-primary-foreground px-8 py-20">
+			<section className="bg-primary-foreground mt-20 w-full px-8 py-20">
 				<div className="container">
 					<h2 className="text-brand text-3xl font-extrabold md:text-5xl">
 						Search for Top-Rated Doctors
@@ -85,17 +86,17 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 					<ul className="mt-6 grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 lg:grid-cols-4">
 						{doctors.map(({ specialties, user, rating, bio, _count }) => (
 							<li className="h-full" key={user.username}>
-								<div className="flex h-full flex-col justify-between rounded-lg border bg-background py-4 hover:shadow-lg">
-									<div className="relative mx-auto h-20 w-20 rounded-sm bg-secondary">
+								<div className="bg-background flex h-full flex-col justify-between rounded-lg border py-4 hover:shadow-lg">
+									<div className="bg-secondary relative mx-auto h-20 w-20 rounded-sm">
 										<img
 											src={getUserImgSrc(user.image?.objectKey)}
 											alt={user.name ?? user.username}
 											className="h-full w-full rounded-sm object-cover"
 										/>
-										<div className="absolute -bottom-1 left-1/2 flex w-max -translate-x-1/2 items-center justify-center gap-0.5 rounded-md bg-secondary-foreground px-1 text-xs text-background shadow-lg">
+										<div className="bg-secondary-foreground text-background absolute -bottom-1 left-1/2 flex w-max -translate-x-1/2 items-center justify-center gap-0.5 rounded-md px-1 text-xs shadow-lg">
 											<Icon
 												name="star"
-												className="h-3 w-3 text-primary-foreground"
+												className="text-primary-foreground h-3 w-3"
 											/>
 											{rating}
 										</div>
@@ -169,7 +170,7 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 						</Button>
 					</div>
 					<div className="flex-1">
-						<img src="/images/health.png" alt="health" />
+						<img src={healthImg} alt="health" />
 					</div>
 				</div>
 			</section>
