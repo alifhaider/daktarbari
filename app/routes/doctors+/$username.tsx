@@ -445,8 +445,8 @@ export default function DoctorRoute({ loaderData }: Route.ComponentProps) {
 							height={832}
 						/>
 					) : (
-						<div className="h-32 w-32 rounded-sm bg-primary-foreground shadow-xs">
-							<Icon name="avatar" className="h-32 w-32 text-primary" />
+						<div className="bg-primary-foreground h-32 w-32 rounded-sm shadow-xs">
+							<Icon name="avatar" className="text-primary h-32 w-32" />
 						</div>
 					)}
 
@@ -469,7 +469,7 @@ export default function DoctorRoute({ loaderData }: Route.ComponentProps) {
 							) : null}
 						</div>
 						{!isDoctor ? (
-							<p className="flex items-center gap-2 text-sm text-accent-foreground">
+							<p className="text-accent-foreground flex items-center gap-2 text-sm">
 								<Icon name="mail" />
 								{user.email}
 							</p>
@@ -484,7 +484,7 @@ export default function DoctorRoute({ loaderData }: Route.ComponentProps) {
 									<div className="flex items-center rounded-lg border p-1.5">
 										<Icon name="stethoscope" />
 									</div>
-									<ul className="flex items-center gap-4 text-primary">
+									<ul className="text-primary flex items-center gap-4">
 										{specialties && specialties.length > 0 ? (
 											specialties.map((specialty, index) => (
 												<>
@@ -617,7 +617,7 @@ const Schedules = ({ schedules, isOwner, username }: ScheduleProps) => {
 			{schedules && schedules?.length > 0 && (
 				<div className="relative flex items-center">
 					<span className="h-0.5 w-full border"></span>
-					<h5 className="mx-1 text-nowrap text-4xl font-bold text-secondary-foreground">
+					<h5 className="text-secondary-foreground mx-1 text-4xl font-bold text-nowrap">
 						{scheduleDate}
 					</h5>
 					<span className="h-0.5 w-full border"></span>
@@ -629,7 +629,7 @@ const Schedules = ({ schedules, isOwner, username }: ScheduleProps) => {
 			<Spacer size="3xs" />
 
 			{schedules && schedules?.length === 0 ? (
-				<p className="text-lg text-accent-foreground">No available schedules</p>
+				<p className="text-accent-foreground text-lg">No available schedules</p>
 			) : null}
 
 			<ul className="max-h-[40rem] space-y-8 overflow-y-auto">
@@ -697,17 +697,27 @@ const ScheduleItem = ({
 	const timeOfDayStyles = getTimeOfDayStyles(getTimeOfDay(schedule.startTime))
 	const timeOfDay = getTimeOfDay(schedule.startTime)
 
+	const totalFee =
+		(schedule.serialFee ?? 0) +
+		(schedule.visitFee ?? 0) -
+		(schedule.discountFee ?? 0)
+
+	const availabilityPercentage =
+		100 - (schedule._count.bookings / schedule.maxAppointments) * 100
+
+	console.log('availabilityPercentage', availabilityPercentage)
+
 	return (
 		<li
 			hidden={isDeleting}
 			className="overflow-hidden rounded-sm border shadow-md transition-all hover:shadow-lg"
 		>
-			<div className="flex items-start justify-between border-b bg-accent/50 p-3 dark:bg-accent/20">
+			<div className="bg-accent/50 dark:bg-accent/20 flex items-start justify-between border-b p-3">
 				<div>
-					<h3 className="font-semibold text-primary">
+					<h3 className="text-primary font-semibold">
 						{schedule.location.name}
 					</h3>
-					<div className="mt-0.5 flex items-center text-xs text-muted-foreground">
+					<div className="text-muted-foreground mt-0.5 flex items-center text-xs">
 						<Icon name="map-pin" className="mr-1 h-3 w-3" />
 						{schedule.location.address}
 					</div>
@@ -729,8 +739,8 @@ const ScheduleItem = ({
 				</div>
 			</div>
 
-			<div className="flex items-center border-b bg-muted/50 p-3 dark:bg-muted/20">
-				<Icon name="clock" className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+			<div className="bg-muted/50 dark:bg-muted/20 flex items-center border-b p-3">
+				<Icon name="clock" className="text-muted-foreground mr-2 h-3.5 w-3.5" />
 				<div className="text-sm font-medium">
 					{format(schedule.startTime, 'hh:mm a')} -{' '}
 					{format(schedule.endTime, 'hh:mm a')}
@@ -741,21 +751,21 @@ const ScheduleItem = ({
 				<div className="flex flex-wrap gap-2 text-sm">
 					<div className="min-w-[180px] flex-1">
 						<div className="mb-1 flex items-center justify-between">
-							<span className="text-xs text-muted-foreground">Date:</span>
+							<span className="text-muted-foreground text-xs">Date:</span>
 							<span className="text-xs font-medium">
 								{format(schedule.startTime, 'dd MMMM, yyyy')}
 							</span>
 						</div>
 						<div className="flex items-center justify-between">
-							<span className="text-xs text-muted-foreground">
+							<span className="text-muted-foreground text-xs">
 								Availability:
 							</span>
 							<div className="flex items-center gap-1">
-								<div className="h-1.5 w-16 rounded-full bg-muted">
+								<div className="bg-muted h-1.5 w-16 rounded-full">
 									<div
-										className="h-1.5 rounded-full bg-primary"
+										className={`h-1.5 rounded-full ${availabilityPercentage < 50 ? 'bg-red-500' : 'bg-green-500'}`}
 										style={{
-											width: `${100 - (schedule._count.bookings / schedule.maxAppointments) * 100}%`,
+											width: `${availabilityPercentage}%`,
 										}}
 									></div>
 								</div>
@@ -769,30 +779,30 @@ const ScheduleItem = ({
 					{/* Compact fee section */}
 					<div className="flex min-w-[180px] flex-1 gap-2">
 						<div className="grid w-full grid-cols-2 gap-2">
-							<div className="rounded border bg-muted/50 p-1.5 text-center dark:bg-muted/20">
-								<p className="text-[10px] text-muted-foreground">Serial</p>
+							<div className="bg-muted/50 dark:bg-muted/20 rounded border p-1.5 text-center">
+								<p className="text-muted-foreground text-[10px]">Serial</p>
 								<p className="font-bold">{schedule.serialFee} tk</p>
 							</div>
-							<div className="rounded border bg-muted/50 p-1.5 text-center dark:bg-muted/20">
-								<p className="text-[10px] text-muted-foreground">Visit</p>
+							<div className="bg-muted/50 dark:bg-muted/20 rounded border p-1.5 text-center">
+								<p className="text-muted-foreground text-[10px]">Visit</p>
 								<p className="font-bold">{schedule.visitFee} tk</p>
 							</div>
 						</div>
 						<div className="grid w-full grid-cols-2 gap-2">
-							<div className="rounded border bg-muted/50 p-1.5 text-center dark:bg-muted/20">
-								<p className="text-[10px] text-muted-foreground">Discount</p>
+							<div className="bg-muted/50 dark:bg-muted/20 rounded border p-1.5 text-center">
+								<p className="text-muted-foreground text-[10px]">Discount</p>
 								<p className="font-bold">{schedule.discountFee} tk</p>
 							</div>
-							<div className="rounded border bg-muted/50 p-1.5 text-center dark:bg-muted/20">
-								<p className="text-[10px] text-muted-foreground">Deposit</p>
-								<p className="font-bold">{schedule.depositAmount} tk</p>
+							<div className="bg-muted/50 dark:bg-muted/20 rounded border p-1.5 text-center">
+								<p className="text-muted-foreground text-[10px]">total</p>
+								<p className="font-bold">{totalFee} tk</p>
 							</div>
 						</div>
 					</div>
 				</div>
 			</div>
 
-			<div className="border-t bg-muted/50 p-2 dark:bg-muted/20">
+			<div className="bg-muted/50 dark:bg-muted/20 border-t p-2">
 				{isOwner ? (
 					<div className="space-y-2">
 						<div className="flex w-full gap-2">
@@ -830,16 +840,33 @@ const ScheduleItem = ({
 						<ErrorList errors={form.errors} />
 					</div>
 				) : (
-					<Button
-						asChild
-						size="sm"
-						className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-					>
-						<Link to={`/profile/${username}/schedule/${schedule.id}`}>
-							<Icon name="calendar-check" className="mr-1 h-3 w-3" />
-							Book Now
-						</Link>
-					</Button>
+					<>
+						{schedule._count.bookings >= schedule.maxAppointments ? (
+							<Button
+								disabled
+								variant="outline"
+								size="sm"
+								className="bg-accent/50 text-accent-foreground w-full"
+							>
+								<Icon name="calendar-check" className="mr-1 h-3 w-3" />
+								Booked Out
+							</Button>
+						) : (
+							<Button
+								asChild
+								size="sm"
+								className="bg-primary text-primary-foreground hover:bg-primary/90 w-full"
+							>
+								<Link
+									to={`/schedules/${schedule.id}`}
+									className={`${schedule._count.bookings >= schedule.maxAppointments ? 'pointer-events-none cursor-not-allowed' : null}`}
+								>
+									<Icon name="calendar-check" className="mr-1 h-3 w-3" />
+									Book Now
+								</Link>
+							</Button>
+						)}
+					</>
 				)}
 			</div>
 		</li>
@@ -868,7 +895,7 @@ const BookedAppointments = () => {
 			<Spacer size="2xs" />
 
 			{bookings.length === 0 ? (
-				<p className="text-lg text-accent-foreground">
+				<p className="text-accent-foreground text-lg">
 					Looks like you haven&apos;t booked any appointments yet.{' '}
 					<Link
 						to="/search"
@@ -914,7 +941,7 @@ const BookedAppointments = () => {
 													booking.doctor.user.username}
 											</CardTitle>
 										</Link>
-										<p className="text-sm text-muted-foreground">
+										<p className="text-muted-foreground text-sm">
 											Appointment on{' '}
 											{format(
 												new Date(booking.schedule.startTime),
@@ -926,7 +953,7 @@ const BookedAppointments = () => {
 										<Button asChild variant="outline">
 											<Link
 												to={`/profile/${booking.doctor.user.username}`}
-												className="flex w-max items-center gap-2 text-sm text-accent-foreground"
+												className="text-accent-foreground flex w-max items-center gap-2 text-sm"
 											>
 												Leave a Review
 											</Link>
@@ -942,7 +969,7 @@ const BookedAppointments = () => {
 										<div className="flex items-center gap-2">
 											<Icon
 												name="calendar"
-												className="h-4 w-4 text-muted-foreground"
+												className="text-muted-foreground h-4 w-4"
 											/>
 											<span>
 												<strong>Schedule Date: </strong>
@@ -955,7 +982,7 @@ const BookedAppointments = () => {
 										<div className="flex items-center gap-2">
 											<Icon
 												name="clock"
-												className="h-4 w-4 text-muted-foreground"
+												className="text-muted-foreground h-4 w-4"
 											/>
 											<span>
 												<strong>Schedule Time: </strong>
@@ -967,7 +994,7 @@ const BookedAppointments = () => {
 										<div className="flex items-center gap-2">
 											<Icon
 												name="map"
-												className="h-4 w-4 text-muted-foreground"
+												className="text-muted-foreground h-4 w-4"
 											/>
 											<span>
 												<strong>Location: </strong>
@@ -980,7 +1007,7 @@ const BookedAppointments = () => {
 										<div className="flex items-center gap-2">
 											<Icon
 												name="coins"
-												className="h-4 w-4 text-muted-foreground"
+												className="text-muted-foreground h-4 w-4"
 											/>
 											<span>
 												<strong>Total Cost: </strong>
@@ -995,7 +1022,7 @@ const BookedAppointments = () => {
 										<div className="flex items-center gap-2">
 											<Icon
 												name="dollar-sign"
-												className="h-4 w-4 text-muted-foreground"
+												className="text-muted-foreground h-4 w-4"
 											/>
 											<span>
 												<strong>Paid Amount: </strong>
@@ -1005,7 +1032,7 @@ const BookedAppointments = () => {
 										<div className="flex items-center gap-2">
 											<Icon
 												name="avatar"
-												className="h-4 w-4 text-muted-foreground"
+												className="text-muted-foreground h-4 w-4"
 											/>
 											<span>
 												Booked on{' '}
@@ -1049,7 +1076,7 @@ function CancelBookingButton({ bookingId }: { bookingId: string }) {
 				name="_action"
 				value="cancel-booking"
 				type="submit"
-				className="flex w-max items-start rounded-md border border-destructive bg-destructive px-2 py-1 text-destructive-foreground transition-all"
+				className="border-destructive bg-destructive text-destructive-foreground flex w-max items-start rounded-md border px-2 py-1 transition-all"
 			>
 				Cancel Booking
 			</button>
@@ -1099,10 +1126,7 @@ const Reviews = ({
 				<p className="flex items-center gap-2 text-6xl font-extrabold">
 					{overallRating || 0}
 					<span>
-						<Icon
-							name="star"
-							className="h-6 w-6 fill-cyan-400 stroke-cyan-400"
-						/>
+						<Icon name="star" className="h-6 w-6 fill-cyan-400 text-cyan-400" />
 					</span>
 				</p>
 
@@ -1114,7 +1138,7 @@ const Reviews = ({
 
 			<Spacer size="xs" />
 
-			<h6 className="text-sm font-extrabold uppercase text-secondary-foreground">
+			<h6 className="text-secondary-foreground text-sm font-extrabold uppercase">
 				Reviews
 			</h6>
 			<ul className="max-w-4xl py-2">
@@ -1134,14 +1158,14 @@ const Reviews = ({
 									</span>
 								))}
 							</div>
-							<p className="font-montserrat text-xs font-semibold text-secondary-foreground">
+							<p className="font-montserrat text-secondary-foreground text-xs font-semibold">
 								{review.user.name || review.user.username}
-								<span className="ml-2 text-[11px] font-medium text-muted-foreground">
+								<span className="text-muted-foreground ml-2 text-[11px] font-medium">
 									{format(review.createdAt, 'MMMM d, yyyy')}
 								</span>
 							</p>
 
-							<p className="text-sm text-secondary-foreground">
+							<p className="text-secondary-foreground text-sm">
 								{review.comment}
 							</p>
 						</div>
@@ -1157,7 +1181,7 @@ const Reviews = ({
 			</div>
 
 			<Spacer size="md" />
-			<h6 className="text-lg font-extrabold uppercase text-secondary-foreground">
+			<h6 className="text-secondary-foreground text-lg font-extrabold uppercase">
 				Write a Review
 			</h6>
 			<Spacer size="3xs" />

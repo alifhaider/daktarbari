@@ -8,6 +8,26 @@ import { buttonVariants } from './button'
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>
 
+const classNames = {
+	cell: 'h-16 w-16 text-center text-2xl p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20',
+	day: cn(
+		buttonVariants({ variant: 'ghost' }),
+		'h-16 w-16 rounded-md p-0 font-normal aria-selected:opacity-100',
+	),
+	day_range_end: 'day-range-end',
+	day_selected: 'bg-brand text-primary rounded-md font-bold text-xl',
+	day_today: 'text-accent-foreground rounded-md border border-brand',
+	day_outside:
+		'day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30',
+	day_disabled:
+		'text-muted-foreground opacity-50 cursor-not-allowed bg-transparent hover:bg-transparent',
+	day_range_middle:
+		'aria-selected:bg-accent aria-selected:text-accent-foreground',
+	day_has_schedule:
+		'unset bg-primary text-primary-foreground hover:bg-primary hover:text-brand focus:bg-primary focus:text-brand font-bold text-xl rounded-md',
+	day_hidden: 'invisible',
+}
+
 function Calendar({
 	className,
 	classNames,
@@ -34,11 +54,6 @@ function Calendar({
 				head_row: 'flex',
 				head_cell: 'text-muted-foreground rounded-md w-16 font-normal text-lg',
 				row: 'flex w-full mt-2',
-				cell: 'h-16 w-16 text-center text-2xl p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20',
-				day: cn(
-					buttonVariants({ variant: 'ghost' }),
-					'h-16 w-16 p-0 font-normal aria-selected:opacity-100',
-				),
 				day_range_end: 'day-range-end',
 				day_selected:
 					'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground',
@@ -116,26 +131,6 @@ export const CustomCell = React.memo(function CustomCell({
 	}
 
 	const currentDaySchedules = scheduleTimes.filter(isSameDay)
-
-	const classNames = {
-		cell: 'h-16 w-16 text-center text-2xl p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20',
-		day: cn(
-			buttonVariants({ variant: 'ghost' }),
-			'h-16 w-16 rounded-md p-0 font-normal aria-selected:opacity-100',
-		),
-		day_range_end: 'day-range-end',
-		day_selected: 'bg-brand text-primary rounded-md font-bold text-xl',
-		day_today: 'text-accent-foreground rounded-md border border-brand',
-		day_outside:
-			'day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30',
-		day_disabled:
-			'text-muted-foreground opacity-50 cursor-not-allowed bg-transparent hover:bg-transparent',
-		day_range_middle:
-			'aria-selected:bg-accent aria-selected:text-accent-foreground',
-		day_has_schedule:
-			'unset bg-primary text-primary-foreground hover:bg-primary hover:text-brand focus:bg-primary focus:text-brand font-bold text-xl rounded-md',
-		day_hidden: 'invisible',
-	}
 
 	if (dayRender.isHidden) {
 		return <td className={cn(className, 'invisible')} {...props} />

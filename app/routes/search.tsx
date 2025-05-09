@@ -40,7 +40,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const specialtiesQuery = searchParams.get('specialtyId')
 	const locationQuery = searchParams.get('locationId')
 	const page = Number(searchParams.get('page')) || 1
-	const pageSize = 5
+	const pageSize = 6
 
 	// Debug logs
 	console.log('Loader params:', {
@@ -87,7 +87,7 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 
 	const [items, setItems] = useState(loaderData.doctors)
 	const [searchParams, setSearchParams] = useSearchParams()
-	const fetcher = useFetcher<typeof loader>()
+	const fetcher = useFetcher()
 	const isPending = useDelayedIsPending({
 		formMethod: 'GET',
 		formAction: '/search',
@@ -104,18 +104,6 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 			setItems((prev) => [...prev, ...(fetcher.data?.doctors || [])])
 		}
 	}, [fetcher.data])
-
-	const loadNext = async () => {
-		const nextPage = fetcher.data?.nextPage ?? loaderData.nextPage
-		const query = new URLSearchParams(searchParams)
-		query.set('page', nextPage?.toString() ?? '1')
-		query.set('name', searchParams.get('name') ?? '')
-		query.set('specialtyId', searchParams.get('specialtyId') ?? '')
-		query.set('locationId', searchParams.get('locationId') ?? '')
-		query.set('pageSize', '5')
-		await fetcher.load(`/search?${query.toString()}`)
-		setSearchParams(query)
-	}
 
 	// const handleFormChange = useDebounce(async (form: HTMLFormElement) => {
 	// 	 await submit(form)
@@ -154,24 +142,24 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 
 			<main className="flex grow divide-x overflow-y-hidden">
 				<div className="flex-1 overflow-y-auto shadow-md">
-					<InfiniteScroller
-						loadNext={loadNext}
-						loading={fetcher.state === 'loading'}
-					>
-						<div className="search-container container mx-auto overflow-y-scroll">
-							<div>
-								{isPending ? <SearchLoadingSkeleton /> : null}
-								{loaderData.status === 'idle' ? (
-									loaderData.doctors.length ? (
-										<>
-											<div className="my-4">
-												<h4 className="text-xl leading-7 font-medium">
-													{loaderData.doctors.length} Doctors Available
-												</h4>
-												<p className="text-xs font-medium">
-													These doctors are located around
-												</p>
-											</div>
+					<div className="search-container container mx-auto overflow-y-scroll">
+						<div>
+							{isPending ? <SearchLoadingSkeleton /> : null}
+							{loaderData.status === 'idle' ? (
+								loaderData.doctors.length ? (
+									<>
+										<div className="my-4">
+											<h4 className="text-xl leading-7 font-medium">
+												{loaderData.doctors.length} Doctors Available
+											</h4>
+											<p className="text-xs font-medium">
+												These doctors are located around
+											</p>
+										</div>
+										<InfiniteScroller
+											hasMore={loaderData.hasMore}
+											loadMorePath={`/search?${new URLSearchParams(searchParams)}`}
+										>
 											<ul
 												className={cn('mb-4 space-y-4 delay-200', {
 													'opacity-50': isPending,
@@ -292,18 +280,18 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 													</li>
 												))}
 											</ul>
-										</>
-									) : (
-										<p>No doctors found</p>
-									)
-								) : loaderData.status === 'error' ? (
-									<ErrorList
-										errors={['There was an error parsing the results']}
-									/>
-								) : null}
-							</div>
+										</InfiniteScroller>
+									</>
+								) : (
+									<p>No doctors found</p>
+								)
+							) : loaderData.status === 'error' ? (
+								<ErrorList
+									errors={['There was an error parsing the results']}
+								/>
+							) : null}
 						</div>
-					</InfiniteScroller>
+					</div>
 				</div>
 				<div className="w-2/5">
 					<div className="flex h-full items-center justify-center bg-gray-500 p-4">
@@ -405,39 +393,45 @@ const SearchLoadingSkeleton = () => {
 		</div>
 	)
 }
-const InfiniteScroller = (props: {
+
+export function InfiniteScroller({
+	children,
+	hasMore,
+	loadMorePath,
+}: {
 	children: React.ReactNode
-	loading: boolean
-	loadNext: () => Promise<void>
-}) => {
-	const { children, loading, loadNext } = props
-	const scrollListener = useRef(loadNext)
+	hasMore: boolean
+	loadMorePath: string
+}) {
+	const fetcher = useFetcher()
+	const sentinelRef = useRef<HTMLDivElement>(null)
 
-	useEffect(() => {
-		console.log('Setting scroll listener')
-		scrollListener.current = loadNext
-	}, [loadNext])
+	// useEffect(() => {
+	// 	if (!hasMore || fetcher.state !== 'idle') return
 
-	const onScroll = async () => {
-		const documentHeight = document.documentElement.scrollHeight
-		const scrollDifference = Math.floor(window.innerHeight + window.scrollY)
-		const scrollEnded = documentHeight == scrollDifference
+	// 	const observer = new IntersectionObserver(
+	// 		async (entries) => {
+	// 			if (entries[0]?.isIntersecting) {
+	// 				await fetcher.load(loadMorePath)
+	// 			}
+	// 		},
+	// 		{ threshold: 0.1 }, // Trigger when 10% visible
+	// 	)
 
-		if (scrollEnded && !loading) {
-			await scrollListener.current()
-		}
-	}
+	// 	if (sentinelRef.current) observer.observe(sentinelRef.current)
 
-	useEffect(() => {
-		console.log('Adding scroll listener')
-		if (typeof window !== 'undefined') {
-			window.addEventListener('scroll', onScroll)
-		}
+	// 	return () => observer.disconnect()
+	// }, [hasMore, loadMorePath])
 
-		return () => {
-			window.removeEventListener('scroll', onScroll)
-		}
-	}, [])
+	return (
+		<>
+			{children}
 
-	return <>{children}</>
+			{/* Invisible element at the bottom */}
+			<div ref={sentinelRef} style={{ height: '1px', visibility: 'hidden' }} />
+
+			{/* Loading indicator */}
+			{fetcher.state === 'loading' && <div>Loading more...</div>}
+		</>
+	)
 }
