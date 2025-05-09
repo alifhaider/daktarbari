@@ -27,50 +27,43 @@ import {
 import { type Route } from './+types/search'
 import { LocationCombobox } from './resources+/location-combobox'
 import { SpecialtyCombobox } from './resources+/specialty-combobox'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 export const SearchPageSchema = z.object({
 	name: z.string().optional(),
 	locationId: z.string().optional(),
 	specialtyId: z.string().optional(),
 })
-
 export async function loader({ request }: Route.LoaderArgs) {
 	const searchParams = new URL(request.url).searchParams
 	const nameQuery = searchParams.get('name')
 	const specialtiesQuery = searchParams.get('specialtyId')
 	const locationQuery = searchParams.get('locationId')
-	const page = Number(searchParams.get('page')) || 2
+	const page = Number(searchParams.get('page')) || 1
 	const pageSize = 5
-	if (nameQuery === '') {
-		return redirect('/search')
-	}
 
-	const name = nameQuery ?? ''
-	const specialtyId = specialtiesQuery ?? ''
-	const locationId = locationQuery ?? ''
-
-	console.log(
-		'name',
-		name,
-		'specialtyId',
-		specialtyId,
-		'locationId',
-		locationId,
-		'page',
+	// Debug logs
+	console.log('Loader params:', {
+		nameQuery,
+		specialtiesQuery,
+		locationQuery,
 		page,
-		'pageSize',
 		pageSize,
-	)
+	})
 
-	const doctors = await prisma.$queryRawTyped(
-		searchDoctors(name, specialtyId, locationId, page, pageSize),
+	const query = searchDoctors(
+		nameQuery || '',
+		specialtiesQuery || '',
+		locationQuery || '',
+		pageSize,
+		page,
 	)
+	console.log('Executing query:', query)
 
-	console.log('doctors', doctors)
+	const doctors = await prisma.$queryRawTyped(query)
+	console.log(`Returned ${doctors.length} doctors for page ${page}`)
 
 	const parsedDoctors = doctors.map(parseDoctor)
-	console.log('parsed doctors', parsedDoctors)
 
 	return {
 		status: 'idle',
@@ -91,10 +84,10 @@ export async function action({ request }: Route.ActionArgs) {
 
 export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 	// const submit = useSubmit()
-	const [items, setItems] = useState(loaderData.doctors)
-	const fetcher = useFetcher()
-	const [searchParams, setSearchParams] = useSearchParams()
 
+	const [items, setItems] = useState(loaderData.doctors)
+	const [searchParams, setSearchParams] = useSearchParams()
+	const fetcher = useFetcher<typeof loader>()
 	const isPending = useDelayedIsPending({
 		formMethod: 'GET',
 		formAction: '/search',
@@ -107,16 +100,22 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 	})
 
 	useEffect(() => {
-		if (!fetcher.data || fetcher.state === 'loading') {
-			return
+		if (fetcher.data?.doctors) {
+			setItems((prev) => [...prev, ...(fetcher.data?.doctors || [])])
 		}
-		// If we have new data - append it
-		if (fetcher.data) {
-			const newItems = fetcher.data.data
-			console.log('new items', newItems)
-			setItems((prevAssets) => [...prevAssets, ...newItems])
-		}
-	}, [fetcher.data, fetcher.state])
+	}, [fetcher.data])
+
+	const loadNext = async () => {
+		const nextPage = fetcher.data?.nextPage ?? loaderData.nextPage
+		const query = new URLSearchParams(searchParams)
+		query.set('page', nextPage?.toString() ?? '1')
+		query.set('name', searchParams.get('name') ?? '')
+		query.set('specialtyId', searchParams.get('specialtyId') ?? '')
+		query.set('locationId', searchParams.get('locationId') ?? '')
+		query.set('pageSize', '5')
+		await fetcher.load(`/search?${query.toString()}`)
+		setSearchParams(query)
+	}
 
 	// const handleFormChange = useDebounce(async (form: HTMLFormElement) => {
 	// 	 await submit(form)
@@ -155,29 +154,24 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 
 			<main className="flex grow divide-x overflow-y-hidden">
 				<div className="flex-1 overflow-y-auto shadow-md">
-					<div className="search-container container mx-auto overflow-y-scroll">
-						<div>
-							{isPending ? <SearchLoadingSkeleton /> : null}
-							{loaderData.status === 'idle' ? (
-								loaderData.doctors.length ? (
-									<>
-										<div className="my-4">
-											<h4 className="text-xl leading-7 font-medium">
-												{loaderData.doctors.length} Doctors Available
-											</h4>
-											<p className="text-xs font-medium">
-												These doctors are located around
-											</p>
-										</div>
-										<InfiniteScroller
-											loadNext={async () => {
-												const page = fetcher.data ? fetcher.data.nextPage : 0
-												// const query = `?index&page=${page}`
-
-												// await fetcher.load(query)
-											}}
-											loading={fetcher.state === 'loading'}
-										>
+					<InfiniteScroller
+						loadNext={loadNext}
+						loading={fetcher.state === 'loading'}
+					>
+						<div className="search-container container mx-auto overflow-y-scroll">
+							<div>
+								{isPending ? <SearchLoadingSkeleton /> : null}
+								{loaderData.status === 'idle' ? (
+									loaderData.doctors.length ? (
+										<>
+											<div className="my-4">
+												<h4 className="text-xl leading-7 font-medium">
+													{loaderData.doctors.length} Doctors Available
+												</h4>
+												<p className="text-xs font-medium">
+													These doctors are located around
+												</p>
+											</div>
 											<ul
 												className={cn('mb-4 space-y-4 delay-200', {
 													'opacity-50': isPending,
@@ -298,18 +292,18 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 													</li>
 												))}
 											</ul>
-										</InfiniteScroller>
-									</>
-								) : (
-									<p>No doctors found</p>
-								)
-							) : loaderData.status === 'error' ? (
-								<ErrorList
-									errors={['There was an error parsing the results']}
-								/>
-							) : null}
+										</>
+									) : (
+										<p>No doctors found</p>
+									)
+								) : loaderData.status === 'error' ? (
+									<ErrorList
+										errors={['There was an error parsing the results']}
+									/>
+								) : null}
+							</div>
 						</div>
-					</div>
+					</InfiniteScroller>
 				</div>
 				<div className="w-2/5">
 					<div className="flex h-full items-center justify-center bg-gray-500 p-4">
@@ -411,30 +405,31 @@ const SearchLoadingSkeleton = () => {
 		</div>
 	)
 }
-
 const InfiniteScroller = (props: {
-	children: any
+	children: React.ReactNode
 	loading: boolean
-	loadNext: () => void
+	loadNext: () => Promise<void>
 }) => {
 	const { children, loading, loadNext } = props
 	const scrollListener = useRef(loadNext)
 
 	useEffect(() => {
+		console.log('Setting scroll listener')
 		scrollListener.current = loadNext
 	}, [loadNext])
 
-	const onScroll = () => {
+	const onScroll = async () => {
 		const documentHeight = document.documentElement.scrollHeight
 		const scrollDifference = Math.floor(window.innerHeight + window.scrollY)
 		const scrollEnded = documentHeight == scrollDifference
 
 		if (scrollEnded && !loading) {
-			scrollListener.current()
+			await scrollListener.current()
 		}
 	}
 
 	useEffect(() => {
+		console.log('Adding scroll listener')
 		if (typeof window !== 'undefined') {
 			window.addEventListener('scroll', onScroll)
 		}

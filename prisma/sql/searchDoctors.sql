@@ -79,41 +79,27 @@ SELECT
     ORDER BY "Schedule"."startTime" ASC
   ) AS upcomingSchedules
 
-FROM "User"
-JOIN "Doctor" ON "User".id = "Doctor"."userId"
-LEFT JOIN "UserImage" ON "User".id = "UserImage"."userId"
-WHERE 
-  (
-    $1::text IS NULL OR 
-    $1::text = '' OR
-    LOWER("User".name) LIKE '%' || LOWER($1::text) || '%' OR 
-    LOWER("User".username) LIKE '%' || LOWER($1::text) || '%'
-  )
-  AND (
-    $2::text IS NULL OR 
-    $2::text = '' OR
-    EXISTS (
-      SELECT 1 FROM "DoctorSpecialty"
-      WHERE "DoctorSpecialty"."doctorId" = "Doctor"."userId"
-      AND "DoctorSpecialty".id = $2::text
-    )
-  )
-  AND (
-    $3::text IS NULL OR 
-    $3::text = '' OR
-    EXISTS (
-      SELECT 1 FROM "Schedule"
-      JOIN "ScheduleLocation" ON "Schedule"."locationId" = "ScheduleLocation".id
-      WHERE "Schedule"."doctorId" = "Doctor"."userId"
-      AND "ScheduleLocation".id = $3::text
-    )
-  )
-GROUP BY 
-  "User".id,
-  "UserImage".id,
-  "UserImage".objectKey,
-  "Doctor".id
-ORDER BY 
-  "Doctor".rating DESC,
-  "User".name ASC
-LIMIT $5::int OFFSET ($4::int) * $5::int;
+ FROM "User"
+    JOIN "Doctor" ON "User".id = "Doctor"."userId"
+    LEFT JOIN "UserImage" ON "User".id = "UserImage"."userId"
+    WHERE
+      ($1::text IS NULL OR $1::text = '' OR
+       LOWER("User".name) LIKE '%' || LOWER($1::text) || '%' OR 
+       LOWER("User".username) LIKE '%' || LOWER($1::text) || '%')
+      AND ($2::text IS NULL OR $2::text = '' OR
+          EXISTS (
+            SELECT 1 FROM "DoctorSpecialty"
+            WHERE "DoctorSpecialty"."doctorId" = "Doctor"."userId"
+            AND "DoctorSpecialty".id = $2::text
+          ))
+      AND ($3::text IS NULL OR $3::text = '' OR
+          EXISTS (
+            SELECT 1 FROM "Schedule"
+            JOIN "ScheduleLocation" ON "Schedule"."locationId" = "ScheduleLocation".id
+            WHERE "Schedule"."doctorId" = "Doctor"."userId"
+            AND "ScheduleLocation".id = $3::text
+          ))
+    ORDER BY 
+      "Doctor".rating DESC,
+      "User".name ASC
+    LIMIT $pageSize OFFSET ($page - 1) * $pageSize;
