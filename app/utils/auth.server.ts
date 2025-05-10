@@ -77,6 +77,18 @@ export async function getDoctor(request: Request) {
 	return doctor
 }
 
+export async function requireDoctor(request: Request) {
+	const userId = await requireUserId(request)
+	const doctor = await prisma.doctor.findUnique({
+		where: { userId },
+		include: { user: { select: { id: true, username: true } } },
+	})
+	if (!doctor) {
+		throw redirect('/')
+	}
+	return doctor
+}
+
 export async function requireAnonymous(request: Request) {
 	const userId = await getUserId(request)
 	if (userId) {

@@ -49,3 +49,10 @@ export function isScheduleHasMoreThanSixHours(startTime: Date): boolean {
 	const diffInHours = (start.getTime() - now.getTime()) / (1000 * 60 * 60)
 	return diffInHours > 6
 }
+
+// takes a time string like "2: 14" or "14: 00" and returns [2, 14] or [14, 0]
+export function getHoursAndMinutes(time: Date) {
+	const hour = time.getHours()
+	const minute = time.getMinutes()
+	return [hour, minute]
+}
