@@ -1,6 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { getNextDateSchedules } from './schedule'
-import { getMonthlyScheduleDates, isValidTime } from './schedule.server'
+import {
+	getMonthlyScheduleDates,
+	getWeeklyScheduleDates,
+	isValidTime,
+} from './schedule.server'
 
 const FIXED_NOW = new Date('2023-10-01T12:00:00Z') // Fixed date for testing
 
@@ -160,5 +164,38 @@ describe('getMonthlyScheduleDates', () => {
 		})
 
 		expect(result).toEqual(expected)
+	})
+})
+
+describe('getWeeklyScheduleDates', () => {
+	it('should return empty array if the date or starttime or endtime is not provided', () => {
+		const result = getWeeklyScheduleDates([], '', '', false)
+		expect(result).toEqual([])
+		const result2 = getWeeklyScheduleDates(['sunday'], '3:14', '27:18', false)
+		expect(result2).toEqual([])
+		const result3 = getWeeklyScheduleDates(['monday'], '', '12:9', false)
+		expect(result3).toEqual([])
+	})
+
+	it('should return one schedule if isRepetitiveWeek is false', () => {
+		const result = getWeeklyScheduleDates(['sunday'], '14:00', '15:00', false)
+		expect(result).toEqual([
+			{
+				startTime: new Date(
+					FIXED_NOW.getFullYear(),
+					FIXED_NOW.getMonth(),
+					1,
+					14,
+					0,
+				),
+				endTime: new Date(
+					FIXED_NOW.getFullYear(),
+					FIXED_NOW.getMonth(),
+					1,
+					15,
+					0,
+				),
+			},
+		])
 	})
 })
