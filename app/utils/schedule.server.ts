@@ -1,4 +1,4 @@
-import { addMonths, addDays } from 'date-fns'
+import { addMonths, addDays, set } from 'date-fns'
 import { getHoursAndMinutes } from './schedule'
 
 export const REPEAT_WEEKS = 52
@@ -15,22 +15,13 @@ export const DAYS = [
 ] as const
 export type TDay = (typeof DAYS)[number]
 
-export function isValidTime(time: string): boolean {
-	const [hours, minutes] = time.split(':').map(Number)
-	//check undefined or NaN
-	if (hours === undefined || minutes === undefined) return false
-	if (isNaN(hours) || isNaN(minutes)) return false
-	if (hours < 0 || hours > 23) return false
-	if (minutes < 0 || minutes > 59) return false
-	return true
-}
-
 export function getMonthlyScheduleDates(
 	date?: Date,
 	startTime?: string,
 	endTime?: string,
 	isRepetitiveMonth?: boolean,
-) {
+): { startTime: Date; endTime: Date }[] {
+	// Early return for invalid inputs
 	if (
 		!date ||
 		!startTime ||
@@ -41,71 +32,69 @@ export function getMonthlyScheduleDates(
 		return []
 	}
 
-	console.log({ date, startTime, endTime, isRepetitiveMonth })
+	const [startHours, startMinutes] = parseTime(startTime)
+	const [endHours, endMinutes] = parseTime(endTime)
 
-	// Parse the time components from the strings
-	const [startHours, startMinutes] = startTime.split(':').map(Number)
-	const [endHours, endMinutes] = endTime.split(':').map(Number)
+	// Handle invalid time parsing
+	if (startHours === null || endHours === null) return []
 
-	if (
-		startHours === undefined ||
-		startMinutes === undefined ||
-		endHours === undefined ||
-		endMinutes === undefined
-	) {
-		return []
-	}
+	// Create base dates
+	const baseStart = setTime(new Date(date), startHours, startMinutes ?? 0)
+	const baseEnd = setTime(new Date(date), endHours, endMinutes ?? 0)
 
-	// Create base date with the time components
-	const baseStartDate = new Date(date)
-	baseStartDate.setUTCHours(startHours, startMinutes, 0, 0)
-
-	const baseEndDate = new Date(date)
-	baseEndDate.setUTCHours(endHours, endMinutes, 0, 0)
-
-	// If not repetitive, just return the single date
 	if (!isRepetitiveMonth) {
-		return [
-			{
-				startTime: baseStartDate,
-				endTime: baseEndDate,
-			},
-		]
+		return validateDates(baseStart, baseEnd)
+			? [{ startTime: baseStart, endTime: baseEnd }]
+			: []
 	}
 
-	// For repetitive monthly schedules, generate for the next 12 months
-	const schedules: { startTime: Date; endTime: Date }[] = []
-	const currentYear = date.getFullYear()
-	const currentMonth = date.getMonth()
-	const dayOfMonth = date.getDate()
+	// Generate repetitive schedules
+	return Array.from({ length: 12 }, (_, i) => {
+		const newDate = addMonths(date, i)
+		const start = setTime(newDate, startHours, startMinutes ?? 0)
+		const end = setTime(newDate, endHours, endMinutes ?? 0)
+		return { startTime: start, endTime: end }
+	}).filter(({ startTime, endTime }) => validateDates(startTime, endTime))
+}
 
-	for (let i = 0; i < 12; i++) {
-		const month = currentMonth + i
-		const year = currentYear + Math.floor(month / 12)
-		const adjustedMonth = month % 12
+// Helper functions
+function parseTime(time: string): [number | null, number | null] {
+	const [hours, minutes] = time.split(':').map(Number)
+	// Validate hours and minutes
+	if (
+		hours === undefined ||
+		minutes === undefined ||
+		isNaN(hours) ||
+		isNaN(minutes)
+	)
+		return [null, null]
+	return [
+		Number.isInteger(hours) && hours >= 0 && hours < 24 ? hours : null,
+		Number.isInteger(minutes) && minutes >= 0 && minutes < 60 ? minutes : null,
+	]
+}
 
-		// Create the date for this month
-		const startDate = new Date(year, adjustedMonth, dayOfMonth)
-		startDate.setHours(startHours, startMinutes, 0, 0)
+function setTime(date: Date, hours: number, minutes: number): Date {
+	return set(date, { hours, minutes, seconds: 0, milliseconds: 0 })
+}
 
-		const endDate = new Date(year, adjustedMonth, dayOfMonth)
-		endDate.setHours(endHours, endMinutes, 0, 0)
+function validateDates(start: Date, end: Date): boolean {
+	return start.getTime() <= end.getTime()
+}
 
-		console.log(startDate, endDate, dayOfMonth)
+function addMonths(date: Date, months: number): Date {
+	const result = new Date(date)
+	result.setMonth(result.getMonth() + months)
 
-		// Handle cases where the date might be invalid (e.g., Feb 31)
-		if (
-			startDate.getUTCDate() === dayOfMonth &&
-			endDate.getUTCDate() === dayOfMonth
-		) {
-			schedules.push({
-				startTime: startDate,
-				endTime: endDate,
-			})
-		}
+	// Handle month overflow (e.g., Jan 31 + 1 month = Feb 28/29)
+	if (result.getDate() !== date.getDate()) {
+		result.setDate(0) // Set to last day of previous month
 	}
+	return result
+}
 
-	return schedules
+export function isValidTime(time: string): boolean {
+	return /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(time)
 }
 
 export function getWeeklyScheduleDates(

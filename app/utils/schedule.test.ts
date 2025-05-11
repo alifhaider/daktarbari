@@ -105,14 +105,14 @@ describe('isValidTime', () => {
 		expect(isValidTime('abc')).toBe(false)
 		expect(isValidTime('12')).toBe(false)
 		expect(isValidTime('')).toBe(false)
+		expect(isValidTime('12:0')).toBe(false)
+		expect(isValidTime('12:0:0')).toBe(false)
+		expect(isValidTime('12:00:00')).toBe(false)
+		expect(isValidTime('12:00:00')).toBe(false)
 	})
 
 	it('should return true if time is valid', () => {
 		expect(isValidTime('14:00')).toBe(true)
-		expect(isValidTime('12:0')).toBe(true)
-		expect(isValidTime('12:0:0')).toBe(true)
-		expect(isValidTime('12:00:00')).toBe(true)
-		expect(isValidTime('12:00:00')).toBe(true)
 		expect(isValidTime('23:59')).toBe(true)
 	})
 })
@@ -136,8 +136,8 @@ describe('getMonthlyScheduleDates', () => {
 		)
 		expect(result).toEqual([
 			{
-				startTime: new Date('2023-10-01T14:00:00.000Z'),
-				endTime: new Date('2023-10-01T15:00:00.000Z'),
+				startTime: new Date(2023, 9, 1, 14, 0), // Oct = 9 (0-based)
+				endTime: new Date(2023, 9, 1, 15, 0),
 			},
 		])
 	})
@@ -149,15 +149,16 @@ describe('getMonthlyScheduleDates', () => {
 			'15:00',
 			true,
 		)
-		expect(result).toEqual(
-			Array.from({ length: 12 }, (_, i) => ({
-				startTime: new Date(
-					`2023-${(i + 10).toString().padStart(2, '0')}-01T14:00:00.000Z`,
-				),
-				endTime: new Date(
-					`2023-${(i + 10).toString().padStart(2, '0')}-01T15:00:00.000Z`,
-				),
-			})),
-		)
+
+		const expected = Array.from({ length: 12 }, (_, i) => {
+			const year = 2023 + Math.floor((i + 9) / 12) // handle year rollover
+			const month = (i + 9) % 12 // 0-indexed month
+			return {
+				startTime: new Date(year, month, 1, 14, 0),
+				endTime: new Date(year, month, 1, 15, 0),
+			}
+		})
+
+		expect(result).toEqual(expected)
 	})
 })
