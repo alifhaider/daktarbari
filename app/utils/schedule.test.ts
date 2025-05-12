@@ -3,6 +3,7 @@ import { getNextDateSchedules } from './schedule'
 import {
 	getMonthlyScheduleDates,
 	getWeeklyScheduleDates,
+	isOverlapping,
 	isValidTime,
 } from './schedule.server'
 import { addDays, set } from 'date-fns'
@@ -387,5 +388,117 @@ describe('getWeeklyScheduleDates', () => {
 		const dayDiff =
 			(lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24)
 		expect(dayDiff).toBeCloseTo(357, 0) // Allowing slight variance for DST
+	})
+})
+
+describe('isOverlapping', () => {
+	const baseDate = new Date('2023-06-15T00:00:00Z')
+
+	it('should return false for different locations', () => {
+		const existing = {
+			startTime: new Date(baseDate),
+			endTime: new Date(baseDate.getTime() + 60 * 60 * 1000), // +1 hour
+			locationId: 'room1',
+		}
+		const newSchedule = {
+			startTime: new Date(baseDate),
+			endTime: new Date(baseDate.getTime() + 30 * 60 * 1000), // +30 mins
+			locationId: 'room2', // Different location
+		}
+		expect(isOverlapping(existing, newSchedule)).toBe(false)
+	})
+
+	it('should return true for exact same time slots', () => {
+		const existing = {
+			startTime: new Date(baseDate),
+			endTime: new Date(baseDate.getTime() + 60 * 60 * 1000),
+			locationId: 'room1',
+		}
+		const newSchedule = { ...existing } // Exact copy
+		expect(isOverlapping(existing, newSchedule)).toBe(true)
+	})
+
+	it('should return true for partial overlap (new starts during existing)', () => {
+		const existing = {
+			startTime: new Date(baseDate),
+			endTime: new Date(baseDate.getTime() + 60 * 60 * 1000),
+			locationId: 'room1',
+		}
+		const newSchedule = {
+			startTime: new Date(baseDate.getTime() + 30 * 60 * 1000), // Starts 30 mins in
+			endTime: new Date(baseDate.getTime() + 90 * 60 * 1000), // Ends 30 mins after
+			locationId: 'room1',
+		}
+		expect(isOverlapping(existing, newSchedule)).toBe(true)
+	})
+
+	it('should return true for new schedule completely containing existing', () => {
+		const existing = {
+			startTime: new Date(baseDate.getTime() + 30 * 60 * 1000),
+			endTime: new Date(baseDate.getTime() + 60 * 60 * 1000),
+			locationId: 'room1',
+		}
+		const newSchedule = {
+			startTime: new Date(baseDate), // Starts before
+			endTime: new Date(baseDate.getTime() + 90 * 60 * 1000), // Ends after
+			locationId: 'room1',
+		}
+		expect(isOverlapping(existing, newSchedule)).toBe(true)
+	})
+
+	it('should return false for adjacent but non-overlapping schedules', () => {
+		const existing = {
+			startTime: new Date(baseDate),
+			endTime: new Date(baseDate.getTime() + 60 * 60 * 1000),
+			locationId: 'room1',
+		}
+		const newSchedule = {
+			startTime: new Date(baseDate.getTime() + 60 * 60 * 1000), // Starts exactly when existing ends
+			endTime: new Date(baseDate.getTime() + 120 * 60 * 1000),
+			locationId: 'room1',
+		}
+		expect(isOverlapping(existing, newSchedule)).toBe(false)
+	})
+
+	it('should return false for completely separate times', () => {
+		const existing = {
+			startTime: new Date(baseDate),
+			endTime: new Date(baseDate.getTime() + 60 * 60 * 1000),
+			locationId: 'room1',
+		}
+		const newSchedule = {
+			startTime: new Date(baseDate.getTime() + 120 * 60 * 1000), // 2 hours later
+			endTime: new Date(baseDate.getTime() + 180 * 60 * 1000),
+			locationId: 'room1',
+		}
+		expect(isOverlapping(existing, newSchedule)).toBe(false)
+	})
+
+	it('should handle overnight schedules correctly', () => {
+		const existing = {
+			startTime: new Date('2023-06-15T22:00:00Z'),
+			endTime: new Date('2023-06-16T02:00:00Z'), // Overnight
+			locationId: 'room1',
+		}
+		const newSchedule = {
+			startTime: new Date('2023-06-16T01:00:00Z'), // Starts during existing
+			endTime: new Date('2023-06-16T03:00:00Z'),
+			locationId: 'room1',
+		}
+		expect(isOverlapping(existing, newSchedule)).toBe(true)
+	})
+
+	it('should return false for zero-duration schedules', () => {
+		const existing = {
+			startTime: new Date(baseDate),
+			endTime: new Date(baseDate), // Instantaneous
+			locationId: 'room1',
+		}
+		const newSchedule = {
+			startTime: new Date(baseDate),
+			endTime: new Date(baseDate),
+			locationId: 'room1',
+		}
+		expect(isOverlapping(existing, newSchedule)).toBe(false)
 	})
 })

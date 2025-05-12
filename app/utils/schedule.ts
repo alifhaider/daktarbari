@@ -1,3 +1,13 @@
+export const DAYS = [
+	'sunday',
+	'monday',
+	'tuesday',
+	'wednesday',
+	'thursday',
+	'friday',
+	'saturday',
+] as const
+
 // returns all schedules that have not ended yet
 export function getUpcomingSchedules<
 	T extends { startTime: Date | string; endTime: Date | string },

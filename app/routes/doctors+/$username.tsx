@@ -645,7 +645,7 @@ const Schedules = ({ schedules, isOwner, username }: ScheduleProps) => {
 			{isOwner ? (
 				<div className="flex items-center">
 					<Button asChild size="default" className="mt-6">
-						<Link to="/add/schedule">Create a new schedule plan</Link>
+						<Link to="/schedules/add">Create a new schedule plan</Link>
 					</Button>
 				</div>
 			) : null}

@@ -1,13 +1,46 @@
+import {
+	type FieldMetadata,
+	getFormProps,
+	getInputProps,
+	useForm,
+} from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod'
-import { type MetaFunction } from 'react-router'
+import { format } from 'date-fns'
+import { useState } from 'react'
+import { data, Form, Link, type MetaFunction } from 'react-router'
 import { z } from 'zod'
+import { ErrorList, Field } from '#app/components/forms.tsx'
+import { Spacer } from '#app/components/spacer.tsx'
+import { Button } from '#app/components/ui/button.tsx'
+import { Calendar } from '#app/components/ui/calendar.tsx'
+import { Icon } from '#app/components/ui/icon.tsx'
+import { Label } from '#app/components/ui/label.tsx'
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from '#app/components/ui/popover.tsx'
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '#app/components/ui/select.tsx'
 import { requireDoctor } from '#app/utils/auth.server.ts'
-import { type Route } from './+types/add'
+import { prisma } from '#app/utils/db.server.ts'
+import { cn } from '#app/utils/misc.tsx'
 import {
 	getMonthlyScheduleDates,
 	getWeeklyScheduleDates,
+	isOverlapping,
 } from '#app/utils/schedule.server.ts'
-import { prisma } from '#app/utils/db.server.ts'
+import { DAYS } from '#app/utils/schedule.ts'
+import { redirectWithToast } from '#app/utils/toast.server.ts'
+import { LocationCombobox } from '../resources+/location-combobox'
+import { type Route } from './+types/add'
+import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { Checkbox } from '#app/components/ui/checkbox.tsx'
 
 export const meta: MetaFunction = () => {
 	return [{ title: 'Schedule / CH' }]
@@ -120,40 +153,25 @@ export async function action({ request }: Route.ActionArgs) {
 
 				const existingSchedules = await prisma.schedule.findMany({
 					where: {
-						doctorId: data.userId,
-						startTime: {
-							in: scheduleDates.map((date) => new Date(date)),
-						},
-						endTime: {
-							in: scheduleDates.map((date) => new Date(date)),
-						},
+						locationId,
+						OR: newSchedules.map((schedule) => ({
+							startTime: { lt: schedule.endTime },
+							endTime: { gt: schedule.startTime },
+						})),
 					},
 				})
 
-				const isScheduleOverlapped = checkOverlapSchedule(
-					scheduleDates,
-					existingSchedules,
-					startTime,
-					endTime,
+				const nonOverlappingSchedules = newSchedules.filter(
+					(newSchedule) =>
+						!existingSchedules.some((existing) =>
+							isOverlapping(existing, newSchedule),
+						),
 				)
 
-				// Check if any of the results are `true`
-				const hasOverlap = isScheduleOverlapped.some(Boolean)
-
-				if (hasOverlap) {
-					ctx.addIssue({
-						path: ['form'],
-						code: 'custom',
-						message: 'Schedule is overlapped with another schedule',
-					})
-					return z.NEVER
-				}
-
-				const schedules = await prisma.schedule.createMany({
-					data: scheduleDates.map((date) => ({
+				const createdSchedules = await prisma.schedule.createMany({
+					data: nonOverlappingSchedules.map(() => ({
 						doctorId: data.userId,
 						locationId,
-						date: new Date(date),
 						startTime,
 						endTime,
 						maxAppointments: data.maxAppointment,
@@ -163,7 +181,7 @@ export async function action({ request }: Route.ActionArgs) {
 					})),
 				})
 
-				if (!schedules) {
+				if (!createdSchedules) {
 					ctx.addIssue({
 						path: ['form'],
 						code: 'custom',
@@ -172,7 +190,19 @@ export async function action({ request }: Route.ActionArgs) {
 					return z.NEVER
 				}
 
-				return { ...data, schedule: schedules }
+				const skippedCount =
+					newSchedules.length - nonOverlappingSchedules.length
+				const message =
+					skippedCount > 0
+						? `Created ${createdSchedules.count} schedules. ${skippedCount} schedules were skipped due to conflicts.`
+						: `Successfully created ${createdSchedules.count} schedules.`
+
+				return {
+					...data,
+					schedule: createdSchedules,
+					message,
+					createdCount: createdSchedules.count,
+				}
 			}),
 		async: true,
 	})
@@ -186,8 +216,9 @@ export async function action({ request }: Route.ActionArgs) {
 		)
 	}
 	const { username } = submission.value
-	return redirectWithSuccess(`/profile/${username}`, {
-		message: 'Schedule created successfully',
+	return redirectWithToast(`/profile/${username}`, {
+		title: 'Schedule created successfully',
+		description: submission.value.message,
 	})
 }
 
@@ -212,11 +243,10 @@ export default function AddSchedule({
 
 	return (
 		<>
-			<Spacer variant="lg" />
 			<div className="mx-auto max-w-7xl">
-				<PageTitle>Add Schedule</PageTitle>
-				<HelpText />
-				<Spacer variant="lg" />
+				<h2>Add Schedule</h2>
+				{/* <HelpText /> */}
+				<Spacer size="sm" />
 				<Form method="post" className="space-y-8" {...getFormProps(form)}>
 					<div className="grid grid-cols-1 gap-12 align-top md:grid-cols-2">
 						<input
@@ -298,7 +328,7 @@ export default function AddSchedule({
 													!date && 'text-muted-foreground',
 												)}
 											>
-												<CalendarIcon className="mr-2 h-4 w-4" />
+												<Icon name="calendar" className="mr-2 h-4 w-4" />
 												{date ? format(date, 'PPP') : <span>Pick a date</span>}
 											</Button>
 										</PopoverTrigger>
@@ -408,7 +438,7 @@ export default function AddSchedule({
 					</div>
 				</Form>
 			</div>
-			<Spacer variant="lg" />
+			<Spacer size="lg" />
 		</>
 	)
 }
@@ -417,55 +447,55 @@ type CheckboxProps = {
 	label: string
 }
 
-function HelpText() {
-	return (
-		<div className="text-secondary-foreground mt-6 max-w-5xl space-y-1 text-sm">
-			<Accordion type="single" collapsible className="w-full">
-				<AccordionItem value="item-1">
-					<AccordionTrigger className="text-lg">
-						How create schedule works?
-					</AccordionTrigger>
-					<AccordionContent className="space-y-2">
-						<p>
-							A schedule is a set of days and times when you are available for
-							appointments. You can create multiple schedules for different
-							locations.
-						</p>
-						<p>
-							For example, you can{' '}
-							<strong className="text-base">
-								create a schedule for your office location and another schedule
-								for your home location.
-							</strong>
-						</p>
-						<p>
-							Each schedule can have{' '}
-							<strong className="text-base">
-								{' '}
-								different days, times, and maximum appointments per day.
-							</strong>
-						</p>
-						<p>
-							When you create a schedule, patients can book appointments with
-							you during the times you have set. In between{' '}
-							<strong className="text-base">Start Time</strong> and{' '}
-							<strong className="text-base">End Time</strong> are the times when
-							you are available for appointments.
-						</p>
-						<p>
-							Once you create a schedule, you can view and edit it on your{' '}
-							<strong className="text-base">profile page.</strong>
-						</p>
-						<p>
-							While creating a schedule you need to provide the following
-							information:
-						</p>
-					</AccordionContent>
-				</AccordionItem>
-			</Accordion>
-		</div>
-	)
-}
+// function HelpText() {
+// 	return (
+// 		<div className="text-secondary-foreground mt-6 max-w-5xl space-y-1 text-sm">
+// 			<Accordion type="single" collapsible className="w-full">
+// 				<AccordionItem value="item-1">
+// 					<AccordionTrigger className="text-lg">
+// 						How create schedule works?
+// 					</AccordionTrigger>
+// 					<AccordionContent className="space-y-2">
+// 						<p>
+// 							A schedule is a set of days and times when you are available for
+// 							appointments. You can create multiple schedules for different
+// 							locations.
+// 						</p>
+// 						<p>
+// 							For example, you can{' '}
+// 							<strong className="text-base">
+// 								create a schedule for your office location and another schedule
+// 								for your home location.
+// 							</strong>
+// 						</p>
+// 						<p>
+// 							Each schedule can have{' '}
+// 							<strong className="text-base">
+// 								{' '}
+// 								different days, times, and maximum appointments per day.
+// 							</strong>
+// 						</p>
+// 						<p>
+// 							When you create a schedule, patients can book appointments with
+// 							you during the times you have set. In between{' '}
+// 							<strong className="text-base">Start Time</strong> and{' '}
+// 							<strong className="text-base">End Time</strong> are the times when
+// 							you are available for appointments.
+// 						</p>
+// 						<p>
+// 							Once you create a schedule, you can view and edit it on your{' '}
+// 							<strong className="text-base">profile page.</strong>
+// 						</p>
+// 						<p>
+// 							While creating a schedule you need to provide the following
+// 							information:
+// 						</p>
+// 					</AccordionContent>
+// 				</AccordionItem>
+// 			</Accordion>
+// 		</div>
+// 	)
+// }
 
 function RepeatCheckbox({ field, label }: CheckboxProps) {
 	return (
@@ -474,7 +504,6 @@ function RepeatCheckbox({ field, label }: CheckboxProps) {
 				htmlFor={field.id}
 				className="flex items-center space-x-1 text-sm leading-none font-medium capitalize peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 			>
-				{/* @ts-expect-error @ts-ignore */}
 				<Checkbox
 					className="rounded-full"
 					{...getInputProps(field, { type: 'checkbox' })}
@@ -486,13 +515,5 @@ function RepeatCheckbox({ field, label }: CheckboxProps) {
 }
 
 export function ErrorBoundary() {
-	return (
-		<div className="container mx-auto flex flex-col items-center justify-center p-20">
-			<PageTitle>404</PageTitle>
-			<p className="text-center text-4xl font-bold">Content not found</p>
-			<Link to="/" className="text-center text-lg underline">
-				Go back
-			</Link>
-		</div>
-	)
+	return <GeneralErrorBoundary />
 }

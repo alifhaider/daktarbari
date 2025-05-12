@@ -1,18 +1,9 @@
-import { addMonths, addDays, set, nextDay, addWeeks, type Day } from 'date-fns'
-import { getHoursAndMinutes } from './schedule'
+import { addMonths, set, nextDay, addWeeks, type Day } from 'date-fns'
+import { DAYS } from './schedule'
 
 export const REPEAT_WEEKS = 52
 export const REPEAT_MONTHS = 12
 
-export const DAYS = [
-	'sunday',
-	'monday',
-	'tuesday',
-	'wednesday',
-	'thursday',
-	'friday',
-	'saturday',
-] as const
 export type TDay = (typeof DAYS)[number]
 
 export function getMonthlyScheduleDates(
@@ -181,64 +172,3 @@ export function isOverlapping(
 		newSchedule.endTime > existing.startTime
 	)
 }
-
-// export function checkOverlapSchedule<
-// 	T extends { startTime: Date | string; endTime: Date | string },
-// >(
-// 	scheduleDates: Date[],
-// 	schedules: T[],
-// 	startTime: Date | string,
-// 	endTime: Date | string,
-// ) {
-// 	return scheduleDates.map((date) => {
-// 		// Get the schedules for the current date
-// 		const schedulesForDate = schedules.filter((schedule) => {
-// 			return (
-// 				schedule.date.toISOString().slice(0, 10) ===
-// 				new Date(date).toISOString().slice(0, 10)
-// 			)
-// 		})
-
-// 		// Convert the times to Date objects for comparison
-// 		const [formStartHour, formStartMin] = getHoursAndMinutes(startTime)
-// 		const [formEndHour, formEndMin] = getHoursAndMinutes(endTime)
-
-// 		// Create time objects with the correct day
-// 		const formStartTime = new Date(
-// 			new Date(date).setHours(formStartHour, formStartMin, 0, 0),
-// 		)
-// 		const formEndTime = new Date(
-// 			new Date(date).setHours(formEndHour, formEndMin, 0, 0),
-// 		)
-
-// 		// Check for overlaps
-// 		const isOverlapped = schedulesForDate.some((schedule) => {
-// 			const [scheduleStartHour, scheduleStartMin] = schedule.startTime
-// 				.split(':')
-// 				.map(Number)
-// 			const [scheduleEndHour, scheduleEndMin] = schedule.endTime
-// 				.split(':')
-// 				.map(Number)
-
-// 			const scheduleStartTime = new Date(
-// 				new Date(schedule.date).setHours(
-// 					scheduleStartHour,
-// 					scheduleStartMin,
-// 					0,
-// 					0,
-// 				),
-// 			)
-// 			const scheduleEndTime = new Date(
-// 				new Date(schedule.date).setHours(scheduleEndHour, scheduleEndMin, 0, 0),
-// 			)
-
-// 			return (
-// 				(formStartTime >= scheduleStartTime &&
-// 					formStartTime <= scheduleEndTime) || // Form start time overlaps
-// 				(formEndTime >= scheduleStartTime && formEndTime <= scheduleEndTime) // Form end time overlaps
-// 			)
-// 		})
-
-// 		return isOverlapped
-// 	})
-// }
