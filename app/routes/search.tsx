@@ -3,14 +3,8 @@ import { parseWithZod } from '@conform-to/zod'
 import { searchDoctors } from '@prisma/client/sql'
 import { SlidersHorizontal } from 'lucide-react'
 import { Img } from 'openimg/react'
-import {
-	data,
-	Form,
-	Link,
-	redirect,
-	useFetcher,
-	useSearchParams,
-} from 'react-router'
+import { useEffect, useRef, useState } from 'react'
+import { data, Form, Link, useFetcher, useSearchParams } from 'react-router'
 import { z } from 'zod'
 import { ErrorList } from '#app/components/forms.tsx'
 import { Button } from '#app/components/ui/button.tsx'
@@ -27,7 +21,6 @@ import {
 import { type Route } from './+types/search'
 import { LocationCombobox } from './resources+/location-combobox'
 import { SpecialtyCombobox } from './resources+/specialty-combobox'
-import { useCallback, useEffect, useRef, useState } from 'react'
 
 export const SearchPageSchema = z.object({
 	name: z.string().optional(),

@@ -9,7 +9,7 @@ import { format } from 'date-fns'
 import { useState } from 'react'
 import { data, Form, Link, type MetaFunction } from 'react-router'
 import { z } from 'zod'
-import { ErrorList, Field } from '#app/components/forms.tsx'
+import { CheckboxField, ErrorList, Field } from '#app/components/forms.tsx'
 import { Spacer } from '#app/components/spacer.tsx'
 import { Button } from '#app/components/ui/button.tsx'
 import { Calendar } from '#app/components/ui/calendar.tsx'
@@ -121,6 +121,7 @@ export const ScheduleSchema = z
 
 export async function action({ request }: Route.ActionArgs) {
 	await requireDoctor(request)
+	console.log('submitting schedule')
 	const formData = await request.formData()
 
 	const submission = await parseWithZod(formData, {
@@ -142,6 +143,15 @@ export async function action({ request }: Route.ActionArgs) {
 							endTime,
 							isRepetiveWeek,
 						)
+
+				if (potentialSchedules.length === 0) {
+					ctx.addIssue({
+						path: ['form'],
+						code: 'custom',
+						message: 'No valid schedules found',
+					})
+				}
+				console.log('potentialSchedules', potentialSchedules)
 
 				const newSchedules = potentialSchedules.map(
 					({ startTime, endTime }) => ({
@@ -169,11 +179,11 @@ export async function action({ request }: Route.ActionArgs) {
 				)
 
 				const createdSchedules = await prisma.schedule.createMany({
-					data: nonOverlappingSchedules.map(() => ({
+					data: nonOverlappingSchedules.map((schedule) => ({
 						doctorId: data.userId,
 						locationId,
-						startTime,
-						endTime,
+						startTime: schedule.startTime,
+						endTime: schedule.endTime,
 						maxAppointments: data.maxAppointment,
 						visitFee: data.visitingFee,
 						serialFee: data.serialFee,
@@ -357,17 +367,17 @@ export default function AddSchedule({
 										<ul className="grid grid-cols-3 gap-x-4 gap-y-2">
 											{DAYS.map((day) => (
 												<li key={day} className="flex space-x-2">
-													<label className="flex items-center space-x-2 text-sm leading-none font-medium capitalize peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-														{/* @ts-expect-error @ts-ignore */}
-														<Checkbox
-															{...getInputProps(fields.weeklyDays, {
-																type: 'checkbox',
-																value: day,
-															})}
-														/>
-
-														<span>{day}</span>
-													</label>
+													<CheckboxField
+														labelProps={{
+															htmlFor: fields.weeklyDays.id,
+															children: day,
+														}}
+														buttonProps={getInputProps(fields.weeklyDays, {
+															type: 'checkbox',
+															value: day,
+														})}
+														errors={fields.weeklyDays.errors}
+													/>
 												</li>
 											))}
 										</ul>
@@ -429,8 +439,13 @@ export default function AddSchedule({
 						</div>
 					</div>
 
-					<div className="mt-12 flex items-center justify-center">
+					<div className="mt-12 flex items-center justify-center gap-4">
 						<Button type="submit">Create Schedule</Button>
+						<Button asChild variant="outline">
+							<Link to={`/doctors/${username}/schedules/preview`}>
+								Preview Schedule
+							</Link>
+						</Button>
 					</div>
 
 					<div className="mt-4 flex items-center justify-center">
@@ -500,16 +515,16 @@ type CheckboxProps = {
 function RepeatCheckbox({ field, label }: CheckboxProps) {
 	return (
 		<div className="items-top flex space-x-2">
-			<label
-				htmlFor={field.id}
-				className="flex items-center space-x-1 text-sm leading-none font-medium capitalize peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-			>
-				<Checkbox
-					className="rounded-full"
-					{...getInputProps(field, { type: 'checkbox' })}
-				/>
-				<span className="text-sm">{label}</span>
-			</label>
+			<CheckboxField
+				labelProps={{
+					htmlFor: field.id,
+					children: label,
+				}}
+				buttonProps={getInputProps(field, { type: 'checkbox' })}
+				className="rounded-full"
+				errors={field.errors}
+			/>
+			<span className="text-sm">{label}</span>
 		</div>
 	)
 }
