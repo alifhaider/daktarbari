@@ -512,6 +512,9 @@ type CheckboxProps = {
 // 	)
 // }
 
+// TODO: mac has a problem with the checkbox
+//       it doesn't display the checkbox with appropriate styles.
+//       Probably a bug in the browser cache
 function RepeatCheckbox({ field, label }: CheckboxProps) {
 	return (
 		<div className="items-top flex space-x-2">
@@ -521,7 +524,7 @@ function RepeatCheckbox({ field, label }: CheckboxProps) {
 					children: label,
 				}}
 				buttonProps={getInputProps(field, { type: 'checkbox' })}
-				className="rounded-full"
+				className="rounded-full capitalize"
 				errors={field.errors}
 			/>
 			<span className="text-sm">{label}</span>
