@@ -99,7 +99,7 @@ export default function LoginPage({ actionData }: Route.ComponentProps) {
 	})
 
 	return (
-		<div className="flex min-h-full flex-col justify-center pb-32 pt-20">
+		<div className="flex min-h-full flex-col justify-center pt-20 pb-32">
 			<div className="mx-auto w-full max-w-md">
 				<div className="flex flex-col gap-3 text-center">
 					<h1 className="text-h1">Welcome back!</h1>
@@ -138,6 +138,7 @@ export default function LoginPage({ actionData }: Route.ComponentProps) {
 							<div className="flex justify-between">
 								<CheckboxField
 									labelProps={{
+										className: 'text-muted-foreground',
 										htmlFor: fields.remember.id,
 										children: 'Remember me',
 									}}
@@ -149,7 +150,7 @@ export default function LoginPage({ actionData }: Route.ComponentProps) {
 								<div>
 									<Link
 										to="/forgot-password"
-										className="text-body-xs font-semibold"
+										className="text-body-xs text-brand/90 hover:text-brand/80 font-semibold underline"
 									>
 										Forgot password?
 									</Link>

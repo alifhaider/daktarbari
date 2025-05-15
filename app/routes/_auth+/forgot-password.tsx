@@ -14,6 +14,7 @@ import { checkHoneypot } from '#app/utils/honeypot.server.ts'
 import { EmailSchema, UsernameSchema } from '#app/utils/user-validation.ts'
 import { type Route } from './+types/forgot-password.ts'
 import { prepareVerification } from './verify.server.ts'
+import { Icon } from '#app/components/ui/icon.tsx'
 
 export const handle: SEOHandle = {
 	getSitemapEntries: () => null,
@@ -131,15 +132,15 @@ export default function ForgotPasswordRoute() {
 	})
 
 	return (
-		<div className="container pb-32 pt-20">
+		<div className="container pt-20 pb-32">
 			<div className="flex flex-col justify-center">
 				<div className="text-center">
 					<h1 className="text-h1">Forgot Password</h1>
-					<p className="mt-3 text-body-md text-muted-foreground">
+					<p className="text-body-md text-muted-foreground mt-3">
 						No worries, we'll send you reset instructions.
 					</p>
 				</div>
-				<div className="mx-auto mt-16 min-w-full max-w-sm sm:min-w-[368px]">
+				<div className="mx-auto mt-16 max-w-sm min-w-full sm:min-w-[368px]">
 					<forgotPassword.Form method="POST" {...getFormProps(form)}>
 						<HoneypotInputs />
 						<div>
@@ -157,7 +158,7 @@ export default function ForgotPasswordRoute() {
 						</div>
 						<ErrorList errors={form.errors} id={form.errorId} />
 
-						<div className="mt-6">
+						<div className="mt-6 mb-11">
 							<StatusButton
 								className="w-full"
 								status={
@@ -174,9 +175,12 @@ export default function ForgotPasswordRoute() {
 					</forgotPassword.Form>
 					<Link
 						to="/login"
-						className="mt-11 text-center text-body-sm font-bold"
+						className="text-body-xs text-brand/80 group hover:text-brand/100 flex items-center text-center font-bold underline transition-all duration-200 ease-in-out"
 					>
-						Back to Login
+						<div className="mr-1 group-hover:-ml-1">
+							<Icon name="arrow-left" />
+						</div>
+						<div className="ml-1 group-hover:translate-x-1">Back to Login</div>
 					</Link>
 				</div>
 			</div>

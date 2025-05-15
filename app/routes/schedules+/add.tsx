@@ -383,6 +383,7 @@ export default function AddSchedule({
 												<li key={day} className="flex space-x-2">
 													<CheckboxField
 														labelProps={{
+															className: 'text-sm font-bold text-primary',
 															htmlFor: fields.weeklyDays.id,
 															children: day,
 														}}

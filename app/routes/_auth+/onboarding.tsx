@@ -151,7 +151,7 @@ export default function OnboardingRoute({
 	})
 
 	return (
-		<div className="container flex min-h-full flex-col justify-center pb-32 pt-20">
+		<div className="container flex min-h-full flex-col justify-center pt-20 pb-32">
 			<div className="mx-auto w-full max-w-lg">
 				<div className="flex flex-col gap-3 text-center">
 					<h1 className="text-h1">Welcome aboard {loaderData.email}!</h1>
@@ -162,7 +162,7 @@ export default function OnboardingRoute({
 				<Spacer size="xs" />
 				<Form
 					method="POST"
-					className="mx-auto min-w-full max-w-sm sm:min-w-[368px]"
+					className="mx-auto max-w-sm min-w-full sm:min-w-[368px]"
 					{...getFormProps(form)}
 				>
 					<HoneypotInputs />
@@ -206,6 +206,7 @@ export default function OnboardingRoute({
 
 					<CheckboxField
 						labelProps={{
+							className: 'text-muted-foreground',
 							htmlFor: fields.agreeToTermsOfServiceAndPrivacyPolicy.id,
 							children:
 								'Do you agree to our Terms of Service and Privacy Policy?',
@@ -218,6 +219,7 @@ export default function OnboardingRoute({
 					/>
 					<CheckboxField
 						labelProps={{
+							className: 'text-muted-foreground',
 							htmlFor: fields.remember.id,
 							children: 'Remember me',
 						}}
