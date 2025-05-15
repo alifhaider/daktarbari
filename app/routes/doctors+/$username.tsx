@@ -10,14 +10,7 @@ import { format } from 'date-fns'
 import { Img } from 'openimg/react'
 import React, { useState } from 'react'
 import { type DayProps } from 'react-day-picker'
-import {
-	data,
-	Form,
-	Link,
-	useActionData,
-	useFetcher,
-	useLoaderData,
-} from 'react-router'
+import { data, Form, Link, useFetcher, useLoaderData } from 'react-router'
 import { z } from 'zod'
 import { ErrorList, TextareaField } from '#app/components/forms.tsx'
 import { Spacer } from '#app/components/spacer.tsx'
@@ -656,14 +649,12 @@ const Schedules = ({ schedules, isOwner, username }: ScheduleProps) => {
 const ScheduleItem = ({
 	schedule,
 	isOwner,
-	username,
 }: {
 	schedule: Route.ComponentProps['loaderData']['schedules'][number]
 	isOwner: boolean
 	username: string
 }) => {
 	const deleteFetcher = useFetcher()
-	const actionData = useActionData<typeof action>()
 	const [form, fields] = useForm({
 		onValidate({ formData }) {
 			return parseWithZod(formData, {

@@ -200,7 +200,7 @@ function App() {
 		>
 			<div className="flex min-h-screen flex-col justify-between">
 				{isOnSearchPage ? null : (
-					<header className="container py-6">
+					<header className="container px-2 py-6 md:px-3">
 						<nav className="flex flex-wrap items-center justify-between gap-4 sm:flex-nowrap md:gap-8">
 							<Logo />
 							<div className="hidden w-full max-w-sm sm:block">{searchBar}</div>
