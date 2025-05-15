@@ -6,8 +6,15 @@ import {
 } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod'
 import { format } from 'date-fns'
-import { useState } from 'react'
-import { data, Form, Link, type MetaFunction } from 'react-router'
+import { useRef, useState } from 'react'
+import {
+	data,
+	Form,
+	Link,
+	useActionData,
+	useFetcher,
+	type MetaFunction,
+} from 'react-router'
 import { z } from 'zod'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { CheckboxField, ErrorList, Field } from '#app/components/forms.tsx'
@@ -34,6 +41,14 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '#app/components/ui/select.tsx'
+import {
+	Sheet,
+	SheetContent,
+	SheetDescription,
+	SheetHeader,
+	SheetTitle,
+	SheetTrigger,
+} from '#app/components/ui/sheet.tsx'
 import { requireDoctor } from '#app/utils/auth.server.ts'
 import { prisma } from '#app/utils/db.server.ts'
 import { cn } from '#app/utils/misc.tsx'
@@ -43,17 +58,12 @@ import {
 	isOverlapping,
 } from '#app/utils/schedule.server.ts'
 import { DAYS } from '#app/utils/schedule.ts'
-import { redirectWithToast } from '#app/utils/toast.server.ts'
+import {
+	createToastHeaders,
+	redirectWithToast,
+} from '#app/utils/toast.server.ts'
 import { LocationCombobox } from '../resources+/location-combobox'
 import { type Route } from './+types/add'
-import {
-	Sheet,
-	SheetContent,
-	SheetDescription,
-	SheetHeader,
-	SheetTitle,
-	SheetTrigger,
-} from '#app/components/ui/sheet.tsx'
 
 export const meta: MetaFunction = () => {
 	return [{ title: 'Add Schedule / DB' }]
@@ -134,98 +144,29 @@ export const ScheduleSchema = z
 
 export async function action({ request }: Route.ActionArgs) {
 	await requireDoctor(request)
-	console.log('submitting schedule')
 	const formData = await request.formData()
+	const intent = formData.get('intent')
 
+	switch (intent) {
+		case 'preview-schedule':
+			return handleScheduleAction(formData, { preview: true })
+		case 'create-schedule':
+			return handleScheduleAction(formData, { preview: false })
+		default:
+			const toastHeaders = await createToastHeaders({
+				title: 'Invalid action',
+				description: 'You selected an invalid action',
+			})
+			return data({ status: 'error' } as const, { headers: toastHeaders })
+	}
+}
+
+async function handleScheduleAction(
+	formData: FormData,
+	options: { preview: boolean },
+) {
 	const submission = await parseWithZod(formData, {
-		schema: () =>
-			ScheduleSchema.transform(async (data, ctx) => {
-				const weeklyDays = data.weeklyDays
-				const isRepetiveMonth = data.repeatMonths ?? false
-				const isRepetiveWeek = data.repeatWeeks ?? false
-				const oneDay = data.oneDay
-				const startTime = data.startTime
-				const endTime = data.endTime
-				const locationId = data.locationId
-
-				const potentialSchedules = oneDay
-					? getMonthlyScheduleDates(oneDay, startTime, endTime, isRepetiveMonth)
-					: getWeeklyScheduleDates(
-							weeklyDays,
-							startTime,
-							endTime,
-							isRepetiveWeek,
-						)
-
-				if (potentialSchedules.length === 0) {
-					ctx.addIssue({
-						path: ['form'],
-						code: 'custom',
-						message: 'No valid schedules found',
-					})
-				}
-
-				const newSchedules = potentialSchedules.map(
-					({ startTime, endTime }) => ({
-						startTime: new Date(startTime),
-						endTime: new Date(endTime),
-						locationId,
-					}),
-				)
-
-				const existingSchedules = await prisma.schedule.findMany({
-					where: {
-						locationId,
-						OR: newSchedules.map((schedule) => ({
-							startTime: { lt: schedule.endTime },
-							endTime: { gt: schedule.startTime },
-						})),
-					},
-				})
-
-				const nonOverlappingSchedules = newSchedules.filter(
-					(newSchedule) =>
-						!existingSchedules.some((existing) =>
-							isOverlapping(existing, newSchedule),
-						),
-				)
-
-				const createdSchedules = await prisma.schedule.createMany({
-					data: nonOverlappingSchedules.map((schedule) => ({
-						doctorId: data.userId,
-						locationId,
-						startTime: schedule.startTime,
-						endTime: schedule.endTime,
-						maxAppointments: data.maxAppointment,
-						visitFee: data.visitingFee,
-						serialFee: data.serialFee,
-						discountFee: data.discount,
-					})),
-				})
-
-				if (!createdSchedules) {
-					ctx.addIssue({
-						path: ['form'],
-						code: 'custom',
-						message: 'Could not create schedule',
-					})
-					return z.NEVER
-				}
-
-				const skippedCount =
-					newSchedules.length - nonOverlappingSchedules.length
-				const message =
-					skippedCount > 0
-						? `Created ${createdSchedules.count} schedules. ${skippedCount} schedules were skipped due to conflicts.`
-						: `Successfully created ${createdSchedules.count} schedules.`
-
-				return {
-					...data,
-					schedule: createdSchedules,
-					message,
-					createdCount: createdSchedules.count,
-				}
-			}),
+		schema: () => ScheduleSchema.transform(processScheduleData(options)),
 		async: true,
 	})
 
@@ -233,10 +174,20 @@ export async function action({ request }: Route.ActionArgs) {
 		const formErrors = submission.error?.form
 		return data(
 			submission.reply({
-				formErrors: formErrors ?? ['Could not create schedule'],
+				formErrors: formErrors ?? ['Could not process schedule'],
 			}),
 		)
 	}
+
+	if (options.preview) {
+		return data({
+			status: 'success',
+			message: 'Schedule preview',
+			schedules: submission.value.schedules,
+			createdCount: submission.value.createdCount,
+		} as const)
+	}
+
 	const { username } = submission.value
 	return redirectWithToast(`/profile/${username}`, {
 		title: 'Schedule created successfully',
@@ -244,10 +195,128 @@ export async function action({ request }: Route.ActionArgs) {
 	})
 }
 
+function processScheduleData(options: { preview: boolean }) {
+	return async (data: z.infer<typeof ScheduleSchema>, ctx: z.RefinementCtx) => {
+		const {
+			weeklyDays,
+			repeatMonths = false,
+			repeatWeeks = false,
+			oneDay,
+			startTime,
+			endTime,
+			locationId,
+			userId,
+		} = data
+
+		// Generate potential schedules
+		const potentialSchedules = oneDay
+			? getMonthlyScheduleDates(oneDay, startTime, endTime, repeatMonths)
+			: getWeeklyScheduleDates(weeklyDays, startTime, endTime, repeatWeeks)
+
+		if (potentialSchedules.length === 0) {
+			ctx.addIssue({
+				path: ['form'],
+				code: 'custom',
+				message: 'No valid schedules found',
+			})
+			return z.NEVER
+		}
+
+		const location = await prisma.scheduleLocation.findUnique({
+			where: { id: locationId },
+			select: { name: true, address: true, city: true },
+		})
+
+		// Prepare schedule data
+		const newSchedules = potentialSchedules.map(({ startTime, endTime }) => ({
+			startTime: new Date(startTime),
+			endTime: new Date(endTime),
+			locationId,
+			location,
+			visitFee: data.visitingFee,
+			serialFee: data.serialFee,
+			discountFee: data.discount,
+			maxAppointments: data.maxAppointment,
+		}))
+
+		// Check for existing schedules
+		const existingSchedules = await prisma.schedule.findMany({
+			where: {
+				locationId,
+				OR: newSchedules.map((schedule) => ({
+					AND: [
+						{ startTime: { lt: schedule.endTime } },
+						{ endTime: { gt: schedule.startTime } },
+					],
+				})),
+			},
+		})
+
+		// Filter out overlapping schedules
+		const nonOverlappingSchedules = newSchedules.filter(
+			(newSchedule) =>
+				!existingSchedules.some((existing) =>
+					isOverlapping(existing, newSchedule),
+				),
+		)
+
+		const skippedCount = newSchedules.length - nonOverlappingSchedules.length
+
+		// For preview, just return the schedules
+		if (options.preview) {
+			return {
+				...data,
+				schedules: nonOverlappingSchedules,
+				createdCount: nonOverlappingSchedules.length,
+				message: skippedCount
+					? `Skipped ${skippedCount} schedules due to conflicts.`
+					: 'No conflicts found.',
+			} as const
+		}
+
+		// For create, actually save to database
+		const createdSchedules = await prisma.schedule.createMany({
+			data: nonOverlappingSchedules.map((schedule) => ({
+				doctorId: userId,
+				locationId,
+				startTime: schedule.startTime,
+				endTime: schedule.endTime,
+				maxAppointments: data.maxAppointment,
+				visitFee: data.visitingFee,
+				serialFee: data.serialFee,
+				discountFee: data.discount,
+			})),
+		})
+
+		if (!createdSchedules) {
+			ctx.addIssue({
+				path: ['form'],
+				code: 'custom',
+				message: 'Could not create schedule',
+			})
+			return z.NEVER
+		}
+
+		const message =
+			skippedCount > 0
+				? `Created ${createdSchedules.count} schedules. ${skippedCount} schedules were skipped due to conflicts.`
+				: `Successfully created ${createdSchedules.count} schedules.`
+
+		return {
+			...data,
+			schedules: createdSchedules,
+			message,
+			createdCount: createdSchedules.count,
+			username: data.username, // Assuming this exists in your schema
+		} as const
+	}
+}
+
 export default function AddSchedule({
 	loaderData,
 	actionData,
 }: Route.ComponentProps) {
+	const formRef = useRef<HTMLFormElement>(null)
 	const { userId, username } = loaderData
 
 	const [scheduleType, setScheduleType] = useState<ScheduleType>(
@@ -256,7 +325,6 @@ export default function AddSchedule({
 	const [date, setDate] = useState<Date>()
 
 	const [form, fields] = useForm({
-		lastResult: actionData,
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema: ScheduleSchema })
 		},
@@ -265,14 +333,19 @@ export default function AddSchedule({
 
 	return (
 		<>
-			<div className="mx-auto max-w-7xl">
-				<h2 className="text-2xl leading-none font-semibold tracking-tight">
+			<div className="container px-2 md:px-3">
+				<h2 className="text-brand text-4xl leading-none font-bold tracking-tight">
 					Add Schedule
 				</h2>
 				<HelpText />
 				<Spacer size="sm" />
-				<Form method="post" className="space-y-8" {...getFormProps(form)}>
-					<div className="grid grid-cols-1 gap-12 align-top md:grid-cols-2">
+				<div className="grid grid-cols-1 gap-12 align-top md:grid-cols-2">
+					<Form
+						method="post"
+						className="contents"
+						ref={formRef}
+						{...getFormProps(form)}
+					>
 						<input
 							{...getInputProps(fields.userId, { type: 'hidden' })}
 							value={userId}
@@ -383,7 +456,6 @@ export default function AddSchedule({
 												<li key={day} className="flex space-x-2">
 													<CheckboxField
 														labelProps={{
-															className: 'text-sm font-bold text-primary',
 															htmlFor: fields.weeklyDays.id,
 															children: day,
 														}}
@@ -407,7 +479,7 @@ export default function AddSchedule({
 								</>
 							) : null}
 
-							<p className="text-secondary-foreground mt-2 text-sm">
+							<div className="text-secondary-foreground mt-2 text-sm">
 								<ul className="list-disc space-y-2">
 									<li>
 										<strong>Note: </strong> By checking the repeat option, this
@@ -422,9 +494,9 @@ export default function AddSchedule({
 										generated.
 									</li>
 								</ul>
-							</p>
+							</div>
 						</div>
-						<div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+						<div className="col-span-1 grid grid-cols-1 gap-6 md:grid-cols-3">
 							<Field
 								labelProps={{ children: 'Visiting Fee' }}
 								inputProps={{
@@ -452,28 +524,55 @@ export default function AddSchedule({
 								errors={fields.discount.errors}
 							/>
 						</div>
-					</div>
-
-					<div className="mt-12 flex items-center justify-center gap-4 lg:gap-8">
-						<Button type="submit">Create Schedule</Button>
-						<Sheet>
-							<SheetTrigger>Open</SheetTrigger>
-							<SheetContent>
-								<SheetHeader>
-									<SheetTitle>Are you absolutely sure?</SheetTitle>
-									<SheetDescription>
-										This action cannot be undone. This will permanently delete
-										your account and remove your data from our servers.
-									</SheetDescription>
-								</SheetHeader>
-							</SheetContent>
-						</Sheet>
-					</div>
-
-					<div className="mt-4 flex items-center justify-center">
-						<ErrorList errors={form.errors} />
-					</div>
-				</Form>
+						<div className="hidden md:col-span-1 md:block"></div>
+						{/* This is to take the other half of fifth iitem */}
+						<div className="flex items-end justify-center md:justify-end">
+							<Button
+								type="submit"
+								size="lg"
+								name="intent"
+								value="create-schedule"
+							>
+								Create
+							</Button>
+							<Sheet>
+								<div className="flex items-end justify-center md:justify-start">
+									<Button
+										asChild
+										variant="outline"
+										size="lg"
+										name="intent"
+										value="preview-schedule"
+										type="submit"
+									>
+										<SheetTrigger>
+											<Icon name="eye" className="mr-2 h-4 w-4" />
+											Preview
+										</SheetTrigger>
+									</Button>
+								</div>
+								<SheetContent className="w-full md:w-1/2 md:max-w-1/2">
+									<SheetHeader>
+										<SheetTitle>Your Schedule Summary</SheetTitle>
+										<SheetDescription>
+											Here&apos;s a preview of all upcoming schedules based on
+											your selected days and times.
+											<pre>
+												{actionData?.status === 'success' &&
+												'schedules' in actionData
+													? JSON.stringify(actionData.schedules, null, 2)
+													: null}
+											</pre>
+										</SheetDescription>
+									</SheetHeader>
+								</SheetContent>
+							</Sheet>
+							<div className="mt-4 flex items-center justify-center">
+								<ErrorList errors={form.errors} />
+							</div>
+						</div>
+					</Form>
+				</div>
 			</div>
 			<Spacer size="lg" />
 		</>
@@ -486,10 +585,10 @@ type CheckboxProps = {
 
 function HelpText() {
 	return (
-		<div className="text-secondary-foreground mt-6 max-w-5xl space-y-1 text-sm">
+		<div className="text-muted-foreground mt-6 space-y-1 text-sm">
 			<Accordion type="single" collapsible className="w-full">
 				<AccordionItem value="item-1">
-					<AccordionTrigger className="text-lg">
+					<AccordionTrigger className="cursor-pointer text-lg">
 						How create schedule works?
 					</AccordionTrigger>
 					<AccordionContent className="space-y-2">
