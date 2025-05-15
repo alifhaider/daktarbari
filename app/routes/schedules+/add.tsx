@@ -41,9 +41,15 @@ import { LocationCombobox } from '../resources+/location-combobox'
 import { type Route } from './+types/add'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { Checkbox } from '#app/components/ui/checkbox.tsx'
+import {
+	Accordion,
+	AccordionContent,
+	AccordionItem,
+	AccordionTrigger,
+} from '#app/components/ui/accordion.tsx'
 
 export const meta: MetaFunction = () => {
-	return [{ title: 'Schedule / CH' }]
+	return [{ title: 'Add Schedule / DB' }]
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -254,8 +260,10 @@ export default function AddSchedule({
 	return (
 		<>
 			<div className="mx-auto max-w-7xl">
-				<h2>Add Schedule</h2>
-				{/* <HelpText /> */}
+				<h2 className="text-2xl leading-none font-semibold tracking-tight">
+					Add Schedule
+				</h2>
+				<HelpText />
 				<Spacer size="sm" />
 				<Form method="post" className="space-y-8" {...getFormProps(form)}>
 					<div className="grid grid-cols-1 gap-12 align-top md:grid-cols-2">
@@ -439,7 +447,7 @@ export default function AddSchedule({
 						</div>
 					</div>
 
-					<div className="mt-12 flex items-center justify-center gap-4">
+					<div className="mt-12 flex items-center justify-center gap-4 lg:gap-8">
 						<Button type="submit">Create Schedule</Button>
 						<Button asChild variant="outline">
 							<Link to={`/doctors/${username}/schedules/preview`}>
@@ -462,58 +470,58 @@ type CheckboxProps = {
 	label: string
 }
 
-// function HelpText() {
-// 	return (
-// 		<div className="text-secondary-foreground mt-6 max-w-5xl space-y-1 text-sm">
-// 			<Accordion type="single" collapsible className="w-full">
-// 				<AccordionItem value="item-1">
-// 					<AccordionTrigger className="text-lg">
-// 						How create schedule works?
-// 					</AccordionTrigger>
-// 					<AccordionContent className="space-y-2">
-// 						<p>
-// 							A schedule is a set of days and times when you are available for
-// 							appointments. You can create multiple schedules for different
-// 							locations.
-// 						</p>
-// 						<p>
-// 							For example, you can{' '}
-// 							<strong className="text-base">
-// 								create a schedule for your office location and another schedule
-// 								for your home location.
-// 							</strong>
-// 						</p>
-// 						<p>
-// 							Each schedule can have{' '}
-// 							<strong className="text-base">
-// 								{' '}
-// 								different days, times, and maximum appointments per day.
-// 							</strong>
-// 						</p>
-// 						<p>
-// 							When you create a schedule, patients can book appointments with
-// 							you during the times you have set. In between{' '}
-// 							<strong className="text-base">Start Time</strong> and{' '}
-// 							<strong className="text-base">End Time</strong> are the times when
-// 							you are available for appointments.
-// 						</p>
-// 						<p>
-// 							Once you create a schedule, you can view and edit it on your{' '}
-// 							<strong className="text-base">profile page.</strong>
-// 						</p>
-// 						<p>
-// 							While creating a schedule you need to provide the following
-// 							information:
-// 						</p>
-// 					</AccordionContent>
-// 				</AccordionItem>
-// 			</Accordion>
-// 		</div>
-// 	)
-// }
+function HelpText() {
+	return (
+		<div className="text-secondary-foreground mt-6 max-w-5xl space-y-1 text-sm">
+			<Accordion type="single" collapsible className="w-full">
+				<AccordionItem value="item-1">
+					<AccordionTrigger className="text-lg">
+						How create schedule works?
+					</AccordionTrigger>
+					<AccordionContent className="space-y-2">
+						<p>
+							A schedule is a set of days and times when you are available for
+							appointments. You can create multiple schedules for different
+							locations.
+						</p>
+						<p>
+							For example, you can{' '}
+							<strong className="text-base">
+								create a schedule for your office location and another schedule
+								for your home location.
+							</strong>
+						</p>
+						<p>
+							Each schedule can have{' '}
+							<strong className="text-base">
+								{' '}
+								different days, times, and maximum appointments per day.
+							</strong>
+						</p>
+						<p>
+							When you create a schedule, patients can book appointments with
+							you during the times you have set. In between{' '}
+							<strong className="text-base">Start Time</strong> and{' '}
+							<strong className="text-base">End Time</strong> are the times when
+							you are available for appointments.
+						</p>
+						<p>
+							Once you create a schedule, you can view and edit it on your{' '}
+							<strong className="text-base">profile page.</strong>
+						</p>
+						<p>
+							While creating a schedule you need to provide the following
+							information:
+						</p>
+					</AccordionContent>
+				</AccordionItem>
+			</Accordion>
+		</div>
+	)
+}
 
 // TODO: mac has a problem with the checkbox
-//       it doesn't display the checkbox with appropriate styles.
+//       it doesn't display the checkbox with appropriate styles in initoal render
 //       Probably a bug in the browser cache
 function RepeatCheckbox({ field, label }: CheckboxProps) {
 	return (
