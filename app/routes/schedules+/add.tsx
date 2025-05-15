@@ -46,6 +46,14 @@ import { DAYS } from '#app/utils/schedule.ts'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
 import { LocationCombobox } from '../resources+/location-combobox'
 import { type Route } from './+types/add'
+import {
+	Sheet,
+	SheetContent,
+	SheetDescription,
+	SheetHeader,
+	SheetTitle,
+	SheetTrigger,
+} from '#app/components/ui/sheet.tsx'
 
 export const meta: MetaFunction = () => {
 	return [{ title: 'Add Schedule / DB' }]
@@ -447,11 +455,18 @@ export default function AddSchedule({
 
 					<div className="mt-12 flex items-center justify-center gap-4 lg:gap-8">
 						<Button type="submit">Create Schedule</Button>
-						<Button asChild variant="outline">
-							<Link to={`/doctors/${username}/schedules/preview`}>
-								Preview Schedule
-							</Link>
-						</Button>
+						<Sheet>
+							<SheetTrigger>Open</SheetTrigger>
+							<SheetContent>
+								<SheetHeader>
+									<SheetTitle>Are you absolutely sure?</SheetTitle>
+									<SheetDescription>
+										This action cannot be undone. This will permanently delete
+										your account and remove your data from our servers.
+									</SheetDescription>
+								</SheetHeader>
+							</SheetContent>
+						</Sheet>
 					</div>
 
 					<div className="mt-4 flex items-center justify-center">
