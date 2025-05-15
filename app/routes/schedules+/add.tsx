@@ -9,8 +9,15 @@ import { format } from 'date-fns'
 import { useState } from 'react'
 import { data, Form, Link, type MetaFunction } from 'react-router'
 import { z } from 'zod'
+import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { CheckboxField, ErrorList, Field } from '#app/components/forms.tsx'
 import { Spacer } from '#app/components/spacer.tsx'
+import {
+	Accordion,
+	AccordionContent,
+	AccordionItem,
+	AccordionTrigger,
+} from '#app/components/ui/accordion.tsx'
 import { Button } from '#app/components/ui/button.tsx'
 import { Calendar } from '#app/components/ui/calendar.tsx'
 import { Icon } from '#app/components/ui/icon.tsx'
@@ -39,14 +46,6 @@ import { DAYS } from '#app/utils/schedule.ts'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
 import { LocationCombobox } from '../resources+/location-combobox'
 import { type Route } from './+types/add'
-import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
-import { Checkbox } from '#app/components/ui/checkbox.tsx'
-import {
-	Accordion,
-	AccordionContent,
-	AccordionItem,
-	AccordionTrigger,
-} from '#app/components/ui/accordion.tsx'
 
 export const meta: MetaFunction = () => {
 	return [{ title: 'Add Schedule / DB' }]
@@ -157,7 +156,6 @@ export async function action({ request }: Route.ActionArgs) {
 						message: 'No valid schedules found',
 					})
 				}
-				console.log('potentialSchedules', potentialSchedules)
 
 				const newSchedules = potentialSchedules.map(
 					({ startTime, endTime }) => ({
