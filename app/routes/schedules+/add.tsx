@@ -7,14 +7,7 @@ import {
 import { parseWithZod } from '@conform-to/zod'
 import { format } from 'date-fns'
 import { useRef, useState } from 'react'
-import {
-	data,
-	Form,
-	Link,
-	useActionData,
-	useFetcher,
-	type MetaFunction,
-} from 'react-router'
+import { data, Form, useFetcher, type MetaFunction } from 'react-router'
 import { z } from 'zod'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { CheckboxField, ErrorList, Field } from '#app/components/forms.tsx'
@@ -142,6 +135,12 @@ export const ScheduleSchema = z
 		}
 	})
 
+const ScheduleRemoveSchema = z.object({
+	date: z.date({ message: 'Date is not given' }),
+	startTime: z.string({ message: 'Schedule start time not given' }),
+	endTime: z.string({ message: 'Schedule end time not given' }),
+})
+
 export async function action({ request }: Route.ActionArgs) {
 	await requireDoctor(request)
 	const formData = await request.formData()
@@ -149,9 +148,11 @@ export async function action({ request }: Route.ActionArgs) {
 
 	switch (intent) {
 		case 'preview-schedule':
-			return handleScheduleAction(formData, { preview: true })
+			return handleScheduleAction(formData, { preview: true, remove: false })
 		case 'create-schedule':
-			return handleScheduleAction(formData, { preview: false })
+			return handleScheduleAction(formData, { preview: false, remove: false })
+		case 'remove-schedule':
+			return handleScheduleAction(formData, { preview: true, remove: true })
 		default:
 			const toastHeaders = await createToastHeaders({
 				title: 'Invalid action',
@@ -163,7 +164,7 @@ export async function action({ request }: Route.ActionArgs) {
 
 async function handleScheduleAction(
 	formData: FormData,
-	options: { preview: boolean },
+	options: { preview: boolean; remove: boolean },
 ) {
 	const submission = await parseWithZod(formData, {
 		schema: () => ScheduleSchema.transform(processScheduleData(options)),
@@ -307,7 +308,7 @@ function processScheduleData(options: { preview: boolean }) {
 			schedules: createdSchedules,
 			message,
 			createdCount: createdSchedules.count,
-			username: data.username, // Assuming this exists in your schema
+			username: data.username,
 		} as const
 	}
 }
@@ -318,6 +319,7 @@ export default function AddSchedule({
 }: Route.ComponentProps) {
 	const formRef = useRef<HTMLFormElement>(null)
 	const { userId, username } = loaderData
+	const scheduleRemoveFetcher = useFetcher()
 
 	const [scheduleType, setScheduleType] = useState<ScheduleType>(
 		ScheduleType.REPEAT_WEEKS,
@@ -330,6 +332,26 @@ export default function AddSchedule({
 		},
 		shouldRevalidate: 'onSubmit',
 	})
+
+	const [scheduleRemoveForm, scheduleRemoveFields] = useForm({
+		onValidate({ formData }) {
+			return parseWithZod(formData, { schema: ScheduleRemoveSchema })
+		},
+		shouldRevalidate: 'onSubmit',
+	})
+
+	const isScheduleInActionData =
+		actionData?.status === 'success' && 'schedules' in actionData
+
+	const isArraySchedules =
+		isScheduleInActionData && Array.isArray(actionData.schedules)
+
+	console.log(actionData)
+
+	console.log(
+		'schedules,',
+		isArraySchedules ? actionData.schedules : 'no schedules',
+	)
 
 	return (
 		<>
@@ -535,6 +557,7 @@ export default function AddSchedule({
 							>
 								Create
 							</Button>
+
 							<Sheet>
 								<div className="flex items-end justify-center md:justify-start">
 									<Button
@@ -557,13 +580,102 @@ export default function AddSchedule({
 										<SheetDescription>
 											Here&apos;s a preview of all upcoming schedules based on
 											your selected days and times.
-											<pre>
-												{actionData?.status === 'success' &&
-												'schedules' in actionData
-													? JSON.stringify(actionData.schedules, null, 2)
-													: null}
-											</pre>
 										</SheetDescription>
+
+										{isArraySchedules ? (
+											<div className="space-y-4">
+												<div className="rounded-lg border p-4">
+													<h3 className="mb-4 text-lg font-medium">
+														Common Information
+													</h3>
+													<div className="space-y-2">
+														<p>
+															<strong>Location:</strong>{' '}
+															{actionData.schedules[0]?.location?.name}
+														</p>
+														<p>
+															<strong>Address:</strong>{' '}
+															{actionData.schedules[0]?.location?.address}
+														</p>
+														<p>
+															<strong>City:</strong>{' '}
+															{actionData.schedules[0]?.location?.city}
+														</p>
+														<p>
+															<strong>Time:</strong>{' '}
+															{actionData.schedules[0]?.startTime &&
+																actionData.schedules[0].endTime && (
+																	<>
+																		{format(
+																			actionData.schedules[0]?.startTime,
+																			'h:mm a',
+																		)}{' '}
+																		-{' '}
+																		{format(
+																			actionData.schedules[0]?.endTime,
+																			'h:mm a',
+																		)}
+																	</>
+																)}
+														</p>
+														<p>
+															<strong>Fees:</strong> Visit: $
+															{actionData.schedules[0]?.visitFee}, Serial: $
+															{actionData.schedules[0]?.serialFee}, Discount: $
+															{actionData.schedules[0]?.discountFee}
+														</p>
+														<p>
+															<strong>Max Appointments:</strong>{' '}
+															{actionData.schedules[0]?.maxAppointments}
+														</p>
+													</div>
+												</div>
+
+												<div className="max-h-[600px] space-y-2 overflow-y-auto">
+													<h3 className="mb-2 text-lg font-medium">
+														Available Dates
+													</h3>
+													{actionData.schedules.map((schedule, index) => (
+														<div
+															key={index}
+															className="hover:bg-muted/50 flex items-center justify-between rounded-lg border p-4"
+														>
+															<div className="flex items-center gap-3">
+																<Icon
+																	name="calendar"
+																	className="text-primary h-5 w-5"
+																/>
+																<span className="font-medium">
+																	{format(
+																		schedule?.startTime,
+																		'EEEE, MMMM d, yyyy',
+																	)}
+																</span>
+															</div>
+															<scheduleRemoveFetcher.Form
+																method="post"
+																{...getFormProps(scheduleRemoveForm)}
+															>
+																<input
+																	{...getInputProps(scheduleRemoveFields.date, {
+																		type: 'hidden',
+																	})}
+																	value={schedule.startTime.toISOString()}
+																/>
+																<Button
+																	variant="destructive"
+																	size="sm"
+																	name="intent"
+																	value="remove-schedule"
+																>
+																	Remove
+																</Button>
+															</scheduleRemoveFetcher.Form>
+														</div>
+													))}
+												</div>
+											</div>
+										) : null}
 									</SheetHeader>
 								</SheetContent>
 							</Sheet>
