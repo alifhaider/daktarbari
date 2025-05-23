@@ -42,6 +42,7 @@ import {
 	SheetTitle,
 	SheetTrigger,
 } from '#app/components/ui/sheet.tsx'
+import { StatusButton } from '#app/components/ui/status-button.tsx'
 import { requireDoctor } from '#app/utils/auth.server.ts'
 import { prisma } from '#app/utils/db.server.ts'
 import { cn } from '#app/utils/misc.tsx'
@@ -57,7 +58,6 @@ import {
 } from '#app/utils/toast.server.ts'
 import { LocationCombobox } from '../resources+/location-combobox'
 import { type Route } from './+types/add'
-import { StatusButton } from '#app/components/ui/status-button.tsx'
 
 export const meta: MetaFunction = () => {
 	return [{ title: 'Add Schedule / DB' }]
