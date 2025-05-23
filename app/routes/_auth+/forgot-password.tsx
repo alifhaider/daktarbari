@@ -7,6 +7,7 @@ import { HoneypotInputs } from 'remix-utils/honeypot/react'
 import { z } from 'zod'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { ErrorList, Field } from '#app/components/forms.tsx'
+import { Icon } from '#app/components/ui/icon.tsx'
 import { StatusButton } from '#app/components/ui/status-button.tsx'
 import { prisma } from '#app/utils/db.server.ts'
 import { sendEmail } from '#app/utils/email.server.ts'
@@ -14,7 +15,6 @@ import { checkHoneypot } from '#app/utils/honeypot.server.ts'
 import { EmailSchema, UsernameSchema } from '#app/utils/user-validation.ts'
 import { type Route } from './+types/forgot-password.ts'
 import { prepareVerification } from './verify.server.ts'
-import { Icon } from '#app/components/ui/icon.tsx'
 
 export const handle: SEOHandle = {
 	getSitemapEntries: () => null,

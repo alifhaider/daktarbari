@@ -57,6 +57,7 @@ import {
 } from '#app/utils/toast.server.ts'
 import { LocationCombobox } from '../resources+/location-combobox'
 import { type Route } from './+types/add'
+import { StatusButton } from '#app/components/ui/status-button.tsx'
 
 export const meta: MetaFunction = () => {
 	return [{ title: 'Add Schedule / DB' }]
@@ -73,6 +74,10 @@ export enum ScheduleType {
 }
 export const DaysEnum = z.enum(DAYS)
 export type DaysEnum = z.infer<typeof DaysEnum>
+
+const ScheduleRemoveSchema = z.object({
+	removedDate: z.string().datetime(),
+})
 
 export const ScheduleSchema = z
 	.object({
@@ -135,16 +140,13 @@ export const ScheduleSchema = z
 		}
 	})
 
-const ScheduleRemoveSchema = z.object({
-	date: z.date({ message: 'Date is not given' }),
-	startTime: z.string({ message: 'Schedule start time not given' }),
-	endTime: z.string({ message: 'Schedule end time not given' }),
-})
-
 export async function action({ request }: Route.ActionArgs) {
+	console.log('action')
 	await requireDoctor(request)
 	const formData = await request.formData()
 	const intent = formData.get('intent')
+
+	console.log('intent', intent)
 
 	switch (intent) {
 		case 'preview-schedule':
@@ -180,24 +182,41 @@ async function handleScheduleAction(
 		)
 	}
 
-	if (options.preview) {
-		return data({
-			status: 'success',
-			message: 'Schedule preview',
-			schedules: submission.value.schedules,
-			createdCount: submission.value.createdCount,
-		} as const)
+	if ('username' in submission.value) {
+		const { username } = submission.value
+
+		if (options.preview) {
+			return data({
+				status: 'success',
+				message: 'Schedule preview',
+				schedules: submission.value.schedules,
+				createdCount: submission.value.createdCount,
+			} as const)
+		}
+
+		return redirectWithToast(`/profile/${username}`, {
+			title: 'Schedule created successfully',
+			description: submission.value.message,
+		})
 	}
 
-	const { username } = submission.value
-	return redirectWithToast(`/profile/${username}`, {
+	return redirectWithToast('/', {
 		title: 'Schedule created successfully',
 		description: submission.value.message,
 	})
 }
 
-function processScheduleData(options: { preview: boolean }) {
-	return async (data: z.infer<typeof ScheduleSchema>, ctx: z.RefinementCtx) => {
+type ScheduleData = z.infer<typeof ScheduleSchema>
+type RemoveScheduleData = z.infer<typeof ScheduleRemoveSchema>
+
+function processScheduleData(options: { preview: boolean; remove: boolean }) {
+	return async (
+		data:
+			| (ScheduleData & { remove?: false })
+			| (RemoveScheduleData & { remove: true }),
+		ctx: z.RefinementCtx,
+	) => {
+		const scheduleData = data as ScheduleData
 		const {
 			weeklyDays,
 			repeatMonths = false,
@@ -207,7 +226,12 @@ function processScheduleData(options: { preview: boolean }) {
 			endTime,
 			locationId,
 			userId,
-		} = data
+			visitingFee,
+			serialFee,
+			discount,
+			maxAppointment,
+			username,
+		} = scheduleData
 
 		// Generate potential schedules
 		const potentialSchedules = oneDay
@@ -234,10 +258,10 @@ function processScheduleData(options: { preview: boolean }) {
 			endTime: new Date(endTime),
 			locationId,
 			location,
-			visitFee: data.visitingFee,
-			serialFee: data.serialFee,
-			discountFee: data.discount,
-			maxAppointments: data.maxAppointment,
+			visitFee: visitingFee,
+			serialFee,
+			discountFee: discount,
+			maxAppointments: maxAppointment,
 		}))
 
 		// Check for existing schedules
@@ -254,12 +278,32 @@ function processScheduleData(options: { preview: boolean }) {
 		})
 
 		// Filter out overlapping schedules
-		const nonOverlappingSchedules = newSchedules.filter(
+		let nonOverlappingSchedules = newSchedules.filter(
 			(newSchedule) =>
 				!existingSchedules.some((existing) =>
 					isOverlapping(existing, newSchedule),
 				),
 		)
+
+		if (options.remove && 'removedDate' in data && data.removedDate) {
+			const removedDate = new Date(data.removedDate)
+			const initialCount = nonOverlappingSchedules.length
+			nonOverlappingSchedules = nonOverlappingSchedules.filter(
+				(schedule) =>
+					schedule.startTime.toISOString() !== removedDate.toISOString(),
+			)
+			const removedCount = initialCount - nonOverlappingSchedules.length
+			return {
+				...data,
+				schedules: nonOverlappingSchedules,
+				createdCount: nonOverlappingSchedules.length,
+				removedCount,
+				message:
+					removedCount > 0
+						? `Removed 1 schedule from preview. ${nonOverlappingSchedules.length} schedules remaining.`
+						: 'No matching schedule found to remove.',
+			} as const
+		}
 
 		const skippedCount = newSchedules.length - nonOverlappingSchedules.length
 
@@ -282,10 +326,10 @@ function processScheduleData(options: { preview: boolean }) {
 				locationId,
 				startTime: schedule.startTime,
 				endTime: schedule.endTime,
-				maxAppointments: data.maxAppointment,
-				visitFee: data.visitingFee,
-				serialFee: data.serialFee,
-				discountFee: data.discount,
+				maxAppointments: maxAppointment,
+				visitFee: visitingFee,
+				serialFee: serialFee,
+				discountFee: discount,
 			})),
 		})
 
@@ -308,7 +352,7 @@ function processScheduleData(options: { preview: boolean }) {
 			schedules: createdSchedules,
 			message,
 			createdCount: createdSchedules.count,
-			username: data.username,
+			username,
 		} as const
 	}
 }
@@ -318,8 +362,8 @@ export default function AddSchedule({
 	actionData,
 }: Route.ComponentProps) {
 	const formRef = useRef<HTMLFormElement>(null)
+	const fetcher = useFetcher()
 	const { userId, username } = loaderData
-	const scheduleRemoveFetcher = useFetcher()
 
 	const [scheduleType, setScheduleType] = useState<ScheduleType>(
 		ScheduleType.REPEAT_WEEKS,
@@ -333,7 +377,7 @@ export default function AddSchedule({
 		shouldRevalidate: 'onSubmit',
 	})
 
-	const [scheduleRemoveForm, scheduleRemoveFields] = useForm({
+	const [removeForm, removeFields] = useForm({
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema: ScheduleRemoveSchema })
 		},
@@ -357,9 +401,8 @@ export default function AddSchedule({
 		<>
 			<div className="container px-2 md:px-3">
 				<h2 className="text-brand text-4xl leading-none font-bold tracking-tight">
-					Add Schedule
+					Create Schedules
 				</h2>
-				<HelpText />
 				<Spacer size="sm" />
 				<div className="grid grid-cols-1 gap-12 align-top md:grid-cols-2">
 					<Form
@@ -652,25 +695,31 @@ export default function AddSchedule({
 																	)}
 																</span>
 															</div>
-															<scheduleRemoveFetcher.Form
+															<fetcher.Form
 																method="post"
-																{...getFormProps(scheduleRemoveForm)}
+																{...getFormProps(removeForm)}
 															>
 																<input
-																	{...getInputProps(scheduleRemoveFields.date, {
+																	{...getInputProps(removeFields.removedDate, {
 																		type: 'hidden',
 																	})}
 																	value={schedule.startTime.toISOString()}
 																/>
-																<Button
-																	variant="destructive"
-																	size="sm"
+																<StatusButton
+																	className="w-full"
+																	status={
+																		fetcher.state === 'submitting'
+																			? 'pending'
+																			: (form.status ?? 'idle')
+																	}
+																	type="submit"
 																	name="intent"
 																	value="remove-schedule"
+																	disabled={fetcher.state !== 'idle'}
 																>
 																	Remove
-																</Button>
-															</scheduleRemoveFetcher.Form>
+																</StatusButton>
+															</fetcher.Form>
 														</div>
 													))}
 												</div>
@@ -685,6 +734,8 @@ export default function AddSchedule({
 						</div>
 					</Form>
 				</div>
+				<Spacer size="md" />
+				<HelpText />
 			</div>
 			<Spacer size="lg" />
 		</>
@@ -760,7 +811,6 @@ function RepeatCheckbox({ field, label }: CheckboxProps) {
 				className="rounded-full capitalize"
 				errors={field.errors}
 			/>
-			<span className="text-sm">{label}</span>
 		</div>
 	)
 }
