@@ -3,7 +3,7 @@ import { parseWithZod } from '@conform-to/zod'
 import { searchDoctors } from '@prisma/client/sql'
 import { SlidersHorizontal } from 'lucide-react'
 import { Img } from 'openimg/react'
-import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
 	data,
 	Form,
@@ -57,11 +57,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 		effectiveLimit,
 		start,
 	)
-	console.log('Executing query:', query)
 
 	const doctors = await prisma.$queryRawTyped(query)
 
-	console.log('doctors', doctors)
 	return data(
 		{ doctors: doctors.map(parseDoctor) },
 		{ headers: { 'Cache-Control': 'public, max-age=120' } },
@@ -89,6 +87,8 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 	const startRef = useRef(0)
 	const parentRef = useRef<HTMLDivElement>(null)
 
+	const currentSearchRef = useRef(searchParams.toString())
+
 	const rowVirtualizer = useVirtual({
 		size: items.length,
 		parentRef,
@@ -97,16 +97,16 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 	})
 
 	const [lastVirtualItem] = [...rowVirtualizer.virtualItems].reverse()
-	if (!lastVirtualItem) {
-		throw new Error('this should never happen')
-	}
-	let newStart = startRef.current
-	const upperBoundary = startRef.current + LIMIT - DATA_OVERSCAN
 
-	if (lastVirtualItem.index > upperBoundary) {
-		// user is scrolling down. Move the window down
-		newStart = startRef.current + LIMIT
+	let newStart = startRef.current
+
+	if (lastVirtualItem) {
+		const upperBoundary = startRef.current + LIMIT - DATA_OVERSCAN
+		if (lastVirtualItem.index > upperBoundary) {
+			newStart = startRef.current + LIMIT
+		}
 	}
+
 	const isPending = useDelayedIsPending({
 		formMethod: 'GET',
 		formAction: '/search',
@@ -117,30 +117,54 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 			return parseWithZod(formData, { schema: SearchPageSchema })
 		},
 	})
+	useEffect(() => {
+		const currentParams = searchParams.toString()
+		if (currentParams !== currentSearchRef.current) {
+			currentSearchRef.current = currentParams
+			setItems(loaderData.doctors)
+			startRef.current = 0
+			rowVirtualizer.scrollToIndex(0)
+		}
+	}, [searchParams, loaderData.doctors, rowVirtualizer])
 
 	useEffect(() => {
 		async function loadMore() {
 			if (newStart === startRef.current) return
+			if (fetcher.state !== 'idle') return
+			if (searchParams.toString() !== currentSearchRef.current) return
 
 			const qs = new URLSearchParams([
 				['start', String(newStart)],
 				['limit', String(LIMIT)],
+				['name', fields.name.value ?? ''],
+				['specialtyId', fields.specialtyId.value ?? ''],
+				['locationId', fields.locationId.value ?? ''],
 			])
 			await fetcher.load(`/search?${qs}`)
 			startRef.current = newStart
 		}
 
-		loadMore().catch((err) => {
-			console.error('Failed to load more results:', err)
-		})
-	}, [fetcher, newStart])
+		loadMore().catch(console.error)
+	}, [
+		newStart,
+		fetcher,
+		fields.name.value,
+		fields.specialtyId.value,
+		fields.locationId.value,
+		searchParams,
+	])
 
 	useEffect(() => {
 		if (fetcher.data?.doctors) {
-			setItems((prev) => [...prev, ...(fetcher.data?.doctors || [])])
+			setItems((prev) => {
+				// If we're at start 0, replace completely (new search)
+				// Otherwise append (pagination)
+				return startRef.current === 0
+					? fetcher.data.doctors
+					: [...prev, ...fetcher.data.doctors]
+			})
 		}
 	}, [fetcher.data])
-
 	// const handleFormChange = useDebounce(async (form: HTMLFormElement) => {
 	// 	 await submit(form)
 	// }, 400)
@@ -182,7 +206,7 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 						<div>
 							{isPending ? <SearchLoadingSkeleton /> : null}
 							{navigation.state === 'idle' ? (
-								loaderData.doctors.length ? (
+								items.length ? (
 									<>
 										<div className="my-4">
 											<h4 className="text-xl leading-7 font-medium">
@@ -451,47 +475,5 @@ const SearchLoadingSkeleton = () => {
 			<div className="bg-muted h-4 w-1/2 rounded-md" />
 			<div className="bg-muted h-4 w-1/3 rounded-md" />
 		</div>
-	)
-}
-
-export function InfiniteScroller({
-	children,
-	hasMore,
-	loadMorePath,
-}: {
-	children: React.ReactNode
-	hasMore: boolean
-	loadMorePath: string
-}) {
-	const fetcher = useFetcher()
-	const sentinelRef = useRef<HTMLDivElement>(null)
-
-	// useEffect(() => {
-	// 	if (!hasMore || fetcher.state !== 'idle') return
-
-	// 	const observer = new IntersectionObserver(
-	// 		async (entries) => {
-	// 			if (entries[0]?.isIntersecting) {
-	// 				await fetcher.load(loadMorePath)
-	// 			}
-	// 		},
-	// 		{ threshold: 0.1 }, // Trigger when 10% visible
-	// 	)
-
-	// 	if (sentinelRef.current) observer.observe(sentinelRef.current)
-
-	// 	return () => observer.disconnect()
-	// }, [hasMore, loadMorePath])
-
-	return (
-		<>
-			{children}
-
-			{/* Invisible element at the bottom */}
-			<div ref={sentinelRef} style={{ height: '1px', visibility: 'hidden' }} />
-
-			{/* Loading indicator */}
-			{fetcher.state === 'loading' && <div>Loading more...</div>}
-		</>
 	)
 }
