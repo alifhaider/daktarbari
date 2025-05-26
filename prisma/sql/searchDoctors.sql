@@ -1,8 +1,8 @@
 -- @param {String} $1:name
 -- @param {String} $2:specialtyId
 -- @param {String} $3:locationId
--- @param {Int} $4:page 
--- @param {Int} $5:pageSize
+-- @param {Int} $4:limit 
+-- @param {Int} $5:start
 SELECT 
   "User".id,
   "User".username,
@@ -102,4 +102,4 @@ SELECT
     ORDER BY 
       "Doctor".rating DESC,
       "User".name ASC
-    LIMIT $pageSize OFFSET ($page - 1) * $pageSize;
+    LIMIT $4 OFFSET $5;

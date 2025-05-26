@@ -3,17 +3,23 @@ import { parseWithZod } from '@conform-to/zod'
 import { searchDoctors } from '@prisma/client/sql'
 import { SlidersHorizontal } from 'lucide-react'
 import { Img } from 'openimg/react'
-import { useEffect, useRef, useState } from 'react'
-import { data, Form, Link, useFetcher, useSearchParams } from 'react-router'
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
+import {
+	data,
+	Form,
+	Link,
+	useFetcher,
+	useNavigation,
+	useSearchParams,
+} from 'react-router'
+import { useVirtual } from 'react-virtual'
 import { z } from 'zod'
-import { ErrorList } from '#app/components/forms.tsx'
 import { Button } from '#app/components/ui/button.tsx'
 import { Icon } from '#app/components/ui/icon.tsx'
 import { UserDropdown } from '#app/components/user-dropdown.tsx'
 import { Logo } from '#app/root.tsx'
 import { prisma } from '#app/utils/db.server.ts'
 import {
-	cn,
 	getUserImgSrc,
 	parseDoctor,
 	useDelayedIsPending,
@@ -27,43 +33,39 @@ export const SearchPageSchema = z.object({
 	locationId: z.string().optional(),
 	specialtyId: z.string().optional(),
 })
+
+const LIMIT = 5
+const DATA_OVERSCAN = 5
+
+const getStartLimit = (searchParams: URLSearchParams) => ({
+	start: Number(searchParams.get('start') || '0'),
+	limit: Number(searchParams.get('limit') || LIMIT.toString()),
+})
+
 export async function loader({ request }: Route.LoaderArgs) {
 	const searchParams = new URL(request.url).searchParams
 	const nameQuery = searchParams.get('name')
 	const specialtiesQuery = searchParams.get('specialtyId')
 	const locationQuery = searchParams.get('locationId')
-	const page = Number(searchParams.get('page')) || 1
-	const pageSize = 6
-
-	// Debug logs
-	console.log('Loader params:', {
-		nameQuery,
-		specialtiesQuery,
-		locationQuery,
-		page,
-		pageSize,
-	})
+	const { start, limit } = getStartLimit(searchParams)
+	const effectiveLimit = limit + DATA_OVERSCAN
 
 	const query = searchDoctors(
 		nameQuery || '',
 		specialtiesQuery || '',
 		locationQuery || '',
-		pageSize,
-		page,
+		effectiveLimit,
+		start,
 	)
 	console.log('Executing query:', query)
 
 	const doctors = await prisma.$queryRawTyped(query)
-	console.log(`Returned ${doctors.length} doctors for page ${page}`)
 
-	const parsedDoctors = doctors.map(parseDoctor)
-
-	return {
-		status: 'idle',
-		doctors: parsedDoctors,
-		hasMore: parsedDoctors.length === pageSize,
-		nextPage: parsedDoctors.length === pageSize ? page + 1 : null,
-	} as const
+	console.log('doctors', doctors)
+	return data(
+		{ doctors: doctors.map(parseDoctor) },
+		{ headers: { 'Cache-Control': 'public, max-age=120' } },
+	)
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -80,7 +82,31 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 
 	const [items, setItems] = useState(loaderData.doctors)
 	const [searchParams, setSearchParams] = useSearchParams()
+
+	const navigation = useNavigation()
 	const fetcher = useFetcher()
+
+	const startRef = useRef(0)
+	const parentRef = useRef<HTMLDivElement>(null)
+
+	const rowVirtualizer = useVirtual({
+		size: items.length,
+		parentRef,
+		estimateSize: useCallback(() => 160, []),
+		initialRect: { width: 0, height: 800 },
+	})
+
+	const [lastVirtualItem] = [...rowVirtualizer.virtualItems].reverse()
+	if (!lastVirtualItem) {
+		throw new Error('this should never happen')
+	}
+	let newStart = startRef.current
+	const upperBoundary = startRef.current + LIMIT - DATA_OVERSCAN
+
+	if (lastVirtualItem.index > upperBoundary) {
+		// user is scrolling down. Move the window down
+		newStart = startRef.current + LIMIT
+	}
 	const isPending = useDelayedIsPending({
 		formMethod: 'GET',
 		formAction: '/search',
@@ -91,6 +117,23 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 			return parseWithZod(formData, { schema: SearchPageSchema })
 		},
 	})
+
+	useEffect(() => {
+		async function loadMore() {
+			if (newStart === startRef.current) return
+
+			const qs = new URLSearchParams([
+				['start', String(newStart)],
+				['limit', String(LIMIT)],
+			])
+			await fetcher.load(`/search?${qs}`)
+			startRef.current = newStart
+		}
+
+		loadMore().catch((err) => {
+			console.error('Failed to load more results:', err)
+		})
+	}, [fetcher, newStart])
 
 	useEffect(() => {
 		if (fetcher.data?.doctors) {
@@ -138,7 +181,7 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 					<div className="search-container container mx-auto overflow-y-scroll">
 						<div>
 							{isPending ? <SearchLoadingSkeleton /> : null}
-							{loaderData.status === 'idle' ? (
+							{navigation.state === 'idle' ? (
 								loaderData.doctors.length ? (
 									<>
 										<div className="my-4">
@@ -149,139 +192,163 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 												These doctors are located around
 											</p>
 										</div>
-										<InfiniteScroller
-											hasMore={loaderData.hasMore}
-											loadMorePath={`/search?${new URLSearchParams(searchParams)}`}
+
+										<div
+											ref={parentRef}
+											className="List"
+											style={{
+												height: `800px`,
+												width: `100%`,
+												overflow: 'auto',
+											}}
 										>
 											<ul
-												className={cn('mb-4 space-y-4 delay-200', {
-													'opacity-50': isPending,
-												})}
+												style={{
+													height: `${rowVirtualizer.totalSize}px`,
+													width: '100%',
+													position: 'relative',
+												}}
 											>
-												{loaderData.doctors.map((user) => (
-													<li key={user.id}>
-														<Link
-															to={`/doctors/${user.username}`}
-															className="border-muted dark:shadow-muted flex w-full gap-4 overflow-hidden rounded-lg border px-4 py-2 hover:shadow-sm lg:gap-6"
+												{rowVirtualizer.virtualItems.map((virtualRow) => {
+													const doctor = items[virtualRow.index]
+
+													if (!doctor) return null
+													return (
+														<li
+															key={virtualRow.key}
+															style={{
+																position: 'absolute',
+																top: 0,
+																left: 0,
+																width: '100%',
+																height: `${virtualRow.size}px`,
+																transform: `translateY(${virtualRow.start}px)`,
+															}}
 														>
-															<div className="h-20 w-20 overflow-hidden rounded-full lg:h-24 lg:w-24">
-																<Img
-																	alt={user.name ?? user.username}
-																	src={getUserImgSrc(user.imageObjectKey)}
-																	className="h-20 w-20 rounded-full object-cover lg:h-24 lg:w-24"
-																	width={256}
-																	height={256}
-																/>
-															</div>
-															<div className="w-full space-y-1.5">
-																<div className="flex w-full justify-between">
-																	<span className="text-body-md text-accent-foreground overflow-hidden text-center font-bold text-ellipsis whitespace-nowrap">
-																		{user.name ? user.name : user.username}
-																	</span>
-																	<div className="bg-muted flex items-center gap-0.5 rounded-md px-2 py-1">
-																		<Icon
-																			name="star"
-																			className="fill-brand text-brand h-3 w-3"
-																		/>
-																		<span className="text-brand text-sm font-bold">
-																			{user.averageRating}
-																			<span className="text-accent-foreground text-xs">
-																				&#47;{user.reviewCount}
-																			</span>
-																		</span>
-																	</div>
+															<Link
+																to={`/doctors/${doctor.username}`}
+																className="border-muted dark:shadow-muted flex w-full gap-4 overflow-hidden rounded-lg border px-4 py-2 hover:shadow-sm lg:gap-6"
+															>
+																<div className="h-20 w-20 overflow-hidden rounded-full lg:h-24 lg:w-24">
+																	<Img
+																		alt={doctor.name ?? doctor.username}
+																		src={getUserImgSrc(doctor.imageObjectKey)}
+																		className="h-20 w-20 rounded-full object-cover lg:h-24 lg:w-24"
+																		width={256}
+																		height={256}
+																	/>
 																</div>
-																{user.specialties.length > 0 && (
-																	<div className="flex items-center gap-1">
-																		<Icon
-																			name="stethoscope"
-																			className="text-primary h-3 w-3"
-																		/>
-																		<ul className="text-muted-foreground flex items-center gap-1 text-xs">
-																			{user.specialties.map((specialty) => (
-																				<li
-																					key={specialty.id}
-																					className="bg-muted text-accent-foreground rounded-md px-1 py-0.5 text-xs"
-																				>
-																					{specialty.name}
-																				</li>
-																			))}
-																		</ul>
+																<div className="w-full space-y-1.5">
+																	<div className="flex w-full justify-between">
+																		<span className="text-body-md text-accent-foreground overflow-hidden text-center font-bold text-ellipsis whitespace-nowrap">
+																			{doctor.name
+																				? doctor.name
+																				: doctor.username}
+																		</span>
+																		<div className="bg-muted flex items-center gap-0.5 rounded-md px-2 py-1">
+																			<Icon
+																				name="star"
+																				className="fill-brand text-brand h-3 w-3"
+																			/>
+																			<span className="text-brand text-sm font-bold">
+																				{doctor.averageRating}
+																				<span className="text-accent-foreground text-xs">
+																					&#47;{doctor.reviewCount}
+																				</span>
+																			</span>
+																		</div>
 																	</div>
-																)}
-																{user.upcomingSchedules.length > 0 && (
-																	<>
+																	{doctor.specialties.length > 0 && (
 																		<div className="flex items-center gap-1">
 																			<Icon
-																				name="map-pin"
+																				name="stethoscope"
 																				className="text-primary h-3 w-3"
 																			/>
-																			<ul className="text-muted-foreground flex items-center gap-1">
-																				<li className="text-accent-foreground text-xs">
-																					{
-																						user.upcomingSchedules[0]?.location
-																							.name
-																					}
-																				</li>
-																				{user.upcomingSchedules.length > 1 && (
-																					<li className="text-muted-foreground text-xs">
-																						+{user.upcomingSchedules.length - 1}{' '}
-																						more
+																			<ul className="text-muted-foreground flex items-center gap-1 text-xs">
+																				{doctor.specialties.map((specialty) => (
+																					<li
+																						key={specialty.id}
+																						className="bg-muted text-accent-foreground rounded-md px-1 py-0.5 text-xs"
+																					>
+																						{specialty.name}
 																					</li>
-																				)}
+																				))}
 																			</ul>
 																		</div>
-																		<div className="flex items-center gap-1">
+																	)}
+																	{doctor.upcomingSchedules.length > 0 && (
+																		<>
+																			<div className="flex items-center gap-1">
+																				<Icon
+																					name="map-pin"
+																					className="text-primary h-3 w-3"
+																				/>
+																				<ul className="text-muted-foreground flex items-center gap-1">
+																					<li className="text-accent-foreground text-xs">
+																						{
+																							doctor.upcomingSchedules[0]
+																								?.location.name
+																						}
+																					</li>
+																					{doctor.upcomingSchedules.length >
+																						1 && (
+																						<li className="text-muted-foreground text-xs">
+																							+
+																							{doctor.upcomingSchedules.length -
+																								1}{' '}
+																							more
+																						</li>
+																					)}
+																				</ul>
+																			</div>
+																			<div className="flex items-center gap-1">
+																				<Icon
+																					name="calendar-check"
+																					className="text-primary h-3 w-3"
+																				/>
+																				<p className="text-muted-foreground text-xs">
+																					{doctor.upcomingSchedules.length}{' '}
+																					available schedules
+																				</p>
+																			</div>
+																		</>
+																	)}
+																	<div className="mt-3 flex items-center justify-between">
+																		<p className="bg-muted text-brand text-body-2xs flex items-center gap-1 rounded-sm px-1 py-0.5">
 																			<Icon
-																				name="calendar-check"
-																				className="text-primary h-3 w-3"
+																				name="tag"
+																				className="h-3 w-3 rotate-90"
 																			/>
-																			<p className="text-muted-foreground text-xs">
-																				{user.upcomingSchedules.length}{' '}
-																				available schedules
-																			</p>
-																		</div>
-																	</>
-																)}
-																<div className="mt-3 flex items-center justify-between">
-																	<p className="bg-muted text-brand text-body-2xs flex items-center gap-1 rounded-sm px-1 py-0.5">
-																		<Icon
-																			name="tag"
-																			className="h-3 w-3 rotate-90"
-																		/>
-																		<span>
-																			Save{' '}
-																			<span className="font-semibold">
-																				{user.priceInfo.discount}tk
+																			<span>
+																				Save{' '}
+																				<span className="font-semibold">
+																					{doctor.priceInfo.discount}tk
+																				</span>
 																			</span>
-																		</span>
-																	</p>
-																	<p className="flex items-center gap-1">
-																		<span className="text-muted-foreground line-through">
-																			{user.priceInfo.discount +
-																				user.priceInfo.startsFrom}
-																			tk
-																		</span>
-																		<span className="text-primary font-bold underline">
-																			{user.priceInfo.startsFrom}tk{' '}
-																			<span className="text-sm">total</span>
-																		</span>
-																	</p>
+																		</p>
+																		<p className="flex items-center gap-1">
+																			<span className="text-muted-foreground line-through">
+																				{doctor.priceInfo.discount +
+																					doctor.priceInfo.startsFrom}
+																				tk
+																			</span>
+																			<span className="text-primary font-bold underline">
+																				{doctor.priceInfo.startsFrom}tk{' '}
+																				<span className="text-sm">total</span>
+																			</span>
+																		</p>
+																	</div>
 																</div>
-															</div>
-														</Link>
-													</li>
-												))}
+															</Link>
+														</li>
+													)
+												})}
 											</ul>
-										</InfiniteScroller>
+										</div>
 									</>
 								) : (
 									<p>No doctors found</p>
 								)
-							) : loaderData.status === 'error' ? (
-								<ErrorList
-									errors={['There was an error parsing the results']}
-								/>
 							) : null}
 						</div>
 					</div>
