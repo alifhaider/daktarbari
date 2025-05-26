@@ -3,6 +3,13 @@ import { CheckIcon } from 'lucide-react'
 import * as React from 'react'
 import { cn } from '#app/utils/misc.tsx'
 
+export type CheckboxProps = Omit<
+	React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>,
+	'type'
+> & {
+	type?: string
+}
+
 function Checkbox({
 	className,
 	...props
