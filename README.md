@@ -1,53 +1,70 @@
 <div align="center">
-  <h1 align="center"><a href="https://www.epicweb.dev/epic-stack">The Epic Stack 🚀</a></h1>
+  <h1 align="center"><a href="https://www.epicweb.dev/epic-stack">The DaktarBari App 🚀</a></h1>
   <strong align="center">
-    Ditch analysis paralysis and start shipping Epic Web apps.
+  Overview
   </strong>
   <p>
-    This is an opinionated project starter and reference that allows teams to
-    ship their ideas to production faster and on a more stable foundation based
-    on the experience of <a href="https://kentcdodds.com">Kent C. Dodds</a> and
-    <a href="https://github.com/epicweb-dev/epic-stack/graphs/contributors">contributors</a>.
+    This repository contains a web application that allows users to book appointments with doctors and enables healthcare professionals to manage their schedules efficiently. The system provides a dual functionality where:
   </p>
+
+  <ul>
+  <li><strong>Patients</strong>can search for doctors and book appointments based on availability</li>
+  <li><strong>Doctors</strong> can register, add their practice locations, and manage their schedules</li>
+  </ul>
 </div>
 
-```sh
-npx create-epic-app@latest
-```
-
-[![The Epic Stack](https://github-production-user-asset-6210df.s3.amazonaws.com/1500684/246885449-1b00286c-aa3d-44b2-9ef2-04f694eb3592.png)](https://www.epicweb.dev/epic-stack)
-
-[The Epic Stack](https://www.epicweb.dev/epic-stack)
+Used [The Epic Stack](https://www.epicweb.dev/epic-stack) as the starting point
 
 <hr />
 
-## Watch Kent's Introduction to The Epic Stack
+## Key Features
 
-[![Epic Stack Talk slide showing Flynn Rider with knives, the text "I've been around and I've got opinions" and Kent speaking in the corner](https://github-production-user-asset-6210df.s3.amazonaws.com/1500684/277818553-47158e68-4efc-43ae-a477-9d1670d4217d.png)](https://www.epicweb.dev/talks/the-epic-stack)
+## For Patients:
 
-["The Epic Stack" by Kent C. Dodds](https://www.epicweb.dev/talks/the-epic-stack)
+- Browse available doctors by specialty
+
+- View doctor profiles and practice locations
+
+- Book appointments based on real-time availability
+
+- Receive confirmation of scheduled appointments
+
+## For Doctors:
+
+    - Registration: Any qualified professional can register as a doctor by completing a verification form
+
+    - Location Management:
+      - Add multiple hospital/chamber locations
+
+       - Set practice hours for each location
+
+## Development
+
+- Initial setup:
+
+```sh
+npm run setup
+```
+
+- Start Dev Server
+
+```sh
+npm run dev
+```
+
+This starts your app in development mode, rebuilding assets on file changes.
+
+The database seed script creates a new user with some data you can use to get
+started:
+
+- Username: `alif`
+- Password: `222222`
 
 ## Docs
 
 [Read the docs](https://github.com/epicweb-dev/epic-stack/blob/main/docs)
-(please 🙏).
-
-## Support
-
-- 🆘 Join the
-  [discussion on GitHub](https://github.com/epicweb-dev/epic-stack/discussions)
-  and the [KCD Community on Discord](https://kcd.im/discord).
-- 💡 Create an
-  [idea discussion](https://github.com/epicweb-dev/epic-stack/discussions/new?category=ideas)
-  for suggestions.
-- 🐛 Open a [GitHub issue](https://github.com/epicweb-dev/epic-stack/issues) to
-  report a bug.
-
-## Branding
-
-Want to talk about the Epic Stack in a blog post or talk? Great! Here are some
-assets you can use in your material:
-[EpicWeb.dev/brand](https://epicweb.dev/brand)
+(Follow the documentation of Epic-Web if you want to know more about how things
+work).
 
 ## Thanks
 
