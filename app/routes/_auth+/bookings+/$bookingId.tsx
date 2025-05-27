@@ -1,5 +1,6 @@
 import { invariantResponse } from '@epic-web/invariant'
 import jsPDF from 'jspdf'
+import { autoTable } from 'jspdf-autotable'
 import { Calendar } from 'lucide-react'
 import { useState } from 'react'
 import { type MetaFunction } from 'react-router'
@@ -16,7 +17,7 @@ import { Icon } from '#app/components/ui/icon.tsx'
 import { Separator } from '#app/components/ui/separator.tsx'
 import { requireUserId } from '#app/utils/auth.server.ts'
 import { prisma } from '#app/utils/db.server.ts'
-import { type Route } from './+types/confirm-booking'
+import { type Route } from './+types/$bookingId'
 
 export const meta: MetaFunction = () => {
 	return [
@@ -74,7 +75,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			},
 		},
 		where: {
-			id: params.scheduleId,
+			id: params.bookingId,
 		},
 	})
 
@@ -87,93 +88,207 @@ export default function ConfirmBooking({ loaderData }: Route.ComponentProps) {
 	const { booking } = loaderData
 	const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
 
+	const visitFee = booking.schedule.visitFee ?? 0
+	const serialFee = booking.schedule.serialFee ?? 0
+	const discountFee = booking.schedule.discountFee ?? 0
+	const depositAmount = booking.schedule.depositAmount ?? 0
+	const totalAmount = visitFee + serialFee - discountFee
+	const due = totalAmount - depositAmount
+	const status = booking.status?.toLocaleLowerCase() ?? 'pending'
+
 	const generateInvoicePDF = async () => {
 		setIsGeneratingPDF(true)
 
 		try {
 			const doc = new jsPDF()
 
+			// Add logo (if you have one)
+			// const logoUrl = '/logo.png';
+			// const logoData = await fetch(logoUrl).then(res => res.arrayBuffer());
+			// doc.addImage(logoData, 'PNG', 10, 10, 30, 30);
+
+			// Colors
+			const primaryColor = [41, 128, 185] as const
+			const secondaryColor = [52, 73, 94] as const
+			const destructiveColor = [231, 76, 60] as const
+
 			// Header
 			doc.setFontSize(20)
+			doc.setTextColor(...primaryColor)
+			doc.setFont('helvetica', 'bold')
+			doc.text('DAKTARBARI', 105, 20, { align: 'center' })
+
+			doc.setFontSize(14)
+			doc.setTextColor(...secondaryColor)
+			doc.text('APPOINTMENT INVOICE', 105, 30, { align: 'center' })
+
+			// Divider line
+			doc.setDrawColor(...primaryColor)
+			doc.setLineWidth(0.5)
+			doc.line(20, 35, 190, 35)
+
+			// Invoice Info (right aligned)
+			doc.setFontSize(10)
 			doc.setTextColor(40, 40, 40)
-			doc.text('MEDICAL APPOINTMENT INVOICE', 20, 30)
+			doc.setFont('helvetica', 'normal')
+			doc.text(`Invoice #: ${booking.id}`, 180, 45, { align: 'right' })
+			doc.text(
+				`Date: ${new Date(booking.createdAt).toLocaleDateString()}`,
+				180,
+				50,
+				{ align: 'right' },
+			)
+			doc.text(`Status: ${booking.status?.toUpperCase()}`, 180, 55, {
+				align: 'right',
+			})
 
-			// Invoice details
+			// Patient and Doctor Info (two columns)
 			doc.setFontSize(12)
-			doc.text(`Invoice #: ${booking.id}`, 20, 50)
-			doc.text(`Date: ${booking.createdAt.toLocaleDateString()}`, 20, 60)
-			doc.text(`Status: ${booking.status?.toUpperCase()}`, 20, 70)
+			doc.setTextColor(...secondaryColor)
+			doc.setFont('helvetica', 'bold')
+			doc.text('PATIENT INFORMATION', 20, 70)
+			doc.text('DOCTOR INFORMATION', 110, 70)
 
-			// Patient Information
-			doc.setFontSize(14)
-			doc.text('PATIENT INFORMATION', 20, 90)
 			doc.setFontSize(10)
-			doc.text(`Name: ${booking.name}`, 20, 105)
-			doc.text(`Phone: ${booking.phone}`, 20, 125)
-			doc.text(`Email: ${booking.note}`, 20, 115)
+			doc.setTextColor(40, 40, 40)
+			doc.setFont('helvetica', 'normal')
 
-			// Doctor Information
-			doc.setFontSize(14)
-			doc.text('DOCTOR INFORMATION', 20, 145)
-			doc.setFontSize(10)
+			// Patient column
+			doc.text(`Name: ${booking.name || 'N/A'}`, 20, 80)
+			doc.text(`Phone: ${booking.phone || 'N/A'}`, 20, 85)
+			doc.text(`Note: ${booking.note || 'N/A'}`, 20, 90)
+
+			// Doctor column
 			doc.text(
-				`Name: ${booking.doctor.user.name ?? booking.doctor.user.username}`,
-				20,
-				160,
+				`Name: ${booking.doctor.user.name || booking.doctor.user.username}`,
+				110,
+				80,
 			)
 			doc.text(
-				`Specialization: ${booking.doctor.specialties.join(', ')}`,
-				20,
-				170,
+				`Specialties: ${booking.doctor.specialties.map((specialty) => specialty.name).join(', ') || 'N/A'}`,
+				110,
+				85,
 			)
-			doc.text(`Email: ${booking.doctor.user.email}`, 20, 180)
+			doc.text(`Email: ${booking.doctor.user.email}`, 110, 90)
 
 			// Appointment Details
-			doc.setFontSize(14)
-			doc.text('APPOINTMENT DETAILS', 20, 200)
-			doc.setFontSize(10)
-			doc.text(
-				`Date: ${booking.schedule.startTime.toLocaleDateString()}`,
-				20,
-				215,
-			)
-			doc.text(
-				`Time: ${booking.schedule.startTime.toLocaleTimeString()} - ${booking.schedule.endTime.toLocaleTimeString()}`,
-				20,
-				225,
-			)
-			doc.text(`Location: ${booking.schedule.location.name}`, 20, 235)
-			doc.text(
-				`Address: ${booking.schedule.location.address}, ${booking.schedule.location.city}, ${booking.schedule.location.state} ${booking.schedule.location.zip}`,
-				20,
-				245,
-			)
-
-			// Billing Information
-			doc.setFontSize(14)
-			doc.text('BILLING INFORMATION', 20, 265)
-			doc.setFontSize(10)
-			doc.text(`Serial Fee: $${booking.schedule.serialFee}`, 20, 280)
-			doc.text(`Discount: -$${booking.schedule.discountFee}`, 20, 290)
-			doc.text(`Visit Fee: $${booking.schedule.visitFee}`, 20, 300)
-			doc.text(`Deposit Paid: $${booking.schedule.depositAmount}`, 20, 310)
-
-			// Total
 			doc.setFontSize(12)
-			doc.text(`TOTAL AMOUNT: $${booking.schedule.visitFee}`, 20, 325)
+			doc.setTextColor(...secondaryColor)
+			doc.setFont('helvetica', 'bold')
+			doc.text('APPOINTMENT DETAILS', 20, 110)
+
+			doc.setFontSize(10)
+			doc.setTextColor(40, 40, 40)
+			doc.setFont('helvetica', 'normal')
+
+			const startTime = new Date(booking.schedule.startTime)
+			const endTime = new Date(booking.schedule.endTime)
+
+			doc.text(`Date: ${startTime.toLocaleDateString()}`, 20, 120)
 			doc.text(
-				`REMAINING BALANCE: $${(booking.schedule.visitFee ?? 0) - (booking.schedule.depositAmount ?? 0)}`,
+				`Time: ${startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
 				20,
-				335,
+				125,
 			)
+			doc.text(`Location: ${booking.schedule.location.name}`, 20, 130)
+			doc.text(
+				`Address: ${[
+					booking.schedule.location.address,
+					booking.schedule.location.city,
+					booking.schedule.location.state,
+					booking.schedule.location.zip,
+				]
+					.filter(Boolean)
+					.join(', ')}`,
+				20,
+				135,
+			)
+
+			// Billing Table
+			doc.setFontSize(12)
+			doc.setTextColor(...secondaryColor)
+			doc.setFont('helvetica', 'bold')
+			doc.text('BILLING DETAILS', 20, 155)
+
+			// Table data
+			const billingItems = [
+				{ description: 'Serial Fee', amount: serialFee || 0 },
+				{
+					description: 'Discount',
+					amount: -(booking.schedule.discountFee || 0),
+				},
+				{ description: 'Visit Fee', amount: visitFee || 0 },
+				{
+					description: 'Deposit Paid',
+					amount: -(depositAmount || 0),
+				},
+			]
+			// AutoTable for billing items
+			autoTable(doc, {
+				startY: 160,
+				head: [['Description', 'Amount']],
+				body: [
+					...billingItems.map((item) => [
+						item.description,
+						`${item.amount.toFixed(2)}tk`,
+					]),
+					[
+						{ content: 'TOTAL AMOUNT', styles: { fontStyle: 'bold' } },
+						{
+							content: `${totalAmount.toFixed(2)}tk`,
+							styles: { fontStyle: 'bold' },
+						},
+					],
+					[
+						{
+							content: 'REMAINING BALANCE',
+							styles: { fontStyle: 'bold', textColor: [...destructiveColor] },
+						},
+						{
+							content: `${due.toFixed(2)}tk`,
+							styles: { fontStyle: 'bold', textColor: [...destructiveColor] },
+						},
+					],
+				],
+				theme: 'grid',
+				headStyles: {
+					fillColor: [...primaryColor],
+					textColor: 255,
+					fontStyle: 'bold',
+				},
+				columnStyles: {
+					0: { cellWidth: 'auto' },
+					1: { cellWidth: 40, halign: 'right' },
+				},
+				margin: { left: 20 },
+			})
 
 			// Footer
-			doc.setFontSize(8)
-			doc.text('Thank you for choosing our medical services.', 20, 360)
-			doc.text('Please bring this invoice to your appointment.', 20, 370)
+			doc.setFontSize(10)
+			doc.setTextColor(100, 100, 100)
+			doc.text(
+				'Thank you for choosing our medical services.',
+				20,
+				(doc as any).lastAutoTable.finalY + 10,
+			)
+			doc.text(
+				'Please bring this invoice to your appointment.',
+				20,
+				(doc as any).lastAutoTable.finalY + 20,
+			)
+			doc.text(
+				'For any questions, please contact support@daktarbari.com',
+				20,
+				(doc as any).lastAutoTable.finalY + 25,
+			)
+
+			// Page border
+			doc.setDrawColor(200, 200, 200)
+			doc.setLineWidth(0.5)
+			doc.rect(5, 5, 200, 287) // A4 size: 210x297, with 5mm margin
 
 			// Save the PDF
-			doc.save(`invoice-${booking.id}.pdf`)
+			doc.save(`DaktarBari-Invoice-${booking.id}.pdf`)
 		} catch (error) {
 			console.error('Error generating PDF:', error)
 		} finally {
@@ -182,17 +297,17 @@ export default function ConfirmBooking({ loaderData }: Route.ComponentProps) {
 	}
 
 	return (
-		<div className="min-h-screen bg-gray-50 py-8">
+		<div className="min-h-screen py-8">
 			<div className="container mx-auto max-w-4xl px-4">
 				{/* Success Header */}
 				<div className="mb-8 text-center">
 					<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
 						<Icon name="check" className="h-8 w-8 text-green-600" />
 					</div>
-					<h1 className="text-3xl font-bold text-gray-900">
+					<h1 className="text-accent-foreground text-3xl font-bold">
 						Booking Confirmed!
 					</h1>
-					<p className="mt-2 text-gray-600">
+					<p className="text-primary mt-2">
 						Your appointment has been successfully scheduled
 					</p>
 				</div>
@@ -212,9 +327,9 @@ export default function ConfirmBooking({ loaderData }: Route.ComponentProps) {
 								<Icon name="clock" className="h-8 w-8 text-green-600" />
 								<div>
 									<p className="font-medium">
-										{booking.schedule.startTime.toLocaleTimeString()}
+										{booking.schedule.startTime.toLocaleDateString()}
 									</p>
-									<p className="text-sm text-gray-600">
+									<p className="text-accent-foreground text-sm">
 										{booking.schedule.startTime.toLocaleTimeString()} -{' '}
 										{booking.schedule.endTime.toLocaleTimeString()}
 									</p>
@@ -227,7 +342,7 @@ export default function ConfirmBooking({ loaderData }: Route.ComponentProps) {
 									<p className="font-medium">
 										{booking.schedule.location.name}
 									</p>
-									<p className="text-sm text-gray-600">
+									<p className="text-secondary text-sm">
 										{booking.schedule.location.address}
 										<br />
 										{booking.schedule.location.city},{' '}
@@ -239,35 +354,34 @@ export default function ConfirmBooking({ loaderData }: Route.ComponentProps) {
 
 							<div className="flex items-center gap-3">
 								<Icon name="avatar" className="h-4 w-4 text-gray-500" />
-								<div>
+								<div className="space-y-1">
 									<p className="font-medium">
 										{booking.doctor.user.name ?? booking.doctor.user.username}
 									</p>
-									<p className="text-sm text-gray-600">
+									<p className="text-secondary text-sm">
 										{booking.doctor.specialties.length > 0 && (
-											<div className="flex items-center gap-1">
-												<Icon
-													name="stethoscope"
-													className="text-primary h-3 w-3"
-												/>
-												<ul className="text-muted-foreground flex items-center gap-1 text-xs">
-													{booking.doctor.specialties.map((specialty) => (
-														<li
-															key={specialty.id}
-															className="bg-muted text-accent-foreground rounded-md px-1 py-0.5 text-xs"
-														>
-															{specialty.name}
-														</li>
-													))}
-												</ul>
-											</div>
+											<ul className="text-muted-foreground flex items-center gap-1 text-xs">
+												{booking.doctor.specialties.map((specialty) => (
+													<li
+														key={specialty.id}
+														className="bg-muted text-accent-foreground rounded-md px-1 py-0.5 text-xs"
+													>
+														{specialty.name}
+													</li>
+												))}
+											</ul>
 										)}
 									</p>
 								</div>
 							</div>
 
 							<div className="flex gap-2">
-								<Badge variant="default">Confirmed</Badge>
+								<Badge
+									className="capitalize"
+									variant={`${status === 'pending' ? 'secondary' : 'default'}`}
+								>
+									{status}
+								</Badge>
 								<Badge variant="default">Paid</Badge>
 							</div>
 						</CardContent>
@@ -281,15 +395,15 @@ export default function ConfirmBooking({ loaderData }: Route.ComponentProps) {
 						<CardContent className="space-y-3">
 							<div>
 								<p className="text-sm font-medium text-gray-500">Name</p>
-								<p className="font-medium">{booking.name}</p>
+								<p className="font-semibold">{booking.name}</p>
 							</div>
 							<div>
 								<p className="text-sm font-medium text-gray-500">Phone</p>
-								<p className="font-medium">{booking.phone}</p>
+								<p className="font-semibold">{booking.phone}</p>
 							</div>
 							<div>
 								<p className="text-sm font-medium text-gray-500">Note</p>
-								<p className="font-medium">{booking.note}</p>
+								<p className="font-semibold">{booking.note}</p>
 							</div>
 						</CardContent>
 					</Card>
@@ -304,32 +418,29 @@ export default function ConfirmBooking({ loaderData }: Route.ComponentProps) {
 						<div className="space-y-3">
 							<div className="flex justify-between">
 								<span>Serial Fee</span>
-								<span>${booking.schedule.serialFee}</span>
+								<span>{serialFee}tk</span>
 							</div>
 							<div className="flex justify-between text-green-600">
 								<span>Discount Applied</span>
-								<span>-${booking.schedule.discountFee}</span>
+								<span>-{discountFee}tk</span>
 							</div>
 							<div className="flex justify-between">
 								<span>Visit Fee</span>
-								<span>${booking.schedule.visitFee}</span>
+								<span>{visitFee}tk</span>
 							</div>
 							<div className="flex justify-between text-blue-600">
 								<span>Deposit Paid</span>
-								<span>${booking.schedule.depositAmount}</span>
+								<span>{depositAmount}tk</span>
 							</div>
 							<Separator />
 							<div className="flex justify-between font-semibold">
 								<span>Total Amount</span>
-								<span>${booking.schedule.visitFee}</span>
+								<span>{totalAmount}tk</span>
 							</div>
+							<Separator />
 							<div className="flex justify-between font-semibold text-orange-600">
-								<span>Remaining Balance</span>
-								<span>
-									$
-									{(booking.schedule.visitFee ?? 0) -
-										(booking.schedule.depositAmount ?? 0)}
-								</span>
+								<span>Due</span>
+								<span>{due}tk</span>
 							</div>
 						</div>
 					</CardContent>
@@ -362,12 +473,12 @@ export default function ConfirmBooking({ loaderData }: Route.ComponentProps) {
 				</div>
 
 				{/* Important Notes */}
-				<Card className="mt-6 border-blue-200 bg-blue-50">
+				<Card className="bg-accent border-accent-foreground mt-6">
 					<CardContent className="pt-6">
-						<h3 className="mb-2 font-semibold text-blue-900">
+						<h3 className="text-accent-foreground mb-2 font-semibold">
 							Important Notes:
 						</h3>
-						<ul className="space-y-1 text-sm text-blue-800">
+						<ul className="text-accent-foreground space-y-1 text-sm">
 							<li>
 								• Please arrive 15 minutes before your scheduled appointment
 								time

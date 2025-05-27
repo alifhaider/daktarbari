@@ -91,13 +91,10 @@ export async function action({ request }: Route.ActionArgs) {
 		},
 	})
 
-	return redirectWithToast(
-		safeRedirect(`/schedules/${scheduleId}/confirm-booking`),
-		{
-			title: 'Congratulations! Doctor Appointment Scheduled Successfully.',
-			description: 'You will receive a confirmation email shortly.',
-		},
-	)
+	return redirectWithToast(safeRedirect(`/bookings/${booking.id}`), {
+		title: 'Congratulations! Doctor Appointment Scheduled Successfully.',
+		description: 'You will receive a confirmation email shortly.',
+	})
 }
 
 export default function Booking({
