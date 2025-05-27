@@ -6,7 +6,7 @@ import {
 } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod'
 import { invariantResponse } from '@epic-web/invariant'
-import { format } from 'date-fns'
+import { format, isPast } from 'date-fns'
 import { Img } from 'openimg/react'
 import React, { useState } from 'react'
 import { type DayProps } from 'react-day-picker'
@@ -881,9 +881,10 @@ const BookedAppointments = () => {
 	return (
 		<section className="mx-auto w-full">
 			<Spacer size="md" />
-			<h2>Booked Appointments</h2>
-
-			<Spacer size="2xs" />
+			<h2 className="text-2xl font-bold">Your Appointments</h2>
+			<Spacer size="4xs" />
+			<hr />
+			<Spacer size="4xs" />
 
 			{bookings.length === 0 ? (
 				<p className="text-accent-foreground text-lg">
@@ -899,9 +900,7 @@ const BookedAppointments = () => {
 
 			<div className="space-y-8">
 				{bookings.map((booking) => {
-					const isInThePast =
-						new Date(booking.schedule.startTime) < new Date() &&
-						new Date(booking.schedule.endTime) < new Date()
+					const isInThePast = isPast(new Date(booking.schedule.startTime))
 					return (
 						<div key={booking.id} className="relative">
 							<Card>
@@ -934,10 +933,12 @@ const BookedAppointments = () => {
 										</Link>
 										<p className="text-muted-foreground text-sm">
 											Appointment on{' '}
-											{format(
-												new Date(booking.schedule.startTime),
-												'MMMM d, yyyy',
-											)}
+											<strong>
+												{format(
+													new Date(booking.schedule.startTime),
+													'MMMM d, yyyy',
+												)}
+											</strong>
 										</p>
 									</div>
 									{isInThePast ? (
@@ -956,20 +957,7 @@ const BookedAppointments = () => {
 									) : null}
 								</CardHeader>
 								<CardContent>
-									<div className="grid gap-4">
-										<div className="flex items-center gap-2">
-											<Icon
-												name="calendar"
-												className="text-muted-foreground h-4 w-4"
-											/>
-											<span>
-												<strong>Schedule Date: </strong>
-												{format(
-													new Date(booking.schedule.startTime),
-													'EEEE, MMMM d, yyyy',
-												)}
-											</span>
-										</div>
+									<div className="grid gap-2 text-sm">
 										<div className="flex items-center gap-2">
 											<Icon
 												name="clock"
@@ -995,29 +983,23 @@ const BookedAppointments = () => {
 												{booking.schedule.location.state}
 											</span>
 										</div>
-										<div className="flex items-center gap-2">
-											<Icon
-												name="coins"
-												className="text-muted-foreground h-4 w-4"
-											/>
-											<span>
-												<strong>Total Cost: </strong>
-												{totalCost(
-													booking.schedule.serialFee,
-													booking.schedule.visitFee,
-													booking.schedule.discountFee,
-												)}
-												tk
-											</span>
-										</div>
+
 										<div className="flex items-center gap-2">
 											<Icon
 												name="dollar-sign"
 												className="text-muted-foreground h-4 w-4"
 											/>
 											<span>
-												<strong>Paid Amount: </strong>
-												{booking.schedule.depositAmount || 0}tk tk
+												Paid Amount:{' '}
+												<strong>
+													{booking.schedule.depositAmount || 0}tk of{' '}
+													{totalCost(
+														booking.schedule.serialFee,
+														booking.schedule.visitFee,
+														booking.schedule.discountFee,
+													)}
+													tk
+												</strong>
 											</span>
 										</div>
 										<div className="flex items-center gap-2">
