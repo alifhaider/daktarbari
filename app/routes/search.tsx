@@ -28,6 +28,8 @@ import { type Route } from './+types/search'
 import { LocationCombobox } from './resources+/location-combobox'
 import { SpecialtyCombobox } from './resources+/specialty-combobox'
 
+//TODO: Get the count of total doctors from the searchDoctors sql query
+
 export const SearchPageSchema = z.object({
 	name: z.string().optional(),
 	locationId: z.string().optional(),
@@ -210,11 +212,8 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 									<>
 										<div className="my-4">
 											<h4 className="text-xl leading-7 font-medium">
-												{loaderData.doctors.length} Doctors Available
+												{items.length} Doctors Available
 											</h4>
-											<p className="text-xs font-medium">
-												These doctors are located around
-											</p>
 										</div>
 
 										<div
