@@ -25,7 +25,7 @@ const ExploreLinks = [
 
 export default function Footer() {
 	return (
-		<footer className="container py-14 text-secondary-foreground">
+		<footer className="text-secondary-foreground container py-14">
 			<div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
 				<FooterLinkSection title="User" links={UserLinks} />
 				<FooterLinkSection title="DaktarBari" links={CompanyLinks} />
@@ -37,7 +37,7 @@ export default function Footer() {
 			<div className="mt-12 border-t border-gray-200 pt-8">
 				<div className="flex flex-wrap items-center justify-between gap-6">
 					<div className="flex flex-wrap space-x-6">
-						<span className="text-sm">&copy; 2025 CareHub</span>
+						<span className="text-sm">&copy; 2025 DaktarBari</span>
 						<Link
 							to="/terms"
 							className="text-sm transition-all hover:text-cyan-400 hover:underline"
@@ -80,7 +80,7 @@ const FooterLinkSection = ({
 }) => {
 	return (
 		<div>
-			<h2 className="mb-4 text-sm font-bold text-secondary-foreground">
+			<h2 className="text-secondary-foreground mb-4 text-sm font-bold">
 				{title}
 			</h2>
 			<ul className="space-y-2">

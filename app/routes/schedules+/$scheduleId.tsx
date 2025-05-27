@@ -1,6 +1,6 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod'
-import { invariant } from '@epic-web/invariant'
+import { invariant, invariantResponse } from '@epic-web/invariant'
 import { format } from 'date-fns'
 import { data, Form, Link, type MetaFunction } from 'react-router'
 import { safeRedirect } from 'remix-utils/safe-redirect'
@@ -35,8 +35,8 @@ const BookingFormSchema = z.object({
 
 export const meta: MetaFunction = () => {
 	return [
-		{ title: 'Book / CH' },
-		{ name: 'description', content: 'Book appointment from CareHub' },
+		{ title: 'Book / DB' },
+		{ name: 'description', content: 'Book appointment from DaktarBari' },
 	]
 }
 
@@ -56,6 +56,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			},
 		},
 	})
+
+	invariantResponse(schedule, 'Schedule not found', { status: 404 })
 
 	const canBeBooked =
 		schedule && schedule.maxAppointments > schedule.doctor._count.bookings
@@ -77,10 +79,9 @@ export async function action({ request }: Route.ActionArgs) {
 
 	// TODO: Send a confirmation email
 
-	const { doctorId, userId, scheduleId, phone, note, username } =
-		submission.value
+	const { doctorId, userId, scheduleId, phone, note } = submission.value
 
-	await prisma.booking.create({
+	const booking = await prisma.booking.create({
 		data: {
 			doctorId,
 			userId,
@@ -90,10 +91,13 @@ export async function action({ request }: Route.ActionArgs) {
 		},
 	})
 
-	return redirectWithToast(safeRedirect(`/doctors/${username}`), {
-		title: 'Congratulations! Doctor Appointment Scheduled Successfully.',
-		description: 'You will receive a confirmation email shortly.',
-	})
+	return redirectWithToast(
+		safeRedirect(`/schedules/${scheduleId}/confirm-booking`),
+		{
+			title: 'Congratulations! Doctor Appointment Scheduled Successfully.',
+			description: 'You will receive a confirmation email shortly.',
+		},
+	)
 }
 
 export default function Booking({
