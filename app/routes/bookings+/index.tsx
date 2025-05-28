@@ -292,8 +292,10 @@ export default function BookingsRoute({ loaderData }: Route.ComponentProps) {
 													</DropdownMenuTrigger>
 													<DropdownMenuContent align="end">
 														<DropdownMenuItem>
-															<Icon name="eye" className="mr-2 h-4 w-4" />
-															View Details
+															<Link to={`/bookings/${booking.id}`}>
+																<Icon name="eye" className="mr-2 h-4 w-4" />
+																View Details
+															</Link>
 														</DropdownMenuItem>
 														<DropdownMenuItem className="text-red-600">
 															<Icon name="trash" className="mr-2 h-4 w-4" />
