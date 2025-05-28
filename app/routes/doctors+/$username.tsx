@@ -8,9 +8,9 @@ import { parseWithZod } from '@conform-to/zod'
 import { invariantResponse } from '@epic-web/invariant'
 import { format, isPast } from 'date-fns'
 import { Img } from 'openimg/react'
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { type DayProps } from 'react-day-picker'
-import { data, Form, Link, useFetcher, useLoaderData } from 'react-router'
+import { data, Form, Link, useFetcher, useNavigation } from 'react-router'
 import { z } from 'zod'
 import { ErrorList, TextareaField } from '#app/components/forms.tsx'
 import { Spacer } from '#app/components/spacer.tsx'
@@ -255,7 +255,7 @@ export async function action({ request }: Route.ActionArgs) {
 
 		if (submission.status !== 'success') {
 			return data(
-				{ success: false },
+				{ success: false, result: submission.reply() },
 				{
 					headers: await createToastHeaders({
 						description: 'There was an error creating the review',
@@ -277,7 +277,7 @@ export async function action({ request }: Route.ActionArgs) {
 		})
 
 		return data(
-			{ success: true },
+			{ success: true, result: submission.reply() },
 			{
 				headers: await createToastHeaders({
 					description: 'Thanks for sharing your feedback!',
@@ -303,7 +303,7 @@ export async function action({ request }: Route.ActionArgs) {
 
 		if (submission.status !== 'success') {
 			return data(
-				{ success: false },
+				{ success: false, result: submission.reply() },
 				{
 					headers: await createToastHeaders({
 						description: 'Schedule has bookings and cannot be deleted',
@@ -318,7 +318,7 @@ export async function action({ request }: Route.ActionArgs) {
 		await prisma.schedule.delete({ where: { id: scheduleId } })
 
 		return data(
-			{ success: true },
+			{ success: true, result: submission.reply() },
 			{
 				headers: await createToastHeaders({
 					description: 'Your schedule is no longer available',
@@ -338,7 +338,7 @@ export async function action({ request }: Route.ActionArgs) {
 
 		if (submission.status !== 'success') {
 			return data(
-				{ success: false },
+				{ success: false, result: submission.reply() },
 				{
 					headers: await createToastHeaders({
 						description: 'There was an error cancelling the booking',
@@ -353,7 +353,7 @@ export async function action({ request }: Route.ActionArgs) {
 		await prisma.booking.delete({ where: { id: bookingId } })
 
 		return data(
-			{ success: true },
+			{ success: true, result: submission.reply() },
 			{
 				headers: await createToastHeaders({
 					description: 'Booking cancelled successfully',
@@ -372,7 +372,7 @@ export async function action({ request }: Route.ActionArgs) {
 			return cancelBooking(formData)
 		default:
 			return data(
-				{ success: false },
+				{ success: false, result: {} },
 				{
 					headers: await createToastHeaders({
 						description: 'Invalid action',
@@ -383,7 +383,10 @@ export async function action({ request }: Route.ActionArgs) {
 	}
 }
 
-export default function DoctorRoute({ loaderData }: Route.ComponentProps) {
+export default function DoctorRoute({
+	loaderData,
+	actionData,
+}: Route.ComponentProps) {
 	const {
 		isDoctor,
 		isOwner,
@@ -572,7 +575,9 @@ export default function DoctorRoute({ loaderData }: Route.ComponentProps) {
 				</>
 			) : null}
 
-			{isOwner ? <BookedAppointments /> : null}
+			{isOwner ? (
+				<BookedAppointments actionData={actionData} loaderData={loaderData} />
+			) : null}
 
 			{isDoctor && loaderData.loggedInUserId ? (
 				<>
@@ -582,6 +587,7 @@ export default function DoctorRoute({ loaderData }: Route.ComponentProps) {
 					<Reviews
 						reviews={user.doctor?.reviews}
 						doctorId={user.id}
+						actionData={actionData}
 						userId={loaderData.loggedInUserId}
 						totalReviews={user.doctor?._count?.reviews}
 						overallRating={overallRating}
@@ -597,9 +603,15 @@ type ScheduleProps = {
 	schedules: Route.ComponentProps['loaderData']['schedules']
 	isOwner: boolean
 	username: string
+	actionData?: Route.ComponentProps['actionData']
 }
 
-const Schedules = ({ schedules, isOwner, username }: ScheduleProps) => {
+const Schedules = ({
+	schedules,
+	isOwner,
+	username,
+	actionData,
+}: ScheduleProps) => {
 	const scheduleDate = format(
 		schedules[0]?.startTime ?? new Date(),
 		'dd MMMM, yyyy',
@@ -628,6 +640,7 @@ const Schedules = ({ schedules, isOwner, username }: ScheduleProps) => {
 				{schedules?.map((schedule) => (
 					<ScheduleItem
 						key={schedule.id}
+						actionData={actionData}
 						schedule={schedule}
 						isOwner={isOwner}
 						username={username}
@@ -648,13 +661,16 @@ const Schedules = ({ schedules, isOwner, username }: ScheduleProps) => {
 const ScheduleItem = ({
 	schedule,
 	isOwner,
+	actionData,
 }: {
+	actionData: Route.ComponentProps['actionData']
 	schedule: Route.ComponentProps['loaderData']['schedules'][number]
 	isOwner: boolean
 	username: string
 }) => {
 	const deleteFetcher = useFetcher()
 	const [form, fields] = useForm({
+		lastResult: actionData?.result,
 		onValidate({ formData }) {
 			return parseWithZod(formData, {
 				schema: z.object({ scheduleId: z.string() }),
@@ -863,9 +879,14 @@ const ScheduleItem = ({
 	)
 }
 
-const BookedAppointments = () => {
-	const { user } = useLoaderData<typeof loader>()
-	const bookings = user.bookings
+const BookedAppointments = ({
+	actionData,
+	loaderData,
+}: {
+	actionData: Route.ComponentProps['actionData']
+	loaderData: Route.ComponentProps['loaderData']
+}) => {
+	const bookings = loaderData.user.bookings
 	const getAmount = (fee: number | null) => Number(fee) || 0
 	function totalCost(
 		serialFee: number | null,
@@ -955,7 +976,10 @@ const BookedAppointments = () => {
 									!isStartTimeMoreThanSixHoursAhead(
 										booking.schedule.startTime,
 									) ? (
-										<CancelBookingButton bookingId={booking.id} />
+										<CancelBookingButton
+											bookingId={booking.id}
+											actionData={actionData}
+										/>
 									) : null}
 								</CardHeader>
 								<CardContent>
@@ -1030,9 +1054,16 @@ const BookedAppointments = () => {
 	)
 }
 
-function CancelBookingButton({ bookingId }: { bookingId: string }) {
+function CancelBookingButton({
+	bookingId,
+	actionData,
+}: {
+	bookingId: string
+	actionData: Route.ComponentProps['actionData']
+}) {
 	const deleteFetcher = useFetcher()
 	const [form, fields] = useForm({
+		lastResult: actionData?.result,
 		onValidate({ formData }) {
 			return parseWithZod(formData, {
 				schema: z.object({ bookingId: z.string() }),
@@ -1064,6 +1095,7 @@ type ReviewProps = {
 	userId: string
 	totalReviews: number | undefined
 	overallRating: number
+	actionData: Route.ComponentProps['actionData']
 	reviews:
 		| {
 				user: {
@@ -1083,14 +1115,28 @@ const Reviews = ({
 	doctorId,
 	userId,
 	totalReviews,
+	actionData,
 	overallRating,
 }: ReviewProps) => {
+	const $form = useRef<HTMLFormElement>(null)
+	let navigation = useNavigation()
 	const [form, fields] = useForm({
+		lastResult: actionData?.result,
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema: ReviewSchema })
 		},
 		shouldRevalidate: 'onSubmit',
 	})
+
+	useEffect(
+		function resetFormOnSuccess() {
+			if (navigation.state === 'idle' && actionData?.success) {
+				$form.current?.reset()
+			}
+		},
+		[navigation.state, actionData],
+	)
+
 	if (!reviews) return null
 
 	return (
@@ -1161,7 +1207,7 @@ const Reviews = ({
 			</h6>
 			<Spacer size="3xs" />
 			<section id="write-review">
-				<Form method="post" {...getFormProps(form)}>
+				<Form method="post" {...getFormProps(form)} ref={$form}>
 					<input
 						{...getInputProps(fields.doctorId, { type: 'hidden' })}
 						value={doctorId}
