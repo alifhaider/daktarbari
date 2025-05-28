@@ -79,12 +79,13 @@ export async function action({ request }: Route.ActionArgs) {
 
 	// TODO: Send a confirmation email
 
-	const { doctorId, userId, scheduleId, phone, note } = submission.value
+	const { doctorId, userId, scheduleId, phone, note, name } = submission.value
 
 	const booking = await prisma.booking.create({
 		data: {
 			doctorId,
 			userId,
+			name,
 			scheduleId,
 			phone,
 			note,
