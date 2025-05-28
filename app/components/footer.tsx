@@ -1,7 +1,7 @@
 import { Link } from 'react-router'
 
 const UserLinks = [
-	{ to: '/appointments', label: 'Appointment History' },
+	{ to: '/bookings', label: 'Appointment History' },
 	{ to: '/profile', label: 'Profile' },
 	{ to: '/reviews', label: 'User Reviews' },
 ]
