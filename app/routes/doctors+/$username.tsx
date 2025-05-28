@@ -32,7 +32,7 @@ import { prisma } from '#app/utils/db.server.ts'
 import { getUserImgSrc } from '#app/utils/misc.tsx'
 import {
 	getUpcomingSchedules,
-	isScheduleHasMoreThanSixHours,
+	isStartTimeMoreThanSixHoursAhead,
 } from '#app/utils/schedule.ts'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 import { type Route } from './+types/$username'
@@ -952,7 +952,9 @@ const BookedAppointments = () => {
 										</Button>
 									) : null}
 									{!isInThePast &&
-									!isScheduleHasMoreThanSixHours(booking.schedule.startTime) ? (
+									!isStartTimeMoreThanSixHoursAhead(
+										booking.schedule.startTime,
+									) ? (
 										<CancelBookingButton bookingId={booking.id} />
 									) : null}
 								</CardHeader>

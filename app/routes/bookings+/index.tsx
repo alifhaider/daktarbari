@@ -27,6 +27,7 @@ import {
 } from '#app/components/ui/dropdown-menu.tsx'
 import { Input } from '#app/components/ui/input.tsx'
 import { format } from 'date-fns'
+import { isStartTimeMoreThanSixHoursAhead } from '#app/utils/schedule.ts'
 
 export const meta: MetaFunction = () => {
 	return [
@@ -297,10 +298,14 @@ export default function BookingsRoute({ loaderData }: Route.ComponentProps) {
 																View Details
 															</Link>
 														</DropdownMenuItem>
-														<DropdownMenuItem className="text-red-600">
-															<Icon name="trash" className="mr-2 h-4 w-4" />
-															Cancel Booking
-														</DropdownMenuItem>
+														{isStartTimeMoreThanSixHoursAhead(
+															booking.schedule.startTime,
+														) ? (
+															<DropdownMenuItem className="text-red-600">
+																<Icon name="trash" className="mr-2 h-4 w-4" />
+																Cancel Booking
+															</DropdownMenuItem>
+														) : null}
 													</DropdownMenuContent>
 												</DropdownMenu>
 											</td>

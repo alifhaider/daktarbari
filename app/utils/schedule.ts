@@ -1,3 +1,5 @@
+import { differenceInHours, isAfter } from 'date-fns'
+
 export const DAYS = [
 	'sunday',
 	'monday',
@@ -52,12 +54,19 @@ export function getNextDateSchedules<
 		return new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
 	})
 }
-
-export function isScheduleHasMoreThanSixHours(startTime: Date): boolean {
+/**
+ * Determines if a scheduled start time is more than 6 hours in the future
+ * @param scheduleStartTime - The scheduled start time to check
+ * @returns True if the schedule starts more than 6 hours from now
+ */
+export function isStartTimeMoreThanSixHoursAhead(
+	scheduleStartTime: Date,
+): boolean {
 	const now = new Date()
-	const start = new Date(startTime)
-	const diffInHours = (start.getTime() - now.getTime()) / (1000 * 60 * 60)
-	return diffInHours > 6
+	return (
+		isAfter(scheduleStartTime, now) &&
+		differenceInHours(scheduleStartTime, now) > 6
+	)
 }
 
 // takes a time string like "2: 14" or "14: 00" and returns [2, 14] or [14, 0]
