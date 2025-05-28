@@ -217,14 +217,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 				},
 			},
 		},
-		where: {
-			username: params.username,
-		},
+		where: { username: params.username },
 	})
 
 	invariantResponse(user, 'User not found', { status: 404 })
 	const loggedInUserId = await getUserId(request)
-	const isLoggedUser = loggedInUserId === user.id
+	const isOwner = loggedInUserId === user.id
 	const isDoctor = !!user.doctor
 	const totalReviewsCount = user.doctor?._count?.reviews
 	const totalRating = user.doctor?.reviews.reduce(
@@ -239,7 +237,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	return {
 		user,
 		userJoinedDisplay: user.createdAt.toLocaleDateString(),
-		isLoggedUser,
+		isOwner,
+		loggedInUserId,
 		isDoctor,
 		schedules: user.doctor?.schedules ?? [],
 		overallRating,
@@ -281,7 +280,7 @@ export async function action({ request }: Route.ActionArgs) {
 			{ success: true },
 			{
 				headers: await createToastHeaders({
-					description: 'Review created successfully',
+					description: 'Thanks for sharing your feedback!',
 					type: 'success',
 				}),
 			},
@@ -322,7 +321,7 @@ export async function action({ request }: Route.ActionArgs) {
 			{ success: true },
 			{
 				headers: await createToastHeaders({
-					description: 'Schedule deleted successfully',
+					description: 'Your schedule is no longer available',
 					type: 'success',
 				}),
 			},
@@ -387,7 +386,7 @@ export async function action({ request }: Route.ActionArgs) {
 export default function DoctorRoute({ loaderData }: Route.ComponentProps) {
 	const {
 		isDoctor,
-		isLoggedUser,
+		isOwner,
 		user,
 		userJoinedDisplay,
 		overallRating,
@@ -449,7 +448,7 @@ export default function DoctorRoute({ loaderData }: Route.ComponentProps) {
 								{user.name ?? user.username}
 							</h2>
 
-							{isDoctor && isLoggedUser ? (
+							{isDoctor && isOwner ? (
 								<Button asChild variant="outline">
 									<Link
 										to="/settings/profile"
@@ -565,7 +564,7 @@ export default function DoctorRoute({ loaderData }: Route.ComponentProps) {
 						{displayedSchedules && isDoctor ? (
 							<Schedules
 								schedules={displayedSchedules}
-								isOwner={isLoggedUser}
+								isOwner={isOwner}
 								username={user.username}
 							/>
 						) : null}
@@ -573,17 +572,17 @@ export default function DoctorRoute({ loaderData }: Route.ComponentProps) {
 				</>
 			) : null}
 
-			{isLoggedUser ? <BookedAppointments /> : null}
+			{isOwner ? <BookedAppointments /> : null}
 
-			{isDoctor && user.doctor?.userId ? (
+			{isDoctor && loaderData.loggedInUserId ? (
 				<>
 					<Spacer size="lg" />
 					<hr className="border-t border-gray-200 dark:border-gray-700" />
 					<Spacer size="sm" />
 					<Reviews
 						reviews={user.doctor?.reviews}
-						doctorId={user.doctor?.userId}
-						userId={user.id}
+						doctorId={user.id}
+						userId={loaderData.loggedInUserId}
 						totalReviews={user.doctor?._count?.reviews}
 						overallRating={overallRating}
 					/>
@@ -944,7 +943,8 @@ const BookedAppointments = () => {
 									{isInThePast ? (
 										<Button asChild variant="outline">
 											<Link
-												to={`/profile/${booking.doctor.user.username}`}
+												reloadDocument
+												to={`/doctors/${booking.doctor.user.username}#write-review`}
 												className="text-accent-foreground flex w-max items-center gap-2 text-sm"
 											>
 												Leave a Review
