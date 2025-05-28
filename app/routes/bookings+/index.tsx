@@ -1,9 +1,7 @@
-import { Form, Link, MetaFunction, Outlet, useSearchParams } from 'react-router'
-import { requireUserId } from '#app/utils/auth.server.ts'
-import { prisma } from '#app/utils/db.server.ts'
-import { type Route } from './+types'
+import { format } from 'date-fns'
+import { Form, Link, type MetaFunction, useSearchParams } from 'react-router'
+import { Badge } from '#app/components/ui/badge.tsx'
 import { Button } from '#app/components/ui/button.tsx'
-import { Icon } from '#app/components/ui/icon.tsx'
 import {
 	Card,
 	CardContent,
@@ -12,22 +10,24 @@ import {
 	CardTitle,
 } from '#app/components/ui/card.tsx'
 import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from '#app/components/ui/dropdown-menu.tsx'
+import { Icon } from '#app/components/ui/icon.tsx'
+import { Input } from '#app/components/ui/input.tsx'
+import {
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
 } from '#app/components/ui/select.tsx'
-import { Badge } from '#app/components/ui/badge.tsx'
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from '#app/components/ui/dropdown-menu.tsx'
-import { Input } from '#app/components/ui/input.tsx'
-import { format } from 'date-fns'
+import { requireUserId } from '#app/utils/auth.server.ts'
+import { prisma } from '#app/utils/db.server.ts'
 import { isStartTimeMoreThanSixHoursAhead } from '#app/utils/schedule.ts'
+import { type Route } from './+types'
 
 export const meta: MetaFunction = () => {
 	return [
