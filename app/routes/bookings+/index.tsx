@@ -34,12 +34,12 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '#app/components/ui/select.tsx'
+import { StatusButton } from '#app/components/ui/status-button.tsx'
 import { requireUserId } from '#app/utils/auth.server.ts'
 import { prisma } from '#app/utils/db.server.ts'
 import { isStartTimeMoreThanSixHoursAhead } from '#app/utils/schedule.ts'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 import { type Route } from './+types'
-import { StatusButton } from '#app/components/ui/status-button.tsx'
 
 function CancelBookingSchema(
 	intent: Intent | null,
@@ -63,7 +63,7 @@ function CancelBookingSchema(
 					if (!isValidatingSBooking) {
 						ctx.addIssue({
 							code: 'custom',
-							path: ['form'],
+							path: ['bookingId'],
 							message: 'Booking validation process is not properly initiated.',
 						})
 						return
@@ -72,7 +72,7 @@ function CancelBookingSchema(
 					if (typeof options?.bookingHasMoreThanSixHours !== 'function') {
 						ctx.addIssue({
 							code: 'custom',
-							path: ['form'],
+							path: ['bookingId'],
 							message: 'Booking check  validation function is not provided.',
 							fatal: true,
 						})
@@ -95,7 +95,7 @@ function CancelBookingSchema(
 					} catch (error) {
 						ctx.addIssue({
 							code: 'custom',
-							path: ['form'],
+							path: ['bookingId'],
 							message:
 								'An error occurred while validating  the booking. Please try again later.' +
 								(error instanceof Error ? ` ${error.message}` : ''),
@@ -200,7 +200,6 @@ export async function action({ request }: Route.ActionArgs) {
 	const submission = await parseWithZod(formData, {
 		schema: CancelBookingSchema(null, {
 			bookingHasMoreThanSixHours: async (bookingId) => {
-				console.log('Validating booking cancellation for ID:', bookingId)
 				const booking = await prisma.booking.findUnique({
 					where: { id: bookingId },
 					select: { schedule: { select: { startTime: true } } },
@@ -214,23 +213,12 @@ export async function action({ request }: Route.ActionArgs) {
 
 				const startTime = new Date(booking.schedule.startTime)
 				const now = new Date()
-				console.log(
-					'isAfter(startTime, now):',
-					startTime,
-					isAfter(startTime, now),
-				)
-				console.log(
-					'differenceInHours(startTime, now):',
-					{ startTime, now },
-					differenceInHours(startTime, now) > 6,
-				)
 				return isAfter(startTime, now) && differenceInHours(startTime, now) > 6
 			},
 		}),
 		async: true,
 	})
 
-	console.log('Submission result:', submission)
 	if (submission.status !== 'success') {
 		return data(
 			{ success: false },
@@ -509,7 +497,16 @@ export default function BookingsRoute({ loaderData }: Route.ComponentProps) {
 														booking.schedule.startTime,
 													) ? (
 														<CancelBookingForm bookingId={booking.id} />
-													) : null}
+													) : (
+														<Button asChild variant="outline" size="sm">
+															<Link
+																to={`/doctors/${booking.doctor.user.username}#write-review`}
+																reloadDocument
+															>
+																Rate
+															</Link>
+														</Button>
+													)}
 												</td>
 											</tr>
 										)
