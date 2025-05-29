@@ -117,7 +117,8 @@ model ScheduleLocation {
   latitude  Float?
   longitude Float?
 
-  
+  image LocationImage?
+
   schedules Schedule[]
 
   createdAt DateTime @default(now())
@@ -220,6 +221,18 @@ model UserImage {
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId String @unique
+}
+
+model LocationImage {
+  id        String  @id @default(cuid())
+  altText   String?
+  objectKey String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  location ScheduleLocation @relation(fields: [locationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  locationId String @unique
 }
 
 model Password {

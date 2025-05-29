@@ -522,6 +522,9 @@ export default function DoctorRoute({
 				<>
 					<Spacer size="lg" />
 					<section className="grid grid-cols-1 gap-8 lg:grid-cols-5">
+						<h2 className="col-span-1 text-3xl font-bold lg:col-span-5">
+							{isOwner ? 'Your Schedules' : "Doctor's Schedules"}
+						</h2>
 						<div className="col-span-1 place-content-center p-0 lg:col-span-2 lg:items-start">
 							<SelectedDateContext.Provider
 								value={{ selected: selectedDate, setSelected: setSelectedDate }}
@@ -579,7 +582,7 @@ export default function DoctorRoute({
 				<BookedAppointments actionData={actionData} loaderData={loaderData} />
 			) : null}
 
-			{isDoctor && loaderData.loggedInUserId ? (
+			{isDoctor ? (
 				<>
 					<Spacer size="lg" />
 					<hr className="border-t border-gray-200 dark:border-gray-700" />
@@ -1092,7 +1095,7 @@ function CancelBookingButton({
 
 type ReviewProps = {
 	doctorId: string
-	userId: string
+	userId: string | null
 	totalReviews: number | undefined
 	overallRating: number
 	actionData: Route.ComponentProps['actionData']
@@ -1160,8 +1163,14 @@ const Reviews = ({
 			<Spacer size="xs" />
 
 			<h6 className="text-secondary-foreground text-sm font-extrabold uppercase">
-				Reviews
+				Reviews from patients
 			</h6>
+			<Spacer size="3xs" />
+			{reviews.length === 0 ? (
+				<p className="text-accent-foreground text-sm">
+					No reviews yet. Be the first to share your experience!
+				</p>
+			) : null}
 			<ul className="max-w-4xl py-2">
 				{reviews.map((review) => (
 					<li
@@ -1206,52 +1215,62 @@ const Reviews = ({
 				Write a Review
 			</h6>
 			<Spacer size="3xs" />
-			<section id="write-review">
-				<Form method="post" {...getFormProps(form)} ref={$form}>
-					<input
-						{...getInputProps(fields.doctorId, { type: 'hidden' })}
-						value={doctorId}
-					/>
-					<input
-						{...getInputProps(fields.userId, { type: 'hidden' })}
-						value={userId}
-					/>
-					<Label htmlFor={fields.rating.id} className="text-sm font-semibold">
-						Rating
-					</Label>
-					<div className="flex gap-2">
-						{[1, 2, 3, 4, 5].map((star) => (
-							<label key={star} className="cursor-pointer">
-								<input
-									{...getInputProps(fields.rating, { type: 'radio' })}
-									value={star}
-									className="peer sr-only"
-								/>
-								<Icon
-									name="star"
-									className={`h-8 w-8 ${star <= Number(fields.rating.value) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300 hover:text-yellow-400'} transition-colors duration-150`}
-								/>
-							</label>
-						))}
-					</div>
-					<ErrorList errors={fields.rating.errors} />
-					<Spacer size="3xs" />
+			{!userId ? (
+				<p className="text-secondary-foreground text-sm">
+					Please{' '}
+					<Link to="/login" className="text-brand underline">
+						Login
+					</Link>{' '}
+					to write a review.
+				</p>
+			) : (
+				<section id="write-review">
+					<Form method="post" {...getFormProps(form)} ref={$form}>
+						<input
+							{...getInputProps(fields.doctorId, { type: 'hidden' })}
+							value={doctorId}
+						/>
+						<input
+							{...getInputProps(fields.userId, { type: 'hidden' })}
+							value={userId || ''} // Ensure userId is a string, even if null
+						/>
+						<Label htmlFor={fields.rating.id} className="text-sm font-semibold">
+							Rating
+						</Label>
+						<div className="flex gap-2">
+							{[1, 2, 3, 4, 5].map((star) => (
+								<label key={star} className="cursor-pointer">
+									<input
+										{...getInputProps(fields.rating, { type: 'radio' })}
+										value={star}
+										className="peer sr-only"
+									/>
+									<Icon
+										name="star"
+										className={`h-8 w-8 ${star <= Number(fields.rating.value) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300 hover:text-yellow-400'} transition-colors duration-150`}
+									/>
+								</label>
+							))}
+						</div>
+						<ErrorList errors={fields.rating.errors} />
+						<Spacer size="3xs" />
 
-					<TextareaField
-						labelProps={{ htmlFor: fields.comment.id, children: 'Comment' }}
-						textareaProps={{
-							...getInputProps(fields.comment, { type: 'text' }),
-							autoComplete: 'off',
-							rows: 4,
-						}}
-						errors={fields.comment.errors}
-					/>
-					<Button type="submit" name="_action" value="create-review">
-						Submit
-					</Button>
-				</Form>
-				<ErrorList errors={form.errors} />
-			</section>
+						<TextareaField
+							labelProps={{ htmlFor: fields.comment.id, children: 'Comment' }}
+							textareaProps={{
+								...getInputProps(fields.comment, { type: 'text' }),
+								autoComplete: 'off',
+								rows: 4,
+							}}
+							errors={fields.comment.errors}
+						/>
+						<Button type="submit" name="_action" value="create-review">
+							Submit
+						</Button>
+					</Form>
+					<ErrorList errors={form.errors} />
+				</section>
+			)}
 		</section>
 	)
 }
