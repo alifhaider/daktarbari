@@ -7,8 +7,51 @@ import { Icon } from '#app/components/ui/icon.tsx'
 import { prisma } from '#app/utils/db.server.ts'
 import { getUserImgSrc } from '#app/utils/misc.tsx'
 import { type Route } from './+types'
+import { motion } from 'framer-motion'
 
 export const meta: Route.MetaFunction = () => [{ title: 'Daktar Bari' }]
+
+const fadeInUp = {
+	initial: { opacity: 0, y: 60 },
+	animate: { opacity: 1, y: 0 },
+	transition: { duration: 0.6 },
+}
+
+const staggerContainer = {
+	animate: {
+		transition: {
+			staggerChildren: 0.1,
+		},
+	},
+}
+
+const faqs = [
+	{
+		question: 'How do I book an appointment?',
+		answer:
+			"Simply search for doctors by specialty or location, select your preferred doctor and available time slot, then confirm your booking. You'll receive a confirmation with all details.",
+	},
+	{
+		question: 'What are the consultation fees?',
+		answer:
+			"Consultation fees vary by doctor and specialty. You pay only 90% of the doctor's fee - we deduct our 10% service charge from the doctor's payment, not from you.",
+	},
+	{
+		question: 'Can I cancel or reschedule my appointment?',
+		answer:
+			'Yes, you can cancel or reschedule appointments up to 2 hours before the scheduled time through your dashboard or by calling our support team.',
+	},
+	{
+		question: 'How do doctors set their schedules?',
+		answer:
+			'Doctors can create flexible schedules - weekly recurring (e.g., every Saturday-Monday), monthly recurring, or one-time appointments. They have full control over their availability.',
+	},
+	{
+		question: 'Is my medical information secure?',
+		answer:
+			'Absolutely. We use bank-level encryption and follow strict medical privacy standards to protect all your personal and medical information.',
+	},
+]
 
 export async function loader() {
 	const doctors = await prisma.doctor.findMany({
@@ -50,28 +93,28 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 	return (
 		<main className="font-poppins grid h-full place-items-center">
 			<Spacer size="xs" />
-			<section className="mx-auto flex flex-col gap-10 md:container md:flex-row">
-				<div className="space-y-6">
-					<h1 className="text-4xl font-extrabold md:text-6xl">
-						Find and Book Your Doctor&apos;s Appointment
-					</h1>
-					<p className="mt-6 font-medium">
-						Take control of your health with our user-friendly platform. Search
-						for doctors in your area, check their availability, and book
-						appointments—all in one place.
-					</p>
-
-					<p className="font-medium">
-						Schedule appointments with just a few clicks. Our streamlined
-						booking system ensures you can find an available slot that fits your
-						schedule without any hassle.
-					</p>
-				</div>
-				<img
-					className="h-80 w-full max-w-5xl rounded-2xl"
-					src="https://i.ibb.co.com/jG6D6bY/Screenshot-92.png"
-					alt="Doctor Appointment"
-				/>
+			<section className="mx-auto flex flex-col gap-10 py-20 md:container md:flex-row md:py-32">
+				<motion.div
+					className="mx-auto max-w-4xl text-center"
+					initial="initial"
+					animate="animate"
+					variants={staggerContainer}
+				>
+					<motion.h1
+						className="mb-6 text-4xl font-bold lg:text-6xl"
+						variants={fadeInUp}
+					>
+						Your Health, Our <span className="text-brand">Priority</span>
+					</motion.h1>
+					<motion.p
+						className="text-muted-foreground mx-auto mb-8 max-w-2xl text-xl"
+						variants={fadeInUp}
+					>
+						Connect with qualified doctors across Bangladesh. Book appointments
+						easily, manage your health records, and get the{' '}
+						<span className="text-brand font-medium"> care you deserve.</span>
+					</motion.p>
+				</motion.div>
 			</section>
 			<section className="bg-primary-foreground mt-20 w-full px-8 py-20">
 				<div className="container">
