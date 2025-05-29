@@ -24,7 +24,6 @@ import { href as iconsHref } from './components/ui/icon.tsx'
 import { EpicToaster } from './components/ui/sonner.tsx'
 import { UserDropdown } from './components/user-dropdown.tsx'
 import {
-	ThemeSwitch,
 	useOptionalTheme,
 	useTheme,
 } from './routes/resources+/theme-switch.tsx'

@@ -93,28 +93,63 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 	return (
 		<main className="font-poppins grid h-full place-items-center">
 			<Spacer size="xs" />
-			<section className="mx-auto flex flex-col gap-10 py-20 md:container md:flex-row md:py-32">
-				<motion.div
-					className="mx-auto max-w-4xl text-center"
-					initial="initial"
-					animate="animate"
-					variants={staggerContainer}
-				>
-					<motion.h1
-						className="mb-6 text-4xl font-bold lg:text-6xl"
+			<section className="mx-auto flex flex-col gap-10 md:container md:flex-row">
+				<div className="grid items-center gap-12 px-2 md:px-3 lg:grid-cols-2">
+					<motion.div
+						initial="initial"
+						animate="animate"
+						variants={staggerContainer}
+					>
+						<motion.h1
+							className="mb-6 text-4xl font-bold lg:text-6xl"
+							variants={fadeInUp}
+						>
+							Your Health, <br />
+							<span className="from-brand to-brand/70 ml-16 bg-gradient-to-r bg-clip-text text-transparent md:ml-32">
+								Our Priority
+							</span>
+						</motion.h1>
+						<motion.p
+							className="text-muted-foreground mb-8 max-w-2xl text-xl"
+							variants={fadeInUp}
+						>
+							Connect with qualified doctors across Bangladesh. Book
+							appointments easily, manage your health records, and get the care
+							you deserve.
+						</motion.p>
+						<motion.div
+							className="flex flex-col gap-4 sm:flex-row"
+							variants={fadeInUp}
+						>
+							<Button
+								size="lg"
+								className="bg-gradient-to-r from-[hsl(var(--brand))] to-[hsl(var(--brand))]/80 shadow-lg hover:from-[hsl(var(--brand))]/90 hover:to-[hsl(var(--brand))]/70"
+							>
+								<Icon name="magnifying-glass" className="mr-2 h-5 w-5" />
+								Find a Doctor
+							</Button>
+							<Button size="lg" variant="outline">
+								<Icon name="user-plus" className="mr-2 h-5 w-5" />
+								Join as Doctor
+							</Button>
+						</motion.div>
+					</motion.div>
+
+					<motion.div
+						className="relative"
+						initial="initial"
+						animate="animate"
 						variants={fadeInUp}
 					>
-						Your Health, Our <span className="text-brand">Priority</span>
-					</motion.h1>
-					<motion.p
-						className="text-muted-foreground mx-auto mb-8 max-w-2xl text-xl"
-						variants={fadeInUp}
-					>
-						Connect with qualified doctors across Bangladesh. Book appointments
-						easily, manage your health records, and get the{' '}
-						<span className="text-brand font-medium"> care you deserve.</span>
-					</motion.p>
-				</motion.div>
+						<img
+							src="/img/hero-img.jpg"
+							alt="Healthcare professionals and patients"
+							width={600}
+							height={500}
+							className="rounded-2xl shadow-2xl"
+						/>
+					</motion.div>
+				</div>
 			</section>
 			<section className="bg-primary-foreground mt-20 w-full px-8 py-20">
 				<div className="container">
