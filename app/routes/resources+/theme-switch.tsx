@@ -12,6 +12,7 @@ import {
 } from '#app/utils/request-info.ts'
 import { type Theme, setTheme } from '#app/utils/theme.server.ts'
 import { type Route } from './+types/theme-switch.ts'
+import { Button } from '#app/components/ui/button.tsx'
 const ThemeFormSchema = z.object({
 	theme: z.enum(['system', 'light', 'dark']),
 	// this is useful for progressive enhancement
@@ -57,17 +58,17 @@ export function ThemeSwitch({
 		mode === 'system' ? 'light' : mode === 'light' ? 'dark' : 'system'
 	const modeLabel = {
 		light: (
-			<Icon name="sun">
+			<Icon name="sun" size="md">
 				<span className="sr-only">Light</span>
 			</Icon>
 		),
 		dark: (
-			<Icon name="moon">
+			<Icon name="moon" size="md">
 				<span className="sr-only">Dark</span>
 			</Icon>
 		),
 		system: (
-			<Icon name="laptop">
+			<Icon name="laptop" size="md">
 				<span className="sr-only">System</span>
 			</Icon>
 		),
@@ -85,14 +86,14 @@ export function ThemeSwitch({
 				)}
 			</ServerOnly>
 			<input type="hidden" name="theme" value={nextMode} />
-			<div className="flex gap-2">
-				<button
-					type="submit"
-					className="flex h-8 w-8 cursor-pointer items-center justify-center"
-				>
-					{modeLabel[mode]}
-				</button>
-			</div>
+			<Button
+				type="submit"
+				variant="ghost"
+				className="flex h-auto w-full justify-between px-2 py-1"
+			>
+				<span className="text-sm">Theme:</span>
+				{modeLabel[mode]}
+			</Button>
 		</fetcher.Form>
 	)
 }

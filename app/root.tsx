@@ -212,7 +212,9 @@ function App() {
 								>
 									<Link to="/doctors/join">Become a doctor</Link>
 								</Button>
-								<UserDropdown />
+								<UserDropdown
+									userPreference={data.requestInfo.userPrefs.theme}
+								/>
 							</div>
 							<div className="block w-full sm:hidden">{searchBar}</div>
 						</nav>
@@ -224,11 +226,6 @@ function App() {
 				</div>
 
 				{isOnSearchPage ? null : <Footer />}
-
-				{/* <div className="container flex justify-between pb-5">
-					<Logo />
-					<ThemeSwitch userPreference={data.requestInfo.userPrefs.theme} />
-				</div> */}
 			</div>
 			<EpicToaster closeButton position="top-center" theme={theme} />
 			<EpicProgress />

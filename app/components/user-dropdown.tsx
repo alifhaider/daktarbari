@@ -1,8 +1,8 @@
-import { Img } from 'openimg/react'
 import { useRef } from 'react'
 import { Link, Form } from 'react-router'
-import { getUserImgSrc } from '#app/utils/misc.tsx'
-import { useOptionalUser, useUser } from '#app/utils/user.ts'
+import { ThemeSwitch } from '#app/routes/resources+/theme-switch.tsx'
+import { type Theme } from '#app/utils/theme.server.ts'
+import { useOptionalUser } from '#app/utils/user.ts'
 import { Button } from './ui/button'
 import {
 	DropdownMenu,
@@ -12,8 +12,13 @@ import {
 	DropdownMenuItem,
 } from './ui/dropdown-menu'
 import { Icon } from './ui/icon'
+import { Separator } from './ui/separator'
 
-export function UserDropdown() {
+export function UserDropdown({
+	userPreference,
+}: {
+	userPreference?: Theme | null
+}) {
 	const user = useOptionalUser()
 	const doctor = false
 	const formRef = useRef<HTMLFormElement>(null)
@@ -27,23 +32,6 @@ export function UserDropdown() {
 			</DropdownMenuTrigger>
 			<DropdownMenuPortal>
 				<DropdownMenuContent sideOffset={8} align="end">
-					{doctor ? (
-						<DropdownMenuItem asChild>
-							<Link prefetch="intent" to="/dashboard">
-								<Icon className="text-body-md" name="layout-dashboard">
-									Dashboard
-								</Icon>
-							</Link>
-						</DropdownMenuItem>
-					) : (
-						<DropdownMenuItem asChild>
-							<Link prefetch="intent" to="/doctors/join">
-								<Icon className="text-body-md" name="stethoscope">
-									Become a Doctor
-								</Icon>
-							</Link>
-						</DropdownMenuItem>
-					)}
 					{user ? (
 						<>
 							<DropdownMenuItem asChild>
@@ -82,12 +70,38 @@ export function UserDropdown() {
 						</>
 					)}
 
+					{doctor ? (
+						<DropdownMenuItem asChild>
+							<Link prefetch="intent" to="/dashboard">
+								<Icon className="text-body-md" name="layout-dashboard">
+									Dashboard
+								</Icon>
+							</Link>
+						</DropdownMenuItem>
+					) : (
+						<DropdownMenuItem asChild>
+							<Link prefetch="intent" to="/doctors/join">
+								<Icon className="text-body-md" name="stethoscope">
+									Become a Doctor
+								</Icon>
+							</Link>
+						</DropdownMenuItem>
+					)}
+
+					<Separator className="my-2" />
+
 					<DropdownMenuItem asChild>
 						<Link to="/works">
 							<Icon className="text-body-md" name="brain-cog">
 								How it works
 							</Icon>
 						</Link>
+					</DropdownMenuItem>
+
+					<Separator className="my-2" />
+
+					<DropdownMenuItem asChild>
+						<ThemeSwitch userPreference={userPreference} />
 					</DropdownMenuItem>
 
 					{/* <DropdownMenuItem asChild>
