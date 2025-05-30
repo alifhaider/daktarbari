@@ -72,6 +72,7 @@ const locations = [
 		city: 'Dhaka',
 		state: 'Dhaka',
 		zip: '1205',
+		type: 'Hospital',
 	},
 	{
 		name: 'Apollo Hospital',
@@ -79,6 +80,7 @@ const locations = [
 		city: 'Dhaka',
 		state: 'Dhaka',
 		zip: '1229',
+		type: 'Hospital',
 	},
 	{
 		name: 'United Hospital',
@@ -86,6 +88,7 @@ const locations = [
 		city: 'Dhaka',
 		state: 'Dhaka',
 		zip: '1212',
+		type: 'Hospital',
 	},
 	{
 		name: 'Labaid Hospital',
@@ -93,6 +96,7 @@ const locations = [
 		city: 'Dhaka',
 		state: 'Dhaka',
 		zip: '1205',
+		type: 'Hospital',
 	},
 	{
 		name: 'Ibn Sina Hospital',
@@ -100,6 +104,7 @@ const locations = [
 		city: 'Dhaka',
 		state: 'Dhaka',
 		zip: '1209',
+		type: 'Hospital',
 	},
 ]
 
@@ -108,11 +113,11 @@ async function seed() {
 	console.time(`🌱 Database has been seeded`)
 
 	console.time('🧹 Clean up database...')
-	await prisma.booking.deleteMany()
 	await prisma.schedule.deleteMany()
 	await prisma.doctorSpecialty.deleteMany()
 	await prisma.scheduleLocation.deleteMany()
 	await prisma.education.deleteMany()
+	await prisma.booking.deleteMany()
 	await prisma.review.deleteMany()
 	await prisma.doctor.deleteMany()
 	await prisma.user.deleteMany()
@@ -129,15 +134,26 @@ async function seed() {
 	console.time(`👤 Created ${totalUsers} users...`)
 	const userImages = await getUserImages()
 
+	const role = await prisma.role.upsert({
+		where: { name: 'user' },
+		create: { name: 'user' },
+		update: {},
+	})
+
 	const users = await Promise.all(
 		Array.from({ length: totalUsers }).map(async (_, index) => {
 			const userData = createUser()
+			const role = await prisma.role.upsert({
+				where: { name: 'user' },
+				create: { name: 'user' },
+				update: {},
+			})
 			const user = await prisma.user.create({
 				select: { id: true },
 				data: {
 					...userData,
 					password: { create: createPassword(userData.username) },
-					roles: { connect: { name: 'user' } },
+					roles: { connect: { id: role.id } },
 				},
 			})
 
@@ -217,6 +233,7 @@ async function seed() {
 					city: locations[index % locations.length]!.city,
 					state: locations[index % locations.length]!.state,
 					zip: locations[index % locations.length]!.zip,
+					type: locations[index % locations.length]!.type,
 				},
 			})
 			return scheduleLocation
@@ -227,19 +244,24 @@ async function seed() {
 	console.time('👨‍⚕️ Creating schedules...')
 	const schedules = await Promise.all(
 		Array.from({ length: totalSchedules }).map(async (_, index) => {
-			const date = faker.date.soon({ days: 40 })
-			date.setUTCHours(0, 0, 0, 0)
+			// Create a new date object for each schedule
+			const scheduleDate = new Date()
+			scheduleDate.setDate(
+				scheduleDate.getDate() + Math.floor(Math.random() * 40),
+			)
+			scheduleDate.setUTCHours(0, 0, 0, 0)
 
-			// set start and end time same day with start hours between 8am to 5pm
-			// and end hours between 9am to 6pm
-			const startTime = faker.date.between({
-				from: Date.now(),
-				to: date.setUTCHours(8, 0, 0, 0),
-			})
-			const endTime = faker.date.between({
-				from: startTime,
-				to: date.setUTCHours(17, 0, 0, 0),
-			})
+			// Get start time (8am-5pm)
+			const startTime = new Date(scheduleDate)
+			startTime.setUTCHours(8 + Math.floor(Math.random() * 9)) // 8am to 5pm
+			startTime.setUTCMinutes(0, 0, 0)
+
+			// Get end time (1-3 hours after start time)
+			const endTime = new Date(startTime)
+			endTime.setUTCHours(
+				startTime.getUTCHours() + 1 + Math.floor(Math.random() * 3),
+			)
+			endTime.setUTCMinutes(0, 0, 0)
 
 			const visitFee = Math.floor(Math.random() * 1000)
 			const serialFee = Math.floor(Math.random() * 1000)
@@ -359,7 +381,7 @@ async function seed() {
 					providerId: String(githubUser.profile.id),
 				},
 			},
-			roles: { connect: [{ name: 'admin' }, { name: 'user' }] },
+			roles: { connect: { id: role.id } },
 		},
 	})
 

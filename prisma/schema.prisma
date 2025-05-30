@@ -119,7 +119,8 @@ model ScheduleLocation {
   latitude  Float?
   longitude Float?
 
-  image LocationImage?
+  images LocationImage[]
+  type String
 
   schedules Schedule[]
 

@@ -54,42 +54,21 @@ const faqs = [
 ]
 
 export async function loader() {
-	const doctors = await prisma.doctor.findMany({
+	const locationsWithCounts = await prisma.scheduleLocation.findMany({
 		select: {
-			_count: {
+			id: true,
+			name: true,
+			schedules: {
 				select: {
-					schedules: true,
+					doctorId: true,
 				},
-			},
-			bio: true,
-			rating: true,
-			specialties: {
-				select: {
-					id: true,
-					name: true,
-				},
-			},
-			user: {
-				select: {
-					name: true,
-					username: true,
-					image: {
-						select: {
-							objectKey: true,
-						},
-					},
-				},
+				distinct: ['doctorId'],
 			},
 		},
-		skip: Math.floor(Math.random() * 1),
-		take: 8,
 	})
-	return { doctors }
 }
 
 export default function Index({ loaderData }: Route.ComponentProps) {
-	const { doctors } = loaderData
-	console.log(doctors)
 	return (
 		<main className="font-poppins grid h-full place-items-center">
 			<Spacer size="xs" />
@@ -122,15 +101,14 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 							variants={fadeInUp}
 						>
 							<Button
+								asChild
 								size="lg"
 								className="bg-gradient-to-r from-[hsl(var(--brand))] to-[hsl(var(--brand))]/80 shadow-lg hover:from-[hsl(var(--brand))]/90 hover:to-[hsl(var(--brand))]/70"
 							>
-								<Icon name="magnifying-glass" className="mr-2 h-5 w-5" />
-								Find a Doctor
-							</Button>
-							<Button size="lg" variant="outline">
-								<Icon name="user-plus" className="mr-2 h-5 w-5" />
-								Join as Doctor
+								<Link to="/search">
+									<Icon name="magnifying-glass" className="mr-2 h-5 w-5" />
+									Find a Doctor
+								</Link>
 							</Button>
 						</motion.div>
 					</motion.div>
@@ -151,6 +129,7 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 					</motion.div>
 				</div>
 			</section>
+
 			<section className="bg-primary-foreground mt-20 w-full px-8 py-20">
 				<div className="container">
 					<h2 className="text-brand text-3xl font-extrabold md:text-5xl">
@@ -161,58 +140,6 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 						doctors across various specialties. Read patient reviews and ratings
 						to choose the best healthcare professional for your needs.
 					</p>
-					<ul className="mt-6 grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 lg:grid-cols-4">
-						{doctors.map(({ specialties, user, rating, bio, _count }) => (
-							<li className="h-full" key={user.username}>
-								<div className="bg-background flex h-full flex-col justify-between rounded-lg border py-4 hover:shadow-lg">
-									<div className="bg-secondary relative mx-auto h-20 w-20 rounded-sm">
-										<img
-											src={getUserImgSrc(user.image?.objectKey)}
-											alt={user.name ?? user.username}
-											className="h-full w-full rounded-sm object-cover"
-										/>
-										<div className="bg-secondary-foreground text-background absolute -bottom-1 left-1/2 flex w-max -translate-x-1/2 items-center justify-center gap-0.5 rounded-md px-1 text-xs shadow-lg">
-											<Icon
-												name="star"
-												className="text-primary-foreground h-3 w-3"
-											/>
-											{rating}
-										</div>
-									</div>
-									<Link
-										to={`/doctors/${user.username}`}
-										className="group mt-2 flex items-end justify-center px-4"
-									>
-										<h3 className="text-lg font-semibold group-hover:underline">
-											{user.name ?? user.username}
-										</h3>
-									</Link>
-									<ul className="mt-4 flex flex-wrap justify-between text-sm">
-										{specialties.map((specialty) => (
-											<li
-												key={specialty.id}
-												className="flex items-center gap-1 px-4"
-											>
-												<div className="h-2 w-2 rounded-full bg-amber-300"></div>
-												{specialty.name}
-											</li>
-										))}
-									</ul>
-
-									<p className="mt-4 px-4 text-sm">{bio}</p>
-
-									<p className="mt-4 px-4 text-sm">
-										<strong>Total schedules:</strong> {_count.schedules}
-									</p>
-									<Button asChild className="mx-4 mt-4">
-										<Link to={`/doctors/${user.username}`}>
-											Check Schedules
-										</Link>
-									</Button>
-								</div>
-							</li>
-						))}
-					</ul>
 
 					<div className="mt-8 flex items-center justify-center">
 						<Button asChild>
@@ -220,6 +147,10 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 						</Button>
 					</div>
 				</div>
+			</section>
+
+			<section className="space-y-6 py-20 md:container">
+				<h4 className="font-bold">Browse by Types</h4>
 			</section>
 
 			<section className="space-y-6 py-20 md:container">
