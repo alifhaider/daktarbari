@@ -46,16 +46,18 @@ const getStartLimit = (searchParams: URLSearchParams) => ({
 
 export async function loader({ request }: Route.LoaderArgs) {
 	const searchParams = new URL(request.url).searchParams
-	const nameQuery = searchParams.get('name')
-	const specialtiesQuery = searchParams.get('specialtyId')
-	const locationQuery = searchParams.get('locationId')
+	const nameQuery = searchParams.get('name') ?? ''
+	const specialtiesQuery = searchParams.get('specialtyId') ?? ''
+	const locationQuery = searchParams.get('locationId') ?? ''
 	const { start, limit } = getStartLimit(searchParams)
 	const effectiveLimit = limit + DATA_OVERSCAN
 
+	console.log({ locationQuery })
+
 	const query = searchDoctors(
-		nameQuery || '',
-		specialtiesQuery || '',
-		locationQuery || '',
+		nameQuery,
+		specialtiesQuery,
+		locationQuery,
 		effectiveLimit,
 		start,
 	)
@@ -220,8 +222,8 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 											ref={parentRef}
 											className="List"
 											style={{
-												height: `800px`,
-												width: `100%`,
+												height: '800px',
+												width: '100%',
 												overflow: 'auto',
 											}}
 										>

@@ -1,13 +1,21 @@
-import { Link } from 'react-router'
+import { getLocations } from '@prisma/client/sql'
+import { motion } from 'framer-motion'
+import { Form, Link } from 'react-router'
 import healthImg from '#app/assets/images/health.png'
 import Reminder from '#app/components/reminder.tsx'
 import { Spacer } from '#app/components/spacer.tsx'
 import { Button } from '#app/components/ui/button.tsx'
+import { Card, CardContent } from '#app/components/ui/card.tsx'
+import {
+	Carousel,
+	CarouselContent,
+	CarouselItem,
+	CarouselNext,
+	CarouselPrevious,
+} from '#app/components/ui/carousel.tsx'
 import { Icon } from '#app/components/ui/icon.tsx'
 import { prisma } from '#app/utils/db.server.ts'
-import { getUserImgSrc } from '#app/utils/misc.tsx'
 import { type Route } from './+types'
-import { motion } from 'framer-motion'
 
 export const meta: Route.MetaFunction = () => [{ title: 'Daktar Bari' }]
 
@@ -54,18 +62,9 @@ const faqs = [
 ]
 
 export async function loader() {
-	const locationsWithCounts = await prisma.scheduleLocation.findMany({
-		select: {
-			id: true,
-			name: true,
-			schedules: {
-				select: {
-					doctorId: true,
-				},
-				distinct: ['doctorId'],
-			},
-		},
-	})
+	const locations = await prisma.$queryRawTyped(getLocations())
+	console.log('locations', locations)
+	return { locations }
 }
 
 export default function Index({ loaderData }: Route.ComponentProps) {
@@ -150,7 +149,39 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 			</section>
 
 			<section className="space-y-6 py-20 md:container">
-				<h4 className="font-bold">Browse by Types</h4>
+				<h4 className="font-bold">Browse by Locations</h4>
+				<Carousel
+					opts={{
+						align: 'start',
+					}}
+					className="mx-auto w-full"
+				>
+					<CarouselContent>
+						{loaderData.locations.map((location) => (
+							<CarouselItem
+								key={location.id}
+								className="md:basis-1/3 lg:basis-1/5"
+							>
+								<Form action="/search" method="GET">
+									<input type="hidden" value={location.id} name="locationId" />
+									<button type="submit">
+										<Card>
+											<CardContent className="flex aspect-square flex-col items-center pb-6">
+												<img
+													src={location.images?.[0] ?? 'as'}
+													className="flex-1"
+												/>
+												<span className="font-semibold">{location.name}</span>
+											</CardContent>
+										</Card>
+									</button>
+								</Form>
+							</CarouselItem>
+						))}
+					</CarouselContent>
+					<CarouselPrevious />
+					<CarouselNext />
+				</Carousel>
 			</section>
 
 			<section className="space-y-6 py-20 md:container">

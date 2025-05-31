@@ -1,36 +1,35 @@
-WITH LocationDoctorCounts AS (
+WITH LocationData AS (
   SELECT 
-    sl.id,
-    sl.name,
-    COUNT(DISTINCT s."doctorId") AS doctor_count
+    sl.*,
+    COUNT(DISTINCT s."doctorId") AS doctor_count,
+    ROW_NUMBER() OVER (PARTITION BY sl.name ORDER BY COUNT(DISTINCT s."doctorId") DESC) as rn
   FROM "ScheduleLocation" sl
   LEFT JOIN "Schedule" s ON sl.id = s."locationId"
-  GROUP BY sl.id, sl.name
+  GROUP BY sl.id
 )
 
 SELECT 
-  ldc.id,
-  ldc.name,
-  ldc.doctor_count,
-  sl.address,
-  sl.city,
-  sl.state,
-  sl.zip,
-  sl.country,
-  sl.latitude,
-  sl.longitude,
-  sl.type,
+  ld.id,
+  ld.name,
+  ld.doctor_count,
+  ld.address,
+  ld.city,
+  ld.state,
+  ld.zip,
+  ld.country,
+  ld.latitude,
+  ld.longitude,
+  ld.type,
   (
     SELECT JSON_GROUP_ARRAY(JSON_OBJECT(
       'id', li.id,
       'objectKey', li.objectKey,
       'createdAt', li."createdAt",
       'updatedAt', li."updatedAt"
-      -- Add any other image fields you need
     ))
     FROM "LocationImage" li
-    WHERE li."locationId" = ldc.id
-    ORDER BY li."createdAt" DESC  -- Optional: order images by newest first
+    WHERE li."locationId" = ld.id
+    ORDER BY li."createdAt" DESC
   ) AS images,
   (
     SELECT JSON_GROUP_ARRAY(JSON_OBJECT(
@@ -49,10 +48,11 @@ SELECT
     FROM "Schedule" s
     JOIN "Doctor" d ON s."doctorId" = d."userId"
     JOIN "User" u ON d."userId" = u.id
-    WHERE s."locationId" = ldc.id
+    WHERE s."locationId" = ld.id
     GROUP BY s."locationId"
-    LIMIT 10  -- Limit to 10 sample doctors
+    LIMIT 10
   ) AS top_doctors
-FROM LocationDoctorCounts ldc
-JOIN "ScheduleLocation" sl ON ldc.id = sl.id
-ORDER BY ldc.doctor_count DESC;
+FROM LocationData ld
+WHERE ld.rn = 1  -- Only take the first occurrence of each location name
+ORDER BY ld.doctor_count DESC
+LIMIT 20
