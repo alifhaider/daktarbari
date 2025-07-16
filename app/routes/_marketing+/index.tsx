@@ -64,7 +64,6 @@ const faqs = [
 
 export async function loader() {
 	const locations = await prisma.$queryRawTyped(getLocations())
-	console.log('locations', locations)
 	return { locations }
 }
 
