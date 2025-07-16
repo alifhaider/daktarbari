@@ -211,7 +211,7 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 						{navigation.state === 'idle' ? (
 							items.length ? (
 								<>
-									<h4 className="text-xl leading-7 font-medium">
+									<h4 className="mb-4 text-xl leading-7 font-medium">
 										{items.length} Doctors Available
 									</h4>
 
