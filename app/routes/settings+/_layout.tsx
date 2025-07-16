@@ -155,7 +155,7 @@ function SettingsBreadcrumb() {
 					<BreadcrumbLink href="/settings">Settings</BreadcrumbLink>
 				</BreadcrumbItem>
 				{segments.slice(1).map((segment, index) => (
-					<div key={segment} className="flex items-center">
+					<div key={segment} className="flex items-center gap-1.5 sm:gap-2.5">
 						<BreadcrumbSeparator />
 						<BreadcrumbItem>
 							{index === segments.length - 2 ? (
