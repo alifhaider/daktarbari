@@ -14,6 +14,7 @@ import { type Route } from './+types/location-combobox'
 
 // TODO: 1. spinner is not visible
 //       2. when user types in the input, the locationId is not removed from the searchParams
+//      3. when user types in location or specilty-combobox, the list rerenders; let's not rerender until user selects an item
 
 export async function loader({ request }: Route.LoaderArgs) {
 	const searchParams = new URL(request.url).searchParams
