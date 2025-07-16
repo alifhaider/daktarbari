@@ -591,7 +591,7 @@ export default function AddSchedule({
 						</div>
 						<div className="hidden md:col-span-1 md:block"></div>
 						{/* This is to take the other half of fifth iitem */}
-						<div className="flex items-end justify-center md:justify-end">
+						<div className="col-span-2 flex items-center justify-center gap-12">
 							<Button
 								type="submit"
 								size="lg"

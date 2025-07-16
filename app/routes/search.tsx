@@ -1,5 +1,6 @@
 import { type FieldMetadata, getFormProps, useForm } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod'
+import { type DoctorSpecialty, type ScheduleLocation } from '@prisma/client'
 import { searchDoctors } from '@prisma/client/sql'
 import { SlidersHorizontal } from 'lucide-react'
 import { Img } from 'openimg/react'
@@ -27,7 +28,6 @@ import {
 import { type Route } from './+types/search'
 import { LocationCombobox } from './resources+/location-combobox'
 import { SpecialtyCombobox } from './resources+/specialty-combobox'
-import { DoctorSpecialty, ScheduleLocation } from '@prisma/client'
 
 //TODO: Get the count of total doctors from the searchDoctors sql query
 
@@ -53,7 +53,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const { start, limit } = getStartLimit(searchParams)
 	const effectiveLimit = limit + DATA_OVERSCAN
 
-	console.log({ locationQuery })
+	console.log('making search query')
 
 	const query = searchDoctors(
 		nameQuery,
