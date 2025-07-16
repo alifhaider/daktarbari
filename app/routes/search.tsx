@@ -27,6 +27,7 @@ import {
 import { type Route } from './+types/search'
 import { LocationCombobox } from './resources+/location-combobox'
 import { SpecialtyCombobox } from './resources+/specialty-combobox'
+import { DoctorSpecialty, ScheduleLocation } from '@prisma/client'
 
 //TODO: Get the count of total doctors from the searchDoctors sql query
 
@@ -63,9 +64,37 @@ export async function loader({ request }: Route.LoaderArgs) {
 	)
 
 	const doctors = await prisma.$queryRawTyped(query)
+	const selectedLocation = locationQuery
+		? await prisma.scheduleLocation.findUnique({
+				where: { id: locationQuery },
+				select: {
+					id: true,
+					name: true,
+					address: true,
+					city: true,
+					state: true,
+					country: true,
+					type: true,
+					zip: true,
+					latitude: true,
+					longitude: true,
+				},
+			})
+		: undefined
+
+	const selectedSpecialty = specialtiesQuery
+		? await prisma.doctorSpecialty.findUnique({
+				where: { id: specialtiesQuery },
+				select: { id: true, name: true },
+			})
+		: undefined
 
 	return data(
-		{ doctors: doctors.map(parseDoctor) },
+		{
+			doctors: doctors.map(parseDoctor),
+			location: selectedLocation,
+			specialty: selectedSpecialty,
+		},
 		{ headers: { 'Cache-Control': 'public, max-age=120' } },
 	)
 }
@@ -198,6 +227,8 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 			>
 				<SearchNavbar
 					locationField={fields.locationId}
+					selectedLocation={loaderData.location}
+					selectedSpecialty={loaderData.specialty}
 					specialtyField={fields.specialtyId}
 				/>
 
@@ -387,9 +418,13 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 const SearchNavbar = ({
 	locationField,
 	specialtyField,
+	selectedLocation,
+	selectedSpecialty,
 }: {
 	locationField: FieldMetadata
 	specialtyField: FieldMetadata
+	selectedLocation?: Omit<ScheduleLocation, 'createdAt' | 'updatedAt'> | null
+	selectedSpecialty?: Pick<DoctorSpecialty, 'id' | 'name'> | null
 }) => {
 	const [searchParams] = useSearchParams()
 
@@ -414,8 +449,15 @@ const SearchNavbar = ({
 							/>
 						</div>
 
-						<LocationCombobox field={locationField} variant="search" />
-						<SpecialtyCombobox field={specialtyField} />
+						<LocationCombobox
+							field={locationField}
+							variant="search"
+							selectedLocation={selectedLocation}
+						/>
+						<SpecialtyCombobox
+							field={specialtyField}
+							selectedSpecialty={selectedSpecialty}
+						/>
 					</div>
 				</div>
 

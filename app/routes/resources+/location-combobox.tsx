@@ -44,7 +44,7 @@ export function LocationCombobox({
 	variant = 'default',
 }: {
 	field: FieldMetadata
-	selectedLocation?: Omit<ScheduleLocation, 'createdAt' | 'updatedAt'>
+	selectedLocation?: Omit<ScheduleLocation, 'createdAt' | 'updatedAt'> | null
 	variant?: 'search' | 'default'
 }) {
 	const [searchParams, setSearchParams] = useSearchParams()
@@ -108,7 +108,7 @@ export function LocationCombobox({
 							className="relative caret-black outline-hidden"
 							{...cb.getInputProps({ id, placeholder: 'Choose a location' })}
 						/>
-						<div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center justify-center">
+						<div className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center justify-center">
 							<Spinner showSpinner={showSpinner} />
 						</div>
 					</div>
@@ -128,7 +128,7 @@ export function LocationCombobox({
 								placeholder: 'District, Division or Zip Code',
 							})}
 						/>
-						<div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center justify-center">
+						<div className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center justify-center">
 							{/* TODO: spinner is not visible */}
 							<Spinner showSpinner={showSpinner} />
 						</div>

@@ -23,7 +23,13 @@ export async function loader({ request }: Route.LoaderArgs) {
 	return data({ items: specialties })
 }
 
-export function SpecialtyCombobox({ field }: { field: FieldMetadata }) {
+export function SpecialtyCombobox({
+	field,
+	selectedSpecialty,
+}: {
+	field: FieldMetadata
+	selectedSpecialty?: Pick<DoctorSpecialty, 'id' | 'name'> | null
+}) {
 	const [searchParams, setSearchParams] = useSearchParams()
 	const specialtyFetcher = useFetcher<typeof loader>()
 	const id = useId()
@@ -40,6 +46,7 @@ export function SpecialtyCombobox({ field }: { field: FieldMetadata }) {
 				{ method: 'get', action: '/resources/specialty-combobox' },
 			)
 		},
+		initialSelectedItem: selectedSpecialty,
 		onSelectedItemChange: (changes) => {
 			const newSearchParams = new URLSearchParams(searchParams)
 			console.log('selected item change specialty')
@@ -75,7 +82,7 @@ export function SpecialtyCombobox({ field }: { field: FieldMetadata }) {
 							placeholder: 'Cardiologist, Dentist...',
 						})}
 					/>
-					<div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center justify-center">
+					<div className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center justify-center">
 						<Spinner showSpinner={showSpinner} />
 					</div>
 				</div>
