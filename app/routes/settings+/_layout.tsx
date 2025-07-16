@@ -1,3 +1,4 @@
+import { invariantResponse } from '@epic-web/invariant'
 import { Link, Outlet, useLocation } from 'react-router'
 import {
 	Breadcrumb,
@@ -10,6 +11,9 @@ import {
 import { Button } from '#app/components/ui/button.tsx'
 import { Card } from '#app/components/ui/card.tsx'
 import { Icon } from '#app/components/ui/icon.tsx'
+import { requireUserId } from '#app/utils/auth.server.ts'
+import { prisma } from '#app/utils/db.server.ts'
+import { type Route } from './+types/_layout'
 import { type IconName } from '@/icon-name'
 
 const navigationItems = [
@@ -87,6 +91,16 @@ const navigationItems = [
 		],
 	},
 ]
+
+export async function loader({ request }: Route.LoaderArgs) {
+	const userId = await requireUserId(request)
+	const user = await prisma.user.findUnique({
+		where: { id: userId },
+		select: { username: true },
+	})
+	invariantResponse(user, 'User not found', { status: 404 })
+	return {}
+}
 
 function SettingsNavigation() {
 	const { pathname } = useLocation()

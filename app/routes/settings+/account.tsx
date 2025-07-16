@@ -1,12 +1,8 @@
-import { invariantResponse } from '@epic-web/invariant'
-import { requireUserId } from '#app/utils/auth.server.ts'
-import { prisma } from '#app/utils/db.server.ts'
-import { useUser } from '#app/utils/user.ts'
-import { twoFAVerificationType } from './profile.two-factor.tsx'
-import { data, Form, useFetcher } from 'react-router'
+import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
-import { NameSchema, UsernameSchema } from '#app/utils/user-validation.ts'
+import { data, Form } from 'react-router'
 import { z } from 'zod'
+import { ErrorList, Field } from '#app/components/forms.tsx'
 import {
 	Card,
 	CardContent,
@@ -14,11 +10,13 @@ import {
 	CardHeader,
 	CardTitle,
 } from '#app/components/ui/card.tsx'
-import { getFormProps, getInputProps, useForm } from '@conform-to/react'
-import { ErrorList, Field } from '#app/components/forms.tsx'
 import { StatusButton } from '#app/components/ui/status-button.tsx'
+import { requireUserId } from '#app/utils/auth.server.ts'
+import { prisma } from '#app/utils/db.server.ts'
 import { useIsPending } from '#app/utils/misc.tsx'
+import { NameSchema, UsernameSchema } from '#app/utils/user-validation.ts'
 import { type Route } from './+types/account.ts'
+import { twoFAVerificationType } from './profile.two-factor.tsx'
 
 const ProfileFormSchema = z.object({
 	name: NameSchema.nullable().default(null),
