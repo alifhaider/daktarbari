@@ -164,6 +164,7 @@ export default function AccountSettings({
 										children: 'Username',
 									}}
 									inputProps={getInputProps(fields.username, { type: 'text' })}
+									instruction="This is your unique identifier and cannot be changed frequently."
 									errors={fields.username.errors}
 								/>
 							</div>

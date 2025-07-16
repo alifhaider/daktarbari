@@ -38,11 +38,13 @@ export function Field({
 	labelProps,
 	inputProps,
 	errors,
+	instruction,
 	className,
 }: {
 	labelProps: React.LabelHTMLAttributes<HTMLLabelElement>
 	inputProps: React.InputHTMLAttributes<HTMLInputElement>
 	errors?: ListOfErrors
+	instruction?: string
 	className?: string
 }) {
 	const fallbackId = useId()
@@ -51,12 +53,17 @@ export function Field({
 	return (
 		<div className={className}>
 			<Label htmlFor={id} {...labelProps} />
-			<Input
-				id={id}
-				aria-invalid={errorId ? true : undefined}
-				aria-describedby={errorId}
-				{...inputProps}
-			/>
+			<div className="mt-2 space-y-2">
+				<Input
+					id={id}
+					aria-invalid={errorId ? true : undefined}
+					aria-describedby={errorId}
+					{...inputProps}
+				/>
+				{instruction && (
+					<p className="text-muted-foreground text-xs">{instruction}</p>
+				)}
+			</div>
 			<div className="min-h-[32px] px-4 pt-1 pb-3">
 				{errorId ? <ErrorList id={errorId} errors={errors} /> : null}
 			</div>
