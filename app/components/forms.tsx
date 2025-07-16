@@ -88,6 +88,7 @@ export function OTPField({
 	return (
 		<div className={className}>
 			<Label htmlFor={id} {...labelProps} />
+			<div className="mt-2" />
 			<InputOTP
 				pattern={REGEXP_ONLY_DIGITS_AND_CHARS}
 				maxLength={6}
@@ -138,7 +139,7 @@ export function TextareaField({
 				aria-describedby={errorId}
 				{...textareaProps}
 			/>
-			<div className="min-h-[32px] px-4 pt-1 pb-3">
+			<div className="min-h-[32px] px-2 pt-1 pb-3">
 				{errorId ? <ErrorList id={errorId} errors={errors} /> : null}
 			</div>
 		</div>

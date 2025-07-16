@@ -9,7 +9,6 @@ import {
 	BreadcrumbSeparator,
 } from '#app/components/ui/breadcrumb.tsx'
 import { Button } from '#app/components/ui/button.tsx'
-import { Card } from '#app/components/ui/card.tsx'
 import { Icon } from '#app/components/ui/icon.tsx'
 import { requireUserId } from '#app/utils/auth.server.ts'
 import { prisma } from '#app/utils/db.server.ts'
@@ -39,7 +38,7 @@ const navigationItems = [
 			},
 			{
 				title: 'Two-Factor Authentication',
-				href: '/settings/security/two-factor',
+				href: '/settings/security/2FA',
 				icon: 'lock',
 				description: 'Secure your account with 2FA',
 			},
@@ -114,7 +113,7 @@ function SettingsNavigation() {
 					</h3>
 					<div className="space-y-1">
 						{section.items.map((item) => {
-							const isActive = pathname === item.href
+							const isActive = pathname.includes(item.href)
 
 							return (
 								<Link
@@ -193,7 +192,7 @@ function SettingsBreadcrumb() {
 
 export default function SettingsLayout() {
 	return (
-		<div className="bg-background min-h-screen">
+		<div className="min-h-screen">
 			<div className="container mx-auto px-4 py-8">
 				<div className="mb-6 flex items-center justify-between">
 					<div>
@@ -212,14 +211,14 @@ export default function SettingsLayout() {
 
 				<SettingsBreadcrumb />
 
-				<div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-4">
-					<Card className="p-4 lg:col-span-1">
+				<div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-4">
+					<section className="lg:col-span-1">
 						<SettingsNavigation />
-					</Card>
+					</section>
 
-					<div className="lg:col-span-3">
+					<section className="lg:col-span-3">
 						<Outlet />
-					</div>
+					</section>
 				</div>
 			</div>
 		</div>

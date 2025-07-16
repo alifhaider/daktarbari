@@ -34,33 +34,33 @@ const staggerContainer = {
 	},
 }
 
-const faqs = [
-	{
-		question: 'How do I book an appointment?',
-		answer:
-			"Simply search for doctors by specialty or location, select your preferred doctor and available time slot, then confirm your booking. You'll receive a confirmation with all details.",
-	},
-	{
-		question: 'What are the consultation fees?',
-		answer:
-			"Consultation fees vary by doctor and specialty. You pay only 90% of the doctor's fee - we deduct our 10% service charge from the doctor's payment, not from you.",
-	},
-	{
-		question: 'Can I cancel or reschedule my appointment?',
-		answer:
-			'Yes, you can cancel or reschedule appointments up to 2 hours before the scheduled time through your dashboard or by calling our support team.',
-	},
-	{
-		question: 'How do doctors set their schedules?',
-		answer:
-			'Doctors can create flexible schedules - weekly recurring (e.g., every Saturday-Monday), monthly recurring, or one-time appointments. They have full control over their availability.',
-	},
-	{
-		question: 'Is my medical information secure?',
-		answer:
-			'Absolutely. We use bank-level encryption and follow strict medical privacy standards to protect all your personal and medical information.',
-	},
-]
+// const faqs = [
+// 	{
+// 		question: 'How do I book an appointment?',
+// 		answer:
+// 			"Simply search for doctors by specialty or location, select your preferred doctor and available time slot, then confirm your booking. You'll receive a confirmation with all details.",
+// 	},
+// 	{
+// 		question: 'What are the consultation fees?',
+// 		answer:
+// 			"Consultation fees vary by doctor and specialty. You pay only 90% of the doctor's fee - we deduct our 10% service charge from the doctor's payment, not from you.",
+// 	},
+// 	{
+// 		question: 'Can I cancel or reschedule my appointment?',
+// 		answer:
+// 			'Yes, you can cancel or reschedule appointments up to 2 hours before the scheduled time through your dashboard or by calling our support team.',
+// 	},
+// 	{
+// 		question: 'How do doctors set their schedules?',
+// 		answer:
+// 			'Doctors can create flexible schedules - weekly recurring (e.g., every Saturday-Monday), monthly recurring, or one-time appointments. They have full control over their availability.',
+// 	},
+// 	{
+// 		question: 'Is my medical information secure?',
+// 		answer:
+// 			'Absolutely. We use bank-level encryption and follow strict medical privacy standards to protect all your personal and medical information.',
+// 	},
+// ]
 
 export async function loader() {
 	const locations = await prisma.$queryRawTyped(getLocations())

@@ -127,7 +127,7 @@ export default function ChangeEmailPage({
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-6">
-					<Alert>
+					<Alert className="w-max">
 						<AlertTitle className="space-x-2">
 							<Icon name="shield" className="h-4 w-4" />
 							<span>
