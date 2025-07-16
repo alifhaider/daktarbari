@@ -44,7 +44,7 @@ const navigationItems = [
 			},
 			{
 				title: 'Change Password',
-				href: '/settings/security/change-password',
+				href: '/settings/security/password',
 				icon: 'key',
 				description: 'Update your password',
 			},
@@ -211,7 +211,7 @@ export default function SettingsLayout() {
 
 				<SettingsBreadcrumb />
 
-				<div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-4">
+				<div className="mt-10 grid grid-cols-1 gap-10 sm:gap-20 lg:grid-cols-4">
 					<section className="lg:col-span-1">
 						<SettingsNavigation />
 					</section>

@@ -23,8 +23,8 @@ import { sendEmail } from '#app/utils/email.server.ts'
 import { useIsPending } from '#app/utils/misc.tsx'
 import { EmailSchema } from '#app/utils/user-validation.ts'
 import { verifySessionStorage } from '#app/utils/verification.server.ts'
-import { EmailChangeEmail } from '../profile.change-email.server'
 import { type Route } from './+types/change-email'
+import { EmailChangeEmail } from './change-email.server'
 
 export const newEmailAddressSessionKey = 'new-email-address'
 const ChangeEmailSchema = z.object({
