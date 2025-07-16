@@ -35,7 +35,7 @@ export function UserDropdown({
 					{user ? (
 						<>
 							<DropdownMenuItem asChild>
-								<Link prefetch="intent" to={`/users/${user.username}`}>
+								<Link prefetch="intent" to={`/profiles/${user.username}`}>
 									<Icon className="text-body-md" name="avatar">
 										Profile
 									</Icon>
