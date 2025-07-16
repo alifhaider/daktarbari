@@ -1,5 +1,6 @@
 import { getLocations } from '@prisma/client/sql'
 import { motion } from 'framer-motion'
+import { Image } from 'openimg/react'
 import { Form, Link } from 'react-router'
 import healthImg from '#app/assets/images/health.png'
 import Reminder from '#app/components/reminder.tsx'
@@ -118,7 +119,7 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 						animate="animate"
 						variants={fadeInUp}
 					>
-						<img
+						<Image
 							src="/img/hero-img.jpg"
 							alt="Healthcare professionals and patients"
 							width={600}
@@ -167,7 +168,9 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 									<button type="submit">
 										<Card>
 											<CardContent className="flex aspect-square flex-col items-center pb-6">
-												<img
+												<Image
+													width={200}
+													height={200}
 													src={location.images?.[0] ?? 'as'}
 													className="flex-1"
 												/>
@@ -210,7 +213,7 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 						</Button>
 					</div>
 					<div className="flex-1">
-						<img src={healthImg} alt="health" />
+						<Image width={500} height={500} src={healthImg} alt="health" />
 					</div>
 				</div>
 			</section>
