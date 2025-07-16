@@ -451,13 +451,13 @@ export default function DoctorRoute({
 								{user.name ?? user.username}
 							</h2>
 
-							{isDoctor && isOwner ? (
+							{isOwner ? (
 								<Button asChild variant="outline">
 									<Link
 										to="/settings/profile"
 										className="flex items-center gap-2"
 									>
-										<Icon name="pencil-2" />
+										<Icon name="settings" />
 										Profile Settings
 									</Link>
 								</Button>
