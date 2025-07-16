@@ -1,4 +1,9 @@
 import { Link, useFetcher } from 'react-router'
+import { Alert, AlertTitle } from '#app/components/ui/alert.tsx'
+import { Badge } from '#app/components/ui/badge.tsx'
+import { Button } from '#app/components/ui/button.tsx'
+import { Icon } from '#app/components/ui/icon.tsx'
+import { StatusButton } from '#app/components/ui/status-button.tsx'
 import { requireRecentVerification } from '#app/routes/_auth+/verify.server.ts'
 import { requireUserId } from '#app/utils/auth.server.ts'
 import { prisma } from '#app/utils/db.server.ts'
@@ -6,11 +11,6 @@ import { useDoubleCheck } from '#app/utils/misc.tsx'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
 import { type Route } from './+types/2FA.disable'
 import { twoFAVerificationType } from './2FA.index'
-import { Icon } from '#app/components/ui/icon.tsx'
-import { Badge } from '#app/components/ui/badge.tsx'
-import { Alert, AlertTitle } from '#app/components/ui/alert.tsx'
-import { Button } from '#app/components/ui/button.tsx'
-import { StatusButton } from '#app/components/ui/status-button.tsx'
 
 export async function loader({ request }: Route.LoaderArgs) {
 	await requireRecentVerification(request)
@@ -130,22 +130,6 @@ export default function TwoFactorDisable() {
 								</p>
 							</div>
 						</div>
-
-						<div className="border-destructive/20 bg-destructive/5 flex items-start gap-3 rounded-lg border p-4">
-							<Icon
-								name="smartphone"
-								className="text-destructive mt-0.5 h-5 w-5"
-							/>
-							<div>
-								<h4 className="text-destructive font-semibold">
-									Loss of Advanced Security
-								</h4>
-								<p className="text-muted-foreground text-sm">
-									You'll lose the protection against account takeovers,
-									unauthorized bookings, and sensitive data access.
-								</p>
-							</div>
-						</div>
 					</div>
 				</div>
 
@@ -168,13 +152,6 @@ export default function TwoFactorDisable() {
 							<li className="flex items-start gap-2">
 								<span className="text-primary">•</span>
 								<span>
-									<strong>Save recovery codes:</strong> Store backup codes in a
-									secure location
-								</span>
-							</li>
-							<li className="flex items-start gap-2">
-								<span className="text-primary">•</span>
-								<span>
 									<strong>Use passkeys:</strong> Consider setting up passkeys as
 									an alternative security method
 								</span>
@@ -190,15 +167,17 @@ export default function TwoFactorDisable() {
 					</div>
 
 					<div className="flex gap-2">
-						<Link to="/settings/security/passkeys">
-							<Button variant="outline">
+						<Button asChild variant="outline">
+							<Link to="/settings/security/passkeys">
 								<Icon name="key" className="mr-2 h-4 w-4" />
 								Set Up Passkeys
-							</Button>
-						</Link>
-						<Button variant="outline">
-							<Icon name="shield" className="mr-2 h-4 w-4" />
-							Contact Support
+							</Link>
+						</Button>
+						<Button asChild variant="outline">
+							<Link to="/help">
+								<Icon name="shield" className="mr-2 h-4 w-4" />
+								Contact Support
+							</Link>
 						</Button>
 					</div>
 				</div>
