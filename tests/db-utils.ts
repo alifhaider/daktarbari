@@ -47,3 +47,16 @@ export async function getUserImages() {
 
 	return userImages
 }
+
+let locationImages: Array<{ objectKey: string }> | undefined
+export async function getLocationImages() {
+	if (locationImages) return locationImages
+
+	locationImages = await Promise.all(
+		Array.from({ length: 10 }, (_, index) => ({
+			objectKey: `location/${index}.jpg`,
+		})),
+	)
+
+	return locationImages
+}

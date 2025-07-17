@@ -1,6 +1,6 @@
 import { getLocations } from '@prisma/client/sql'
 import { motion } from 'framer-motion'
-import { Image } from 'openimg/react'
+import { Image, Img } from 'openimg/react'
 import { Form, Link } from 'react-router'
 import healthImg from '#app/assets/images/health.png'
 import Reminder from '#app/components/reminder.tsx'
@@ -17,19 +17,21 @@ import {
 import { Icon } from '#app/components/ui/icon.tsx'
 import { prisma } from '#app/utils/db.server.ts'
 import { type Route } from './+types'
+import { getLocationImgSrc } from '#app/utils/misc.tsx'
 
 export const meta: Route.MetaFunction = () => [{ title: 'Daktar Bari' }]
 
 const fadeInUp = {
-	initial: { opacity: 0, y: 60 },
+	initial: { opacity: 0, y: 20 },
 	animate: { opacity: 1, y: 0 },
-	transition: { duration: 0.6 },
+	transition: { duration: 0.3, ease: 'easeInOut' },
 }
 
 const staggerContainer = {
 	animate: {
 		transition: {
-			staggerChildren: 0.1,
+			staggerChildren: 0.01,
+			staggerDirection: 1,
 		},
 	},
 }
@@ -63,7 +65,18 @@ const staggerContainer = {
 // ]
 
 export async function loader() {
-	const locations = await prisma.$queryRawTyped(getLocations())
+	const locations = await prisma.scheduleLocation.findMany({
+		select: {
+			id: true,
+			name: true,
+			images: {
+				select: { objectKey: true },
+			},
+		},
+		take: 15,
+		orderBy: { name: 'asc' },
+	})
+
 	return { locations }
 }
 
@@ -72,7 +85,7 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 		<main className="font-poppins grid h-full place-items-center">
 			<Spacer size="xs" />
 			<section className="mx-auto flex flex-col gap-10 md:container md:flex-row">
-				<div className="grid items-center gap-12 px-2 md:px-3 lg:grid-cols-2">
+				<div className="grid items-center gap-12 px-4 md:px-8 lg:grid-cols-2">
 					<motion.div
 						initial="initial"
 						animate="animate"
@@ -118,12 +131,13 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 						animate="animate"
 						variants={fadeInUp}
 					>
-						<Image
+						<Img
 							src="/img/hero-img.jpg"
 							alt="Healthcare professionals and patients"
 							width={600}
 							height={500}
 							className="rounded-2xl shadow-2xl"
+							isAboveFold
 						/>
 					</motion.div>
 				</div>
@@ -157,29 +171,38 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 					className="mx-auto w-full"
 				>
 					<CarouselContent>
-						{loaderData.locations.map((location) => (
-							<CarouselItem
-								key={location.id}
-								className="md:basis-1/3 lg:basis-1/5"
-							>
-								<Form action="/search" method="GET">
-									<input type="hidden" value={location.id} name="locationId" />
-									<button type="submit">
-										<Card>
-											<CardContent className="flex aspect-square flex-col items-center pb-6">
-												<Image
-													width={200}
-													height={200}
-													src={location.images?.[0] ?? 'as'}
-													className="flex-1"
-												/>
-												<span className="font-semibold">{location.name}</span>
-											</CardContent>
-										</Card>
-									</button>
-								</Form>
-							</CarouselItem>
-						))}
+						{loaderData.locations.map((location) => {
+							const imageKey = location.images?.[0]?.objectKey
+							const locationImgSrc = getLocationImgSrc(imageKey)
+							return (
+								<CarouselItem
+									key={location.id}
+									className="md:basis-1/3 lg:basis-1/5"
+								>
+									<Form action="/search" method="GET">
+										<input
+											type="hidden"
+											value={location.id}
+											name="locationId"
+										/>
+										<button type="submit" className="cursor-pointer">
+											<Card>
+												<CardContent className="flex aspect-square flex-col items-center pb-6">
+													<Img
+														width={200}
+														height={200}
+														src={locationImgSrc}
+														className="flex-1"
+														isAboveFold
+													/>
+													<span className="font-semibold">{location.name}</span>
+												</CardContent>
+											</Card>
+										</button>
+									</Form>
+								</CarouselItem>
+							)
+						})}
 					</CarouselContent>
 					<CarouselPrevious />
 					<CarouselNext />
@@ -212,7 +235,14 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 						</Button>
 					</div>
 					<div className="flex-1">
-						<Image width={500} height={500} src={healthImg} alt="health" />
+						<Img
+							width={500}
+							height={500}
+							src={healthImg}
+							alt="health"
+							className="h-full w-full"
+							isAboveFold
+						/>
 					</div>
 				</div>
 			</section>
