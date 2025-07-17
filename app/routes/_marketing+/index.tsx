@@ -1,8 +1,7 @@
 import { getLocations } from '@prisma/client/sql'
 import { motion } from 'framer-motion'
-import { Image, Img } from 'openimg/react'
+import { Img } from 'openimg/react'
 import { Form, Link } from 'react-router'
-import healthImg from '#app/assets/images/health.png'
 import Reminder from '#app/components/reminder.tsx'
 import { Spacer } from '#app/components/spacer.tsx'
 import { Button } from '#app/components/ui/button.tsx'
@@ -16,8 +15,8 @@ import {
 } from '#app/components/ui/carousel.tsx'
 import { Icon } from '#app/components/ui/icon.tsx'
 import { prisma } from '#app/utils/db.server.ts'
-import { type Route } from './+types'
 import { getLocationImgSrc } from '#app/utils/misc.tsx'
+import { type Route } from './+types'
 
 export const meta: Route.MetaFunction = () => [{ title: 'Daktar Bari' }]
 
@@ -65,30 +64,19 @@ const staggerContainer = {
 // ]
 
 export async function loader() {
-	const locations = await prisma.scheduleLocation.findMany({
-		select: {
-			id: true,
-			name: true,
-			images: {
-				select: { objectKey: true },
-			},
-		},
-		take: 15,
-		orderBy: { name: 'asc' },
-	})
-
+	const locations = await prisma.$queryRawTyped(getLocations())
 	return { locations }
 }
 
 export default function Index({ loaderData }: Route.ComponentProps) {
 	return (
-		<main className="font-poppins grid h-full place-items-center">
-			<Spacer size="xs" />
-			<section className="mx-auto flex flex-col gap-10 md:container md:flex-row">
-				<div className="grid items-center gap-12 px-4 md:px-8 lg:grid-cols-2">
+		<>
+			<section className="container mx-auto mt-10 flex flex-col gap-10 md:flex-row md:px-8">
+				<div className="flex w-full flex-col items-center justify-between gap-12 md:flex-row">
 					<motion.div
 						initial="initial"
 						animate="animate"
+						className="w-full"
 						variants={staggerContainer}
 					>
 						<motion.h1
@@ -126,7 +114,7 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 					</motion.div>
 
 					<motion.div
-						className="relative"
+						className="relative flex h-full w-full items-center justify-end"
 						initial="initial"
 						animate="animate"
 						variants={fadeInUp}
@@ -143,8 +131,8 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 				</div>
 			</section>
 
-			<section className="bg-primary-foreground mt-20 w-full px-8 py-20">
-				<div className="container">
+			<section className="bg-primary-foreground mt-20 w-full py-20">
+				<div className="container mx-auto md:px-8">
 					<h2 className="text-brand text-3xl font-extrabold md:text-5xl">
 						Search for Top-Rated Doctors
 					</h2>
@@ -162,22 +150,20 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 				</div>
 			</section>
 
-			<section className="space-y-6 py-20 md:container">
+			<section className="container mx-auto py-20 md:px-8">
 				<h4 className="font-bold">Browse by Locations</h4>
 				<Carousel
 					opts={{
 						align: 'start',
 					}}
-					className="mx-auto w-full"
+					className="mx-auto"
 				>
-					<CarouselContent>
+					<CarouselContent className="-ml-4 py-4">
 						{loaderData.locations.map((location) => {
-							const imageKey = location.images?.[0]?.objectKey
-							const locationImgSrc = getLocationImgSrc(imageKey)
 							return (
 								<CarouselItem
 									key={location.id}
-									className="md:basis-1/3 lg:basis-1/5"
+									className="h-full w-full basis-[80%] sm:basis-1/2 md:basis-1/3 lg:basis-1/5"
 								>
 									<Form action="/search" method="GET">
 										<input
@@ -185,17 +171,32 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 											value={location.id}
 											name="locationId"
 										/>
-										<button type="submit" className="cursor-pointer">
-											<Card>
-												<CardContent className="flex aspect-square flex-col items-center pb-6">
+										<button
+											type="submit"
+											className="h-full w-full cursor-pointer"
+										>
+											<Card className="flex">
+												<CardContent className="flex flex-col items-start px-0 pb-6">
 													<Img
-														width={200}
-														height={200}
-														src={locationImgSrc}
-														className="flex-1"
+														width="100%"
+														fit="cover"
+														height="auto"
+														src={getLocationImgSrc(location.imageObjectKey)}
+														className="w-full flex-1 rounded-t-md object-cover"
 														isAboveFold
 													/>
-													<span className="font-semibold">{location.name}</span>
+													<div className="mt-4 w-full space-y-1 px-2 text-start">
+														<h6 className="font-semibold">{location.name}</h6>
+
+														<span className="text-muted-foreground text-body-2xs line-clamp-1">
+															{location.address}
+														</span>
+
+														<span className="text-muted-foreground text-body-2xs">
+															Total{' '}
+															<strong>{location.totalDoctors} Doctors</strong>
+														</span>
+													</div>
 												</CardContent>
 											</Card>
 										</button>
@@ -209,7 +210,7 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 				</Carousel>
 			</section>
 
-			<section className="space-y-6 py-20 md:container">
+			<section className="container space-y-6 py-20 md:px-8">
 				<h2 className="text-3xl font-extrabold md:text-5xl">
 					Simple and Fast Booking Process
 				</h2>
@@ -238,7 +239,7 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 						<Img
 							width={500}
 							height={500}
-							src={healthImg}
+							src="/img/health.png"
 							alt="health"
 							className="h-full w-full"
 							isAboveFold
@@ -249,6 +250,6 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 
 			<Spacer size="xs" />
 			<Reminder />
-		</main>
+		</>
 	)
 }
