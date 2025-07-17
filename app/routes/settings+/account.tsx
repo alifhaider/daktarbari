@@ -35,15 +35,6 @@ export async function loader({ request }: Route.LoaderArgs) {
 			image: {
 				select: { objectKey: true },
 			},
-			_count: {
-				select: {
-					sessions: {
-						where: {
-							expirationDate: { gt: new Date() },
-						},
-					},
-				},
-			},
 		},
 	})
 
