@@ -61,7 +61,7 @@ const navigationItems = [
 		items: [
 			{
 				title: 'Download Your Data',
-				href: '/settings/privacy/download-data',
+				href: '/settings/privacy/download',
 				icon: 'download',
 				description: 'Export your account data',
 			},
@@ -202,9 +202,15 @@ export default function SettingsLayout() {
 						</p>
 					</div>
 					<div className="flex items-center gap-2">
-						<Button variant="outline" size="sm">
-							<Icon name="download" className="mr-2 h-4 w-4" />
-							Download Data
+						<Button variant="outline" size="sm" asChild>
+							<Link
+								reloadDocument
+								download="my-daktarbari-data.json"
+								to="/resources/download-user-data"
+							>
+								<Icon name="download" className="mr-2 h-4 w-4" />
+								Download Data
+							</Link>
 						</Button>
 					</div>
 				</div>
