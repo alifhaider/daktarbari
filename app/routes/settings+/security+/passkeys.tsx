@@ -206,7 +206,7 @@ export default function PasskeysPage({ loaderData }: Route.ComponentProps) {
 				</ul>
 
 				{loaderData.passkeys.length === 0 && (
-					<div className="py-8 text-center">
+					<div className="bg-muted/50 rounded-lg border py-8 text-center">
 						<Icon
 							name="key"
 							className="text-muted-foreground mx-auto mb-4 h-12 w-12"
