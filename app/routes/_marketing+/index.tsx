@@ -150,8 +150,71 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 				</div>
 			</section>
 
-			<section className="container mx-auto py-20 md:px-8">
+			<section className="container mx-auto py-10 md:px-8">
 				<h4 className="font-bold">Browse by Locations</h4>
+				<Carousel
+					opts={{
+						align: 'start',
+					}}
+					className="mx-auto"
+				>
+					<CarouselContent className="-ml-4 py-4">
+						{loaderData.locations.map((location) => {
+							console.log(location)
+							return (
+								<CarouselItem
+									key={location.id}
+									className="aspect-square h-full w-full basis-[80%] sm:basis-1/2 md:basis-1/3 lg:basis-1/5"
+								>
+									<Form action="/search" method="GET">
+										<input
+											type="hidden"
+											value={location.id}
+											name="locationId"
+										/>
+										<button
+											type="submit"
+											className="h-full w-full cursor-pointer"
+										>
+											<Card className="flex">
+												<CardContent className="flex flex-col items-start px-0 pb-6">
+													<Img
+														width="100%"
+														fit="cover"
+														height="auto"
+														src={getLocationImgSrc(location.imageObjectKey)}
+														className="w-full flex-1 rounded-t-md object-cover"
+														isAboveFold
+													/>
+													<div className="mt-4 w-full space-y-1 px-2 text-start">
+														<h6 className="font-semibold">{location.name}</h6>
+
+														<span className="text-muted-foreground text-body-2xs line-clamp-1">
+															{location.address}
+														</span>
+
+														<span className="text-muted-foreground text-body-2xs">
+															Available{' '}
+															<strong>
+																{location.totalDoctors} Doctors
+															</strong>{' '}
+														</span>
+													</div>
+												</CardContent>
+											</Card>
+										</button>
+									</Form>
+								</CarouselItem>
+							)
+						})}
+					</CarouselContent>
+					<CarouselPrevious />
+					<CarouselNext />
+				</Carousel>
+			</section>
+
+			<section className="container mx-auto py-10 md:px-8">
+				<h4 className="font-bold">Browse by Categories</h4>
 				<Carousel
 					opts={{
 						align: 'start',
@@ -241,8 +304,8 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 					<div className="flex-1">
 						<Img
 							width={500}
-							height={500}
-							src="/img/health.png"
+							height="auto"
+							src="/img/booking.svg"
 							alt="health"
 							className="h-full w-full"
 							isAboveFold
