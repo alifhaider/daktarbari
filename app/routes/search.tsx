@@ -53,8 +53,6 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const { start, limit } = getStartLimit(searchParams)
 	const effectiveLimit = limit + DATA_OVERSCAN
 
-	console.log('making search query')
-
 	const query = searchDoctors(
 		nameQuery,
 		specialtiesQuery,
@@ -109,17 +107,13 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function SearchRoute({ loaderData }: Route.ComponentProps) {
-	// const submit = useSubmit()
-
+	const navigation = useNavigation()
+	const fetcher = useFetcher()
 	const [items, setItems] = useState(loaderData.doctors)
 	const [searchParams, setSearchParams] = useSearchParams()
 
-	const navigation = useNavigation()
-	const fetcher = useFetcher()
-
 	const startRef = useRef(0)
 	const parentRef = useRef<HTMLDivElement>(null)
-
 	const currentSearchRef = useRef(searchParams.toString())
 
 	const rowVirtualizer = useVirtual({
@@ -150,6 +144,7 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 			return parseWithZod(formData, { schema: SearchPageSchema })
 		},
 	})
+
 	useEffect(() => {
 		const currentParams = searchParams.toString()
 		if (currentParams !== currentSearchRef.current) {
@@ -166,13 +161,8 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 			if (fetcher.state !== 'idle') return
 			if (searchParams.toString() !== currentSearchRef.current) return
 
-			const qs = new URLSearchParams([
-				['start', String(newStart)],
-				['limit', String(LIMIT)],
-				['name', fields.name.value ?? ''],
-				['specialtyId', fields.specialtyId.value ?? ''],
-				['locationId', fields.locationId.value ?? ''],
-			])
+			const qs = new URLSearchParams(searchParams)
+
 			await fetcher.load(`/search?${qs}`)
 			startRef.current = newStart
 		}
@@ -221,8 +211,6 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 					}
 
 					setSearchParams(newSearchParams)
-
-					// handleFormChange(event.currentTarget)
 				}}
 			>
 				<SearchNavbar
@@ -431,7 +419,7 @@ const SearchNavbar = ({
 	return (
 		<header className="border-b">
 			<nav className="bg-background sticky inset-0 z-50 flex w-full items-center justify-between px-4 py-2 lg:px-8">
-				<div className="flex w-full items-center gap-6">
+				<div className="flex w-full items-center gap-6 md:gap-20">
 					<Logo />
 
 					<div className="flex w-full gap-8">
