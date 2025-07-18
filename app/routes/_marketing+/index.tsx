@@ -136,7 +136,7 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 					<h2 className="text-brand text-3xl font-extrabold md:text-5xl">
 						Search for Top-Rated Doctors
 					</h2>
-					<p className="mt-6 w-3/4">
+					<p className="mt-6 md:w-3/4">
 						Browse through a comprehensive list of certified and experienced
 						doctors across various specialties. Read patient reviews and ratings
 						to choose the best healthcare professional for your needs.
@@ -160,6 +160,7 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 				>
 					<CarouselContent className="-ml-4 py-4">
 						{loaderData.locations.map((location) => {
+							console.log(location)
 							return (
 								<CarouselItem
 									key={location.id}
@@ -193,8 +194,10 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 														</span>
 
 														<span className="text-muted-foreground text-body-2xs">
-															Total{' '}
-															<strong>{location.totalDoctors} Doctors</strong>
+															Available{' '}
+															<strong>
+																{location.totalDoctors} Doctors
+															</strong>{' '}
 														</span>
 													</div>
 												</CardContent>

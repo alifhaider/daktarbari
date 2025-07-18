@@ -207,7 +207,7 @@ function App() {
 								<Button
 									asChild
 									variant="outline"
-									className="border-primary h-7 rounded-none py-0 text-sm font-bold"
+									className="border-primary hidden h-7 rounded-none py-0 text-sm font-bold lg:inline-flex"
 								>
 									<Link to="/doctors/join">Become a doctor</Link>
 								</Button>

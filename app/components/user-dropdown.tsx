@@ -102,6 +102,13 @@ export function UserDropdown({
 							</Icon>
 						</Link>
 					</DropdownMenuItem>
+					<DropdownMenuItem asChild>
+						<Link to="/help">
+							<Icon className="text-body-md" name="headset">
+								Contact Support
+							</Icon>
+						</Link>
+					</DropdownMenuItem>
 
 					<Separator className="my-2" />
 
