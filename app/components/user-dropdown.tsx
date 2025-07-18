@@ -25,8 +25,13 @@ export function UserDropdown({
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button variant="secondary">
-					<Icon name="menu" className="text-body-md" />
+				<Button
+					variant="secondary"
+					className="flex gap-0.5 px-2 py-0.5"
+					size="sm"
+				>
+					<Icon name="menu" className="text-body-md h-4 w-4" />
+					<Icon name="avatar" className="text-body-md h-4 w-4" />
 					<span className="sr-only">User menu</span>
 				</Button>
 			</DropdownMenuTrigger>
