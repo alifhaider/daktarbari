@@ -113,7 +113,7 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 	const navigation = useNavigation()
 	const fetcher = useFetcher()
 	const [items, setItems] = useState(loaderData.doctors)
-	const [searchParams, setSearchParams] = useSearchParams()
+	const [searchParams] = useSearchParams()
 
 	const startRef = useRef(0)
 	const parentRef = useRef<HTMLDivElement>(null)
@@ -418,8 +418,6 @@ const SearchNavbar = ({
 
 					<div className="flex w-full gap-8">
 						<div className="flex w-full max-w-[350px] items-center gap-2 border-b">
-							<input type="hidden" name="start" value="0" />
-							<input type="hidden" name="limit" value={LIMIT} />
 							<label htmlFor="name" className="text-brand">
 								Who
 							</label>

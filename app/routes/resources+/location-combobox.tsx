@@ -72,6 +72,12 @@ export function LocationCombobox({
 					{ query: inputValue ?? '' },
 					{ method: 'get', action: '/resources/location-combobox' },
 				)
+			} else {
+				setSearchParams((prev) => {
+					const newParams = new URLSearchParams(prev)
+					newParams.delete('locationId')
+					return newParams
+				})
 			}
 		},
 		onSelectedItemChange: ({ selectedItem }) => {
@@ -145,7 +151,7 @@ export function LocationCombobox({
 				{displayMenu
 					? items.map((item, index) => (
 							<li
-								className="hover:text-brand my-2 cursor-pointer py-1"
+								className="hover:text-brand group my-2 cursor-pointer py-1"
 								key={item.id}
 								{...cb.getItemProps({ item: item, index })}
 							>
@@ -159,7 +165,9 @@ export function LocationCombobox({
 								>
 									<div className="flex flex-col">
 										<strong>{item.name}</strong>
-										<span className="mb-0.5 text-xs">{item.address}</span>
+										<span className="text-muted-foreground group-hover:text-brand mb-0.5 text-xs">
+											{item.address}
+										</span>
 									</div>
 								</div>
 							</li>

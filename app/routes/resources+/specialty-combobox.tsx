@@ -2,6 +2,7 @@ import { type FieldMetadata, getInputProps } from '@conform-to/react'
 import { type DoctorSpecialty } from '@prisma/client'
 import clsx from 'clsx'
 import { useCombobox } from 'downshift'
+import { Img } from 'openimg/react'
 import { useId } from 'react'
 import { data, useFetcher, useSearchParams } from 'react-router'
 import { useSpinDelay } from 'spin-delay'
@@ -40,16 +41,22 @@ export function SpecialtyCombobox({
 		items,
 		itemToString: (item) => (item ? item.name : ''),
 		onInputValueChange: async (changes) => {
-			console.log('submitting specialty fetcher')
 			await specialtyFetcher.submit(
 				{ query: changes.inputValue ?? '' },
 				{ method: 'get', action: '/resources/specialty-combobox' },
 			)
+
+			if (!changes.inputValue) {
+				setSearchParams((prev) => {
+					const newSearchParams = new URLSearchParams(prev)
+					newSearchParams.delete('specialtyId')
+					return newSearchParams
+				})
+			}
 		},
 		initialSelectedItem: selectedSpecialty,
 		onSelectedItemChange: (changes) => {
 			const newSearchParams = new URLSearchParams(searchParams)
-			console.log('selected item change specialty')
 			if (changes.selectedItem?.id) {
 				newSearchParams.set('specialtyId', changes.selectedItem.id)
 			} else {
@@ -96,19 +103,29 @@ export function SpecialtyCombobox({
 				{displayMenu
 					? items.map((item, index) => (
 							<li
-								className="hover:text-brand my-2 cursor-pointer py-1"
+								className="group-hover:text-brand group my-2 cursor-pointer py-1"
 								key={item.id}
 								{...cb.getItemProps({ item: item, index })}
 							>
 								<div
-									className={`flex w-full items-center gap-2 rounded-sm border border-transparent px-2 py-2 transition-all ${
+									className={`flex w-full items-center gap-6 rounded-sm border border-transparent px-2 py-2 transition-all ${
 										cb.highlightedIndex === index
 											? 'border-brand text-brand'
 											: ''
 									}`}
 								>
-									<div className="flex items-end">
+									<Img
+										src={item.image ?? '/img/placeholder.png'}
+										width={100}
+										height={100}
+										alt={item.name}
+										className="h-10 w-10 rounded-sm object-cover"
+									/>
+									<div className="flex flex-col">
 										<strong>{item.name}</strong>
+										<span className="text-muted-foreground group-hover:text-brand text-xs">
+											{item.description}
+										</span>
 									</div>
 								</div>
 							</li>
