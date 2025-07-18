@@ -103,7 +103,7 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 							<Button
 								asChild
 								size="lg"
-								className="bg-gradient-to-r from-[hsl(var(--brand))] to-[hsl(var(--brand))]/80 shadow-lg hover:from-[hsl(var(--brand))]/90 hover:to-[hsl(var(--brand))]/70"
+								className="bg-gradient-to-r from-[hsl(var(--brand))] to-[hsl(var(--brand))]/80 font-semibold shadow-lg shadow-[hsl(var(--brand))]/20 hover:from-[hsl(var(--brand))]/90 hover:to-[hsl(var(--brand))]/70 hover:shadow-[hsl(var(--brand))]/30"
 							>
 								<Link to="/search">
 									<Icon name="magnifying-glass" className="mr-2 h-5 w-5" />
