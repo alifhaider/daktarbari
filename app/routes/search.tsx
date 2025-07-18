@@ -216,22 +216,22 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 				<UserDropdown userPreference={loaderData.theme} />
 			</header>
 
-			<main className="flex grow divide-x overflow-y-hidden">
-				<div className="flex-1 overflow-y-auto shadow-md">
-					<div className="search-container container mx-auto overflow-y-scroll py-4">
+			<main className="flex grow divide-x">
+				<div className="flex-1 overflow-y-hidden shadow-md">
+					<div className="search-container mx-auto overflow-y-scroll py-4">
 						{isPending ? <SearchLoadingSkeleton /> : null}
 						{navigation.state === 'idle' ? (
 							items.length ? (
 								<>
-									<h4 className="mb-4 text-xl leading-7 font-medium">
+									<h4 className="mx-4 mb-4 text-xl leading-7 font-medium">
 										{items.length} Doctors Available
 									</h4>
 
 									<div
 										ref={parentRef}
-										className="List"
+										className="px-4"
 										style={{
-											height: '800px',
+											height: '790px',
 											width: '100%',
 											overflow: 'auto',
 										}}
@@ -261,7 +261,7 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 													>
 														<Link
 															to={`/doctors/${doctor.username}`}
-															className="border-muted dark:shadow-muted flex w-full gap-4 overflow-hidden rounded-lg border px-4 py-2 hover:shadow-sm lg:gap-6"
+															className="border-muted dark:shadow-muted hover:border-brand/40 flex w-full gap-4 overflow-hidden rounded-lg border px-4 py-2 hover:shadow-sm lg:gap-6"
 														>
 															<div className="h-20 w-20 overflow-hidden rounded-full lg:h-24 lg:w-24">
 																<Img

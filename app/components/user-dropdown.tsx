@@ -36,7 +36,11 @@ export function UserDropdown({
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuPortal>
-				<DropdownMenuContent sideOffset={8} align="end" className="space-y-1">
+				<DropdownMenuContent
+					sideOffset={8}
+					align="end"
+					className="space-y-1 py-2"
+				>
 					{user ? (
 						<>
 							<DropdownMenuItem asChild>
