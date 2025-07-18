@@ -28,6 +28,7 @@ import {
 import { type Route } from './+types/search'
 import { LocationCombobox } from './resources+/location-combobox'
 import { SpecialtyCombobox } from './resources+/specialty-combobox'
+import { getTheme } from '#app/utils/theme.server.ts'
 
 //TODO: Get the count of total doctors from the searchDoctors sql query
 
@@ -52,6 +53,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const locationQuery = searchParams.get('locationId') ?? ''
 	const { start, limit } = getStartLimit(searchParams)
 	const effectiveLimit = limit + DATA_OVERSCAN
+	const theme = await getTheme(request)
 
 	const query = searchDoctors(
 		nameQuery,
@@ -92,6 +94,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 			doctors: doctors.map(parseDoctor),
 			location: selectedLocation,
 			specialty: selectedSpecialty,
+			theme,
 		},
 		{ headers: { 'Cache-Control': 'public, max-age=120' } },
 	)
@@ -226,7 +229,7 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 
 					<button type="submit" className="hidden" />
 				</Form>
-				<UserDropdown />
+				<UserDropdown userPreference={loaderData.theme} />
 			</header>
 
 			<main className="flex grow divide-x overflow-y-hidden">
