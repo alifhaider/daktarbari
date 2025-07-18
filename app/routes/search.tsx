@@ -162,6 +162,8 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 			if (searchParams.toString() !== currentSearchRef.current) return
 
 			const qs = new URLSearchParams(searchParams)
+			qs.set('start', String(newStart))
+			qs.set('limit', String(LIMIT))
 
 			await fetcher.load(`/search?${qs}`)
 			startRef.current = newStart
@@ -188,40 +190,44 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 			})
 		}
 	}, [fetcher.data])
+
 	// const handleFormChange = useDebounce(async (form: HTMLFormElement) => {
 	// 	 await submit(form)
 	// }, 400)
 
 	return (
 		<>
-			<Form
-				{...getFormProps(form)}
-				method="get"
-				className="sticky top-0 z-50"
-				onChange={async (event) => {
-					event.preventDefault()
-					const formData = new FormData(event.currentTarget)
-					const newSearchParams = new URLSearchParams(searchParams)
-					for (const [key, value] of formData.entries()) {
-						if (formData.has(key) && value.toString().trim()) {
-							newSearchParams.set(key, value.toString())
-						} else {
-							newSearchParams.delete(key)
+			<header className="bg-background sticky inset-0 z-50 flex items-start justify-between border-b px-4 py-2 shadow-sm lg:px-8">
+				<Form
+					{...getFormProps(form)}
+					method="get"
+					className="w-full"
+					onChange={async (event) => {
+						event.preventDefault()
+						const formData = new FormData(event.currentTarget)
+						const newSearchParams = new URLSearchParams(searchParams)
+						for (const [key, value] of formData.entries()) {
+							if (formData.has(key) && value.toString().trim()) {
+								newSearchParams.set(key, value.toString())
+							} else {
+								newSearchParams.delete(key)
+							}
 						}
-					}
 
-					setSearchParams(newSearchParams)
-				}}
-			>
-				<SearchNavbar
-					locationField={fields.locationId}
-					selectedLocation={loaderData.location}
-					selectedSpecialty={loaderData.specialty}
-					specialtyField={fields.specialtyId}
-				/>
+						setSearchParams(newSearchParams)
+					}}
+				>
+					<SearchNavbar
+						locationField={fields.locationId}
+						selectedLocation={loaderData.location}
+						selectedSpecialty={loaderData.specialty}
+						specialtyField={fields.specialtyId}
+					/>
 
-				<button type="submit" className="hidden" />
-			</Form>
+					<button type="submit" className="hidden" />
+				</Form>
+				<UserDropdown />
+			</header>
 
 			<main className="flex grow divide-x overflow-y-hidden">
 				<div className="flex-1 overflow-y-auto shadow-md">
@@ -417,8 +423,8 @@ const SearchNavbar = ({
 	const [searchParams] = useSearchParams()
 
 	return (
-		<header className="border-b">
-			<nav className="bg-background sticky inset-0 z-50 flex w-full items-center justify-between px-4 py-2 lg:px-8">
+		<>
+			<nav className="flex w-full flex-1 items-center justify-between">
 				<div className="flex w-full items-center gap-6 md:gap-20">
 					<Logo />
 
@@ -448,11 +454,9 @@ const SearchNavbar = ({
 						/>
 					</div>
 				</div>
-
-				<UserDropdown />
 			</nav>
 			<Filters />
-		</header>
+		</>
 	)
 }
 
@@ -469,7 +473,7 @@ const FilterWrapper = ({ children }: { children: React.ReactNode }) => {
 
 const Filters = () => {
 	return (
-		<div className="bg-background flex items-center gap-2 px-4 pb-2 shadow-xs lg:px-8">
+		<div className="bg-background mt-2 flex items-center gap-2">
 			<FilterWrapper>
 				<SlidersHorizontal
 					width={16}
