@@ -10,11 +10,11 @@ import { Spinner } from '#app/components/spinner.tsx'
 import { Input } from '#app/components/ui/input.tsx'
 import { Label } from '#app/components/ui/label.tsx'
 import { prisma } from '#app/utils/db.server.ts'
+import { cn } from '#app/utils/misc.tsx'
 import { type Route } from './+types/location-combobox'
 
 // TODO: 1. spinner is not visible
 //       2. when user types in the input, the locationId is not removed from the searchParams
-//       3. when user types in location or specilty-combobox, the list rerenders; let's not rerender until user selects an item
 
 export async function loader({ request }: Route.LoaderArgs) {
 	const searchParams = new URL(request.url).searchParams
@@ -150,14 +150,15 @@ export function LocationCombobox({
 								{...cb.getItemProps({ item: item, index })}
 							>
 								<div
-									className={`flex w-full items-center gap-2 rounded-sm border border-transparent px-2 py-2 transition-all ${
-										cb.highlightedIndex === index
-											? 'border-brand text-brand'
-											: ''
-									}`}
+									className={cn(
+										'hover:bg-muted flex w-full items-center gap-2 rounded-sm border border-transparent px-2 py-2 transition-all',
+										{
+											'border-brand text-brand': cb.highlightedIndex === index,
+										},
+									)}
 								>
-									<div className="flex items-end">
-										<strong>{item.name}</strong>/
+									<div className="flex flex-col">
+										<strong>{item.name}</strong>
 										<span className="mb-0.5 text-xs">{item.address}</span>
 									</div>
 								</div>

@@ -203,25 +203,7 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 	return (
 		<>
 			<header className="bg-background sticky inset-0 z-50 flex items-start justify-between border-b px-4 py-2 shadow-sm lg:px-8">
-				<Form
-					{...getFormProps(form)}
-					method="get"
-					className="w-full"
-					onChange={async (event) => {
-						event.preventDefault()
-						const formData = new FormData(event.currentTarget)
-						const newSearchParams = new URLSearchParams(searchParams)
-						for (const [key, value] of formData.entries()) {
-							if (formData.has(key) && value.toString().trim()) {
-								newSearchParams.set(key, value.toString())
-							} else {
-								newSearchParams.delete(key)
-							}
-						}
-
-						setSearchParams(newSearchParams)
-					}}
-				>
+				<Form {...getFormProps(form)} method="get" className="w-full">
 					<SearchNavbar
 						locationField={fields.locationId}
 						selectedLocation={loaderData.location}
@@ -425,7 +407,8 @@ const SearchNavbar = ({
 	selectedLocation?: Omit<ScheduleLocation, 'createdAt' | 'updatedAt'> | null
 	selectedSpecialty?: Pick<DoctorSpecialty, 'id' | 'name'> | null
 }) => {
-	const [searchParams] = useSearchParams()
+	const [searchParams, setSearchParams] = useSearchParams()
+	const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
 
 	return (
 		<>
@@ -446,6 +429,23 @@ const SearchNavbar = ({
 								type="text"
 								className="w-full bg-transparent focus:outline-hidden"
 								placeholder="Dr. Ahmed"
+								onChange={(event) => {
+									if (debounceTimerRef.current) {
+										clearTimeout(debounceTimerRef.current)
+									}
+									const value = event.target.value
+									debounceTimerRef.current = setTimeout(() => {
+										const newSearchParams = new URLSearchParams(searchParams)
+										if (value) {
+											newSearchParams.set('name', value)
+										} else {
+											newSearchParams.delete('name')
+										}
+										// Reset pagination when search query changes
+										newSearchParams.set('start', '0')
+										setSearchParams(newSearchParams, { replace: true })
+									}, 400) // 400ms debounce delay
+								}}
 								defaultValue={searchParams.get('name') ?? ''}
 							/>
 						</div>
