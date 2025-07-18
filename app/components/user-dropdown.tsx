@@ -31,7 +31,7 @@ export function UserDropdown({
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuPortal>
-				<DropdownMenuContent sideOffset={8} align="end">
+				<DropdownMenuContent sideOffset={8} align="end" className="space-y-1">
 					{user ? (
 						<>
 							<DropdownMenuItem asChild>
