@@ -120,11 +120,11 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 						variants={fadeInUp}
 					>
 						<Img
-							src="/img/hero-img.jpg"
+							src="/img/hero-img.svg"
 							alt="Healthcare professionals and patients"
 							width={600}
-							height={500}
-							className="rounded-2xl shadow-2xl"
+							height="auto"
+							className="rounded-2xl object-cover"
 							isAboveFold
 						/>
 					</motion.div>
