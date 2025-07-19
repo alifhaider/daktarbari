@@ -243,7 +243,7 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 												position: 'relative',
 											}}
 										>
-											{rowVirtualizer.virtualItems.map((virtualRow, index) => {
+											{rowVirtualizer.virtualItems.map((virtualRow) => {
 												const doctor = items[virtualRow.index]
 
 												if (!doctor) return null
