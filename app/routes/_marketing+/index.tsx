@@ -160,7 +160,6 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 				>
 					<CarouselContent className="-ml-4 py-4">
 						{loaderData.locations.map((location) => {
-							console.log(location)
 							return (
 								<CarouselItem
 									key={location.id}
@@ -223,7 +222,6 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 				>
 					<CarouselContent className="-ml-4 py-4">
 						{loaderData.locations.map((location) => {
-							console.log(location)
 							return (
 								<CarouselItem
 									key={location.id}
