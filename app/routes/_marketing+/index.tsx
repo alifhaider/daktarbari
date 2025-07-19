@@ -214,7 +214,7 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 			</section>
 
 			<section className="container mx-auto py-10 md:px-8">
-				<h4 className="font-bold">Browse by Categories</h4>
+				<h4 className="font-bold">Browse by Specialties</h4>
 				<Carousel
 					opts={{
 						align: 'start',
