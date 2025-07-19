@@ -164,9 +164,9 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 							return (
 								<CarouselItem
 									key={location.id}
-									className="aspect-square h-full w-full basis-[80%] sm:basis-1/2 md:basis-1/3 lg:basis-1/5"
+									className="h-full w-full basis-[80%] sm:basis-1/2 md:basis-1/3 lg:basis-1/5"
 								>
-									<Form action="/search" method="GET">
+									<Form action="/search" method="GET" className="h-full w-full">
 										<input
 											type="hidden"
 											value={location.id}
