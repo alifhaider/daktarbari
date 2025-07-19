@@ -45,7 +45,17 @@ export function LocationCombobox({
 	variant = 'default',
 }: {
 	field: FieldMetadata
-	selectedLocation?: Omit<ScheduleLocation, 'createdAt' | 'updatedAt'> | null
+	selectedLocation?: Omit<
+		ScheduleLocation,
+		| 'createdAt'
+		| 'updatedAt'
+		| 'isTopRated'
+		| 'rating'
+		| 'reviews'
+		| 'images'
+		| 'type'
+		| 'schedules'
+	> | null
 	variant?: 'search' | 'default'
 }) {
 	const [searchParams, setSearchParams] = useSearchParams()

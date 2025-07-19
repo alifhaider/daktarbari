@@ -114,7 +114,8 @@ async function seed() {
 
 	console.time('🧹 Clean up database...')
 	await prisma.booking.deleteMany()
-	await prisma.review.deleteMany()
+	await prisma.doctorReview.deleteMany()
+	await prisma.locationReview.deleteMany()
 	await prisma.schedule.deleteMany()
 	await prisma.education.deleteMany()
 	await prisma.doctorSpecialty.deleteMany()
@@ -315,10 +316,10 @@ async function seed() {
 	)
 	console.timeEnd('👨‍⚕️ Creating bookings...')
 
-	console.time('🌱 Seeding reviews...')
+	console.time('🌱 Seeding Doctor reviews...')
 	await Promise.all(
 		Array.from({ length: totalReviews }).map(async (_, index) => {
-			const review = await prisma.review.create({
+			const review = await prisma.doctorReview.create({
 				data: {
 					rating: Math.floor(Math.random() * 5),
 					comment: faker.lorem.sentence(),
@@ -329,7 +330,26 @@ async function seed() {
 			return review
 		}),
 	)
-	console.timeEnd('🌱 Seeding reviews...')
+	console.timeEnd('🌱 Seeding Doctor reviews...')
+
+	console.time('🌱 Seeding Location reviews...')
+	await Promise.all(
+		Array.from({ length: totalReviews }).map(async (_, index) => {
+			const review = await prisma.locationReview.create({
+				data: {
+					rating: Math.floor(Math.random() * 5),
+					comment: faker.lorem.sentence(),
+					userId: filteredUsers[index % filteredUsers.length]!.id,
+					locationId:
+						scheduleLocations[
+							Math.floor(Math.random() * totalScheduleLocations)
+						]!.id,
+				},
+			})
+			return review
+		}),
+	)
+	console.timeEnd('🌱 Seeding Location reviews...')
 
 	console.time(`🐨 Created admin user "alif"`)
 

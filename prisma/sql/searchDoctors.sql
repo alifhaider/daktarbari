@@ -30,12 +30,12 @@ SELECT
     ) AS min_price
   ) AS priceInfo,
   (
-      SELECT COUNT(*) FROM "Review"
-    WHERE "Review"."doctorId" = "Doctor"."userId"
+      SELECT COUNT(*) FROM "DoctorReview"
+    WHERE "DoctorReview"."doctorId" = "Doctor"."userId"
   ) as reviewCount,
   (
-    SELECT ROUND(AVG("Review".rating)) FROM "Review" 
-    WHERE "Review"."doctorId" = "Doctor"."userId"
+    SELECT ROUND(AVG("DoctorReview".rating)) FROM "DoctorReview" 
+    WHERE "DoctorReview"."doctorId" = "Doctor"."userId"
   ) as averageRating,
   (
     SELECT COUNT(*) FROM "User"

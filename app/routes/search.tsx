@@ -412,7 +412,17 @@ const SearchNavbar = ({
 }: {
 	locationField: FieldMetadata
 	specialtyField: FieldMetadata
-	selectedLocation?: Omit<ScheduleLocation, 'createdAt' | 'updatedAt'> | null
+	selectedLocation?: Omit<
+		ScheduleLocation,
+		| 'createdAt'
+		| 'updatedAt'
+		| 'isTopRated'
+		| 'rating'
+		| 'reviews'
+		| 'images'
+		| 'type'
+		| 'schedules'
+	> | null
 	selectedSpecialty?: Pick<DoctorSpecialty, 'id' | 'name'> | null
 }) => {
 	const [searchParams, setSearchParams] = useSearchParams()

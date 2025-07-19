@@ -267,7 +267,7 @@ export async function action({ request }: Route.ActionArgs) {
 
 		const { doctorId, userId, comment, rating } = submission.value
 
-		await prisma.review.create({
+		await prisma.doctorReview.create({
 			data: {
 				rating,
 				comment,
@@ -588,7 +588,7 @@ export default function DoctorRoute({
 					<hr className="border-t border-gray-200 dark:border-gray-700" />
 					<Spacer size="sm" />
 					<Reviews
-						reviews={user.doctor?.reviews}
+						reviews={user.doctor?.reviews ?? []}
 						doctorId={user.id}
 						actionData={actionData}
 						userId={loaderData.loggedInUserId}
@@ -1114,7 +1114,7 @@ type ReviewProps = {
 				id: string
 				createdAt: Date
 				rating: number
-				comment: string
+				comment: string | null
 		  }[]
 		| undefined
 }

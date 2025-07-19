@@ -210,7 +210,7 @@ export default function LocationDetail({ loaderData }: Route.ComponentProps) {
 	const location = mockLocationDetails
 	const remainingImagesCount = Math.max(0, location.images.length - 3)
 	return (
-		<div className="min-h-screen bg-gray-50">
+		<section className="min-h-screen">
 			{/* Header */}
 			<div className="border-b bg-white">
 				<div className="container mx-auto px-4 py-8">
@@ -742,7 +742,7 @@ export default function LocationDetail({ loaderData }: Route.ComponentProps) {
 					</div>
 				</div>
 			</div>
-		</div>
+		</section>
 	)
 }
 
