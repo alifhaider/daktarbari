@@ -113,15 +113,15 @@ async function seed() {
 	console.time(`🌱 Database has been seeded`)
 
 	console.time('🧹 Clean up database...')
-	await prisma.schedule.deleteMany()
-	await prisma.doctorSpecialty.deleteMany()
-	await prisma.scheduleLocation.deleteMany()
-	await prisma.education.deleteMany()
 	await prisma.booking.deleteMany()
 	await prisma.review.deleteMany()
+	await prisma.schedule.deleteMany()
+	await prisma.education.deleteMany()
+	await prisma.doctorSpecialty.deleteMany()
 	await prisma.doctor.deleteMany()
-	await prisma.user.deleteMany()
+	await prisma.scheduleLocation.deleteMany()
 	await prisma.password.deleteMany()
+	await prisma.user.deleteMany()
 
 	console.timeEnd('🧹 Clean up database...')
 
@@ -131,6 +131,7 @@ async function seed() {
 	const totalScheduleLocations = 10
 	const totalSchedules = 20
 	const totalReviews = 20
+
 	console.time(`👤 Created ${totalUsers} users...`)
 	const userImages = await getUserImages()
 
@@ -174,7 +175,6 @@ async function seed() {
 	console.timeEnd(`👤 Created ${totalUsers} users...`)
 
 	// create 5 doctors among the users
-
 	console.time('👨‍⚕️ Creating doctors...')
 	const doctors = await Promise.all(
 		Array.from({ length: totalDoctors }).map(async (_, index) => {
@@ -184,6 +184,7 @@ async function seed() {
 					userId: users[index]!.id,
 					balance: Math.floor(Math.random() * 1000),
 					homeAddress: `${faker.location.streetAddress()}, ${faker.location.city()}, ${faker.location.state()}, ${faker.location.zipCode()}`,
+					rating: Math.floor(Math.random() * 5),
 					specialties: {
 						createMany: {
 							data: Array.from({
@@ -199,7 +200,6 @@ async function seed() {
 							})),
 						},
 					},
-					rating: Math.floor(Math.random() * 5),
 					education: {
 						createMany: {
 							data: Array.from({
