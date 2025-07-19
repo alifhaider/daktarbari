@@ -722,7 +722,7 @@ const ScheduleItem = ({
 			className="overflow-hidden rounded-sm border shadow-md transition-all hover:shadow-lg"
 		>
 			<div className="bg-accent/50 dark:bg-accent/20 flex items-start justify-between border-b p-3">
-				<div>
+				<Link to={`/locations/${schedule.location.id}`}>
 					<h3 className="text-primary font-semibold">
 						{schedule.location.name}
 					</h3>
@@ -730,7 +730,7 @@ const ScheduleItem = ({
 						<Icon name="map-pin" className="mr-1 h-3 w-3" />
 						{schedule.location.address}
 					</div>
-				</div>
+				</Link>
 
 				<div className="flex flex-col items-end gap-1">
 					<Badge
