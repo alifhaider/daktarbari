@@ -243,145 +243,153 @@ export default function SearchRoute({ loaderData }: Route.ComponentProps) {
 												position: 'relative',
 											}}
 										>
-											{rowVirtualizer.virtualItems.map((virtualRow) => {
+											{rowVirtualizer.virtualItems.map((virtualRow, index) => {
 												const doctor = items[virtualRow.index]
 
 												if (!doctor) return null
 												return (
-													<li
-														key={virtualRow.key}
-														style={{
-															position: 'absolute',
-															top: 0,
-															left: 0,
-															width: '100%',
-															height: `${virtualRow.size}px`,
-															transform: `translateY(${virtualRow.start}px)`,
-														}}
-													>
-														<Link
-															to={`/doctors/${doctor.username}`}
-															className="border-muted dark:shadow-muted hover:border-brand/40 flex w-full gap-4 overflow-hidden rounded-lg border px-4 py-2 hover:shadow-sm lg:gap-6"
+													<>
+														<li
+															key={virtualRow.key}
+															style={{
+																position: 'absolute',
+																top: 0,
+																left: 0,
+																width: '100%',
+																height: `${virtualRow.size}px`,
+																transform: `translateY(${virtualRow.start}px)`,
+															}}
 														>
-															<div className="h-20 w-20 overflow-hidden rounded-full lg:h-24 lg:w-24">
-																<Img
-																	alt={doctor.name ?? doctor.username}
-																	src={getUserImgSrc(doctor.imageObjectKey)}
-																	className="h-20 w-20 rounded-full object-cover lg:h-24 lg:w-24"
-																	width={256}
-																	height={256}
-																/>
-															</div>
-															<div className="w-full space-y-1.5">
-																<div className="flex w-full justify-between">
-																	<span className="text-body-md text-accent-foreground overflow-hidden text-center font-bold text-ellipsis whitespace-nowrap">
-																		{doctor.name
-																			? doctor.name
-																			: doctor.username}
-																	</span>
-																	<div className="bg-muted flex items-center gap-0.5 rounded-md px-2 py-1">
-																		<Icon
-																			name="star"
-																			className="fill-brand text-brand h-3 w-3"
-																		/>
-																		<span className="text-brand text-sm font-bold">
-																			{doctor.averageRating}
-																			<span className="text-accent-foreground text-xs">
-																				&#47;{doctor.reviewCount}
-																			</span>
-																		</span>
-																	</div>
+															<Link
+																to={`/doctors/${doctor.username}`}
+																className="border-muted dark:shadow-muted hover:border-brand/40 flex w-full gap-4 overflow-hidden rounded-lg border px-4 py-2 hover:shadow-sm lg:gap-6"
+															>
+																<div className="h-20 w-20 overflow-hidden rounded-full lg:h-24 lg:w-24">
+																	<Img
+																		alt={doctor.name ?? doctor.username}
+																		src={getUserImgSrc(doctor.imageObjectKey)}
+																		className="h-20 w-20 rounded-full object-cover lg:h-24 lg:w-24"
+																		width={256}
+																		height={256}
+																	/>
 																</div>
-																{doctor.specialties.length > 0 && (
-																	<div className="flex items-center gap-1">
-																		<Icon
-																			name="stethoscope"
-																			className="text-primary h-3 w-3"
-																		/>
-																		<ul className="text-muted-foreground flex items-center gap-1 text-xs">
-																			{doctor.specialties.map((specialty) => (
-																				<li
-																					key={specialty.id}
-																					className="bg-muted text-accent-foreground rounded-md px-1 py-0.5 text-xs"
-																				>
-																					{specialty.name}
-																				</li>
-																			))}
-																		</ul>
+																<div className="w-full space-y-1.5">
+																	<div className="flex w-full justify-between">
+																		<span className="text-body-md text-accent-foreground overflow-hidden text-center font-bold text-ellipsis whitespace-nowrap">
+																			{doctor.name
+																				? doctor.name
+																				: doctor.username}
+																		</span>
+																		<div className="bg-muted flex items-center gap-0.5 rounded-md px-2 py-1">
+																			<Icon
+																				name="star"
+																				className="fill-brand text-brand h-3 w-3"
+																			/>
+																			<span className="text-brand text-sm font-bold">
+																				{doctor.averageRating}
+																				<span className="text-accent-foreground text-xs">
+																					&#47;{doctor.reviewCount}
+																				</span>
+																			</span>
+																		</div>
 																	</div>
-																)}
-																{doctor.upcomingSchedules.length > 0 && (
-																	<>
+																	{doctor.specialties.length > 0 && (
 																		<div className="flex items-center gap-1">
 																			<Icon
-																				name="map-pin"
+																				name="stethoscope"
 																				className="text-primary h-3 w-3"
 																			/>
-																			<ul className="text-muted-foreground flex items-center gap-1">
-																				<li className="text-accent-foreground text-xs">
-																					{
-																						doctor.upcomingSchedules[0]
-																							?.location.name
-																					}
-																				</li>
-																				{doctor.upcomingSchedules.length >
-																					1 && (
-																					<li className="text-muted-foreground text-xs">
-																						+
-																						{doctor.upcomingSchedules.length -
-																							1}{' '}
-																						more
+																			<ul className="text-muted-foreground flex items-center gap-1 text-xs">
+																				{doctor.specialties.map((specialty) => (
+																					<li
+																						key={specialty.id}
+																						className="bg-muted text-accent-foreground rounded-md px-1 py-0.5 text-xs"
+																					>
+																						{specialty.name}
 																					</li>
-																				)}
+																				))}
 																			</ul>
 																		</div>
-																		<div className="flex items-center gap-1">
+																	)}
+																	{doctor.upcomingSchedules.length > 0 && (
+																		<>
+																			<div className="flex items-center gap-1">
+																				<Icon
+																					name="map-pin"
+																					className="text-primary h-3 w-3"
+																				/>
+																				<ul className="text-muted-foreground flex items-center gap-1">
+																					<li className="text-accent-foreground text-xs">
+																						{
+																							doctor.upcomingSchedules[0]
+																								?.location.name
+																						}
+																					</li>
+																					{doctor.upcomingSchedules.length >
+																						1 && (
+																						<li className="text-muted-foreground text-xs">
+																							+
+																							{doctor.upcomingSchedules.length -
+																								1}{' '}
+																							more
+																						</li>
+																					)}
+																				</ul>
+																			</div>
+																			<div className="flex items-center gap-1">
+																				<Icon
+																					name="calendar-check"
+																					className="text-primary h-3 w-3"
+																				/>
+																				<p className="text-muted-foreground text-xs">
+																					{doctor.upcomingSchedules.length}{' '}
+																					available schedules
+																				</p>
+																			</div>
+																		</>
+																	)}
+																	<div className="mt-3 flex items-center justify-between">
+																		<p className="bg-muted text-brand text-body-2xs flex items-center gap-1 rounded-sm px-1 py-0.5">
 																			<Icon
-																				name="calendar-check"
-																				className="text-primary h-3 w-3"
+																				name="tag"
+																				className="h-3 w-3 rotate-90"
 																			/>
-																			<p className="text-muted-foreground text-xs">
-																				{doctor.upcomingSchedules.length}{' '}
-																				available schedules
-																			</p>
-																		</div>
-																	</>
-																)}
-																<div className="mt-3 flex items-center justify-between">
-																	<p className="bg-muted text-brand text-body-2xs flex items-center gap-1 rounded-sm px-1 py-0.5">
-																		<Icon
-																			name="tag"
-																			className="h-3 w-3 rotate-90"
-																		/>
-																		<span>
-																			Save{' '}
-																			<span className="font-semibold">
-																				{doctor.priceInfo.discount}tk
+																			<span>
+																				Save{' '}
+																				<span className="font-semibold">
+																					{doctor.priceInfo.discount}tk
+																				</span>
 																			</span>
-																		</span>
-																	</p>
-																	<p className="flex items-center gap-1">
-																		<span className="text-muted-foreground line-through">
-																			{doctor.priceInfo.discount +
-																				doctor.priceInfo.startsFrom}
-																			tk
-																		</span>
-																		<span className="text-primary font-bold underline">
-																			{doctor.priceInfo.startsFrom}tk{' '}
-																			<span className="text-sm">total</span>
-																		</span>
-																	</p>
+																		</p>
+																		<p className="flex items-center gap-1">
+																			<span className="text-muted-foreground line-through">
+																				{doctor.priceInfo.discount +
+																					doctor.priceInfo.startsFrom}
+																				tk
+																			</span>
+																			<span className="text-primary font-bold underline">
+																				{doctor.priceInfo.startsFrom}tk{' '}
+																				<span className="text-sm">total</span>
+																			</span>
+																		</p>
+																	</div>
 																</div>
-															</div>
-														</Link>
-													</li>
+															</Link>
+														</li>
+													</>
 												)
 											})}
 										</ul>
 									</div>
 								</>
 							) : (
-								<p>No doctors found</p>
+								<div className="text-muted-foreground container flex h-full w-full flex-col items-center justify-center space-y-2 md:px-8">
+									<h4 className="text-lg font-semibold">No doctors found</h4>
+									<p className="text-sm">Try adjusting your search criteria</p>
+									<Link to="/search" className="text-brand hover:underline">
+										Reset Search
+									</Link>
+								</div>
 							)
 						) : null}
 					</div>
