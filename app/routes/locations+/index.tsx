@@ -4,25 +4,10 @@ import { Input } from '#app/components/ui/input.tsx'
 import { prisma } from '#app/utils/db.server.ts'
 import { Img } from 'openimg/react'
 import { type Route } from './+types'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { Badge } from '#app/components/ui/badge.tsx'
-
-export async function loader({ request }: Route.LoaderArgs) {
-	const locations = await prisma.scheduleLocation.findMany({
-		select: {
-			id: true,
-			name: true,
-			address: true,
-			city: true,
-			state: true,
-			zip: true,
-			images: {
-				select: { id: true, objectKey: true },
-			},
-		},
-	})
-	return { locations }
-}
+import { getLocationImgSrc } from '#app/utils/misc.tsx'
+import { formatDate } from 'date-fns'
 
 const mockLocations = [
 	{
@@ -129,252 +114,262 @@ const mockLocations = [
 	},
 ]
 
-export default function LocationsIndex({ loaderData }: Route.ComponentProps) {
-	const featuredLocations = mockLocations.filter((loc) => loc.featured)
-	const regularLocations = mockLocations.filter((loc) => !loc.featured)
-	return (
-		<div className="min-h-screen bg-gray-50">
-			{/* Clean Header */}
-			<div className="border-b bg-white">
-				<div className="container mx-auto px-4 py-12">
-					<div className="max-w-3xl">
-						<h1 className="mb-4 text-4xl font-bold text-gray-900">
-							Find Medical Care
-						</h1>
-						<p className="mb-8 text-xl text-gray-600">
-							Browse trusted medical facilities with experienced doctors and
-							quality care.
-						</p>
+export async function loader({ request }: Route.LoaderArgs) {
+	const searchParams = new URL(request.url).searchParams
+	const query = searchParams.get('location')?.toLocaleLowerCase()
+	const locations = await prisma.scheduleLocation.findMany({
+		where: query
+			? {
+					OR: [
+						{ name: { contains: query } },
+						{ address: { contains: query } },
+						{ city: { contains: query } },
+						{ state: { contains: query } },
+						{ zip: { contains: query } },
+					],
+				}
+			: {},
+		include: {
+			schedules: {
+				take: 1,
+				orderBy: { startTime: 'asc' },
+			},
+			images: {
+				select: {
+					id: true,
+					objectKey: true,
+				},
+			},
 
-						{/* Simple Search */}
-						<div className="flex gap-3">
-							<div className="relative flex-1">
-								<Icon
-									name="magnifying-glass"
-									className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 transform text-gray-400"
-								/>
-								<Input
-									placeholder="Search locations..."
-									className="h-12 border-gray-200 pl-12 text-base focus:border-gray-400"
+			_count: {
+				select: {
+					schedules: true,
+				},
+			},
+		},
+		distinct: ['name', 'address', 'city', 'state', 'zip'],
+	})
+	return { locations }
+}
+
+export default function LocationsIndex({ loaderData }: Route.ComponentProps) {
+	const [searchParams] = useSearchParams()
+	const locations = loaderData.locations
+
+	const featuredLocations = mockLocations.filter((loc) => loc.featured)
+	return (
+		<section className="container mx-auto min-h-screen py-12 md:px-8">
+			{/* Clean Header */}
+			<div className="max-w-3xl">
+				<h1 className="text-primary mb-4 text-4xl font-bold">
+					Find Medical Care
+				</h1>
+				<p className="text-muted-foreground mb-8 text-xl">
+					Browse trusted medical facilities with experienced doctors and quality
+					care.
+				</p>
+			</div>
+
+			{/* Simple Search */}
+			<div className="flex w-full justify-center gap-3">
+				<div className="bg-background relativeflex items-center">
+					<Input
+						type="search"
+						name="location"
+						defaultValue={searchParams.get('location') ?? ''}
+						placeholder="Dr. Shafiul Azam"
+						className="w-full min-w-md"
+						autoFocus
+					/>
+				</div>
+				<Button>Search</Button>
+			</div>
+
+			<div className="mt-12 flex flex-col gap-3.5 md:gap-6">
+				{locations.map((location) => (
+					<Link
+						key={location.id}
+						to={`/locations/${location.id}`}
+						className="group hover:border-brand/20 bg-primary-foreground rounded-lg border p-6 transition-colors"
+					>
+						<div className="flex items-start gap-6">
+							{/* Image */}
+							<div className="relative h-24 w-32 flex-shrink-0 overflow-hidden rounded-lg">
+								<Img
+									src={getLocationImgSrc(location.images[0]?.objectKey)}
+									alt={location.name}
+									width={400}
+									height={300}
+									className="object-cover"
 								/>
 							</div>
-							<Button className="h-12 bg-gray-900 px-6 hover:bg-gray-800">
-								Search
-							</Button>
-						</div>
-					</div>
-				</div>
-			</div>
 
-			<div className="container mx-auto px-4 py-12">
-				{/* Featured Section */}
-				<div className="mb-16">
-					<div className="mb-8 flex items-center justify-between">
-						<div>
-							<h2 className="text-2xl font-bold text-gray-900">
-								Featured Locations
-							</h2>
-							<p className="mt-1 text-gray-600">
-								Top-rated facilities in your area
-							</p>
-						</div>
-					</div>
-
-					<div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-						{featuredLocations.map((location) => (
-							<Link key={location.id} to={`/locations/${location.id}`}>
-								<article className="overflow-hidden rounded-lg border border-gray-200 bg-white hover:border-gray-300">
-									{/* Image */}
-									<div className="relative h-48">
-										<Img
-											width={400}
-											height={300}
-											src={location.image || '/placeholder.svg'}
-											alt={location.name}
-											className="object-cover"
-										/>
-										<div className="absolute top-3 left-3">
-											<Badge className="border-0 bg-white text-gray-900">
-												Featured
-											</Badge>
-										</div>
-									</div>
-
-									{/* Content */}
-									<div className="p-6">
-										<div className="mb-3 flex items-start justify-between">
-											<h3 className="text-lg leading-tight font-semibold text-gray-900">
-												{location.name}
-											</h3>
-											<Badge variant="outline" className="ml-2 text-xs">
-												{location.type}
-											</Badge>
-										</div>
-
-										<div className="mb-4 flex items-center text-gray-600">
-											<Icon name="map-pin" className="mr-2 h-4 w-4" />
+							{/* Content */}
+							<div className="min-w-0 flex-1">
+								<div className="mb-2 flex items-start justify-between">
+									<div>
+										<h3 className="text-primary text-lg font-semibold">
+											{location.name}
+										</h3>
+										<div className="text-muted-foreground flex items-center">
+											<Icon name="map-pin" className="mr-1 h-4 w-4" />
 											<span className="text-sm">
-												{location.city}, {location.state}
+												{location.address}, {location.city}, {location.state}
 											</span>
 										</div>
-
-										{/* Key Info Grid */}
-										<div className="mb-4 grid grid-cols-2 gap-4 text-sm">
-											<div>
-												<div className="text-gray-500">Rating</div>
-												<div className="flex items-center">
-													<Icon
-														name="star"
-														className="mr-1 h-4 w-4 fill-gray-900 text-gray-900"
-													/>
-													<span className="font-medium">{location.rating}</span>
-													<span className="ml-1 text-gray-500">
-														({location.reviewCount})
-													</span>
-												</div>
-											</div>
-											<div>
-												<div className="text-gray-500">Doctors</div>
-												<div className="font-medium">
-													{location.doctorCount} available
-												</div>
-											</div>
-											<div>
-												<div className="text-gray-500">Wait time</div>
-												<div className="font-medium">{location.waitTime}</div>
-											</div>
-											<div>
-												<div className="text-gray-500">Next slot</div>
-												<div className="font-medium text-green-700">
-													{location.nextAvailable}
-												</div>
-											</div>
-										</div>
-
-										{/* Specialties */}
-										<div className="flex flex-wrap gap-2">
-											{location.specialties.slice(0, 2).map((specialty) => (
-												<span
-													key={specialty}
-													className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-700"
-												>
-													{specialty}
-												</span>
-											))}
-											{location.specialties.length > 2 && (
-												<span className="text-xs text-gray-500">
-													+{location.specialties.length - 2} more
-												</span>
-											)}
-										</div>
 									</div>
-								</article>
-							</Link>
-						))}
-					</div>
-				</div>
+									<Badge variant="outline">{location.type}</Badge>
+								</div>
 
-				{/* All Locations */}
-				<div>
-					<h2 className="mb-8 text-2xl font-bold text-gray-900">
-						All Locations
-					</h2>
-
-					<div className="space-y-4">
-						{regularLocations.map((location) => (
-							<Link key={location.id} to={`/locations/${location.id}`}>
-								<article className="rounded-lg border border-gray-200 bg-white p-6 hover:border-gray-300">
-									<div className="flex items-start gap-6">
-										{/* Image */}
-										<div className="relative h-24 w-32 flex-shrink-0 overflow-hidden rounded-lg">
-											<Img
-												src={location.image || '/placeholder.svg'}
-												alt={location.name}
-												width={400}
-												height={300}
-												className="object-cover"
-											/>
-										</div>
-
-										{/* Content */}
-										<div className="min-w-0 flex-1">
-											<div className="mb-2 flex items-start justify-between">
-												<div>
-													<h3 className="text-lg font-semibold text-gray-900">
-														{location.name}
-													</h3>
-													<div className="mt-1 flex items-center text-gray-600">
-														<Icon name="map-pin" className="mr-1 h-4 w-4" />
-														<span className="text-sm">
-															{location.address}, {location.city},{' '}
-															{location.state}
-														</span>
-													</div>
-												</div>
-												<Badge variant="outline">{location.type}</Badge>
-											</div>
-
-											{/* Info Grid */}
-											<div className="mt-4 grid grid-cols-4 gap-6 text-sm">
-												<div>
-													<div className="mb-1 text-gray-500">Rating</div>
-													<div className="flex items-center">
-														<Icon
-															name="star"
-															className="mr-1 h-4 w-4 fill-gray-900 text-gray-900"
-														/>
-														<span className="font-medium">
-															{location.rating}
-														</span>
-													</div>
-												</div>
-												<div>
-													<div className="mb-1 text-gray-500">Doctors</div>
-													<div className="font-medium">
-														{location.doctorCount}
-													</div>
-												</div>
-												<div>
-													<div className="mb-1 text-gray-500">Wait time</div>
-													<div className="font-medium">{location.waitTime}</div>
-												</div>
-												<div>
-													<div className="mb-1 text-gray-500">
-														Next available
-													</div>
-													<div className="font-medium text-green-700">
-														{location.nextAvailable}
-													</div>
-												</div>
-											</div>
-
-											{/* Specialties */}
-											<div className="mt-4 flex flex-wrap gap-2">
-												{location.specialties.map((specialty) => (
-													<span
-														key={specialty}
-														className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-700"
-													>
-														{specialty}
-													</span>
-												))}
-											</div>
-										</div>
-
-										{/* Arrow */}
-										<div className="flex-shrink-0">
+								{/* Info Grid */}
+								<div className="text-accent mt-4 grid grid-cols-4 gap-6 text-sm">
+									<div>
+										<div className="mb-0.5 text-gray-400">Rating</div>
+										<div className="text-primary flex items-center">
 											<Icon
-												name="arrow-right"
-												className="h-5 w-5 text-gray-400"
+												name="star"
+												className="fill-brand text-brand mr-1 h-4 w-4"
 											/>
+											<span className="text-secondary-foreground font-medium">
+												4.8
+											</span>
 										</div>
 									</div>
-								</article>
-							</Link>
-						))}
+									<div>
+										<div className="mb-0.5 text-gray-400">Doctors</div>
+										<div className="text-secondary-foreground font-medium">
+											10
+										</div>
+									</div>
+									<div>
+										<div className="mb-0.5 text-gray-400">Schedules</div>
+										<div className="text-secondary-foreground font-medium">
+											{location._count.schedules}
+										</div>
+									</div>
+								</div>
+							</div>
+
+							{/* Arrow */}
+							<div className="flex-shrink-0">
+								<Icon
+									name="arrow-right"
+									className="text-muted group-hover:text-brand h-5 w-5"
+								/>
+							</div>
+						</div>
+					</Link>
+				))}
+			</div>
+
+			{/* Featured Section */}
+
+			{/* All Locations */}
+			<div className="mt-16">
+				<div className="mb-8 flex items-center justify-between">
+					<div>
+						<h2 className="text-2xl font-bold text-gray-900">
+							Featured Locations
+						</h2>
+						<p className="mt-1 text-gray-600">
+							Top-rated facilities in your area
+						</p>
 					</div>
 				</div>
 			</div>
-		</div>
+
+			<div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
+				{featuredLocations.map((location) => (
+					<Link key={location.id} to={`/locations/${location.id}`}>
+						<article className="bg-muted overflow-hidden rounded-lg border hover:border-gray-300">
+							{/* Image */}
+							<div className="relative h-48">
+								<Img
+									width={400}
+									height={300}
+									src={'/img/placeholder.png'}
+									alt={location.name}
+									className="object-cover"
+								/>
+								<div className="absolute top-3 left-3">
+									<Badge className="border-0 bg-white text-gray-900">
+										Featured
+									</Badge>
+								</div>
+							</div>
+
+							{/* Content */}
+							<div className="p-6">
+								<div className="mb-3 flex items-start justify-between">
+									<h3 className="text-lg leading-tight font-semibold text-gray-900">
+										{location.name}
+									</h3>
+									<Badge variant="outline" className="ml-2 text-xs">
+										{location.type}
+									</Badge>
+								</div>
+
+								<div className="mb-4 flex items-center text-gray-600">
+									<Icon name="map-pin" className="mr-2 h-4 w-4" />
+									<span className="text-sm">
+										{location.city}, {location.state}
+									</span>
+								</div>
+
+								{/* Key Info Grid */}
+								<div className="mb-4 grid grid-cols-2 gap-4 text-sm">
+									<div>
+										<div className="text-gray-500">Rating</div>
+										<div className="flex items-center">
+											<Icon
+												name="star"
+												className="mr-1 h-4 w-4 fill-gray-900 text-gray-900"
+											/>
+											<span className="font-medium">{location.rating}</span>
+											<span className="ml-1 text-gray-500">
+												({location.reviewCount})
+											</span>
+										</div>
+									</div>
+									<div>
+										<div className="text-gray-500">Doctors</div>
+										<div className="font-medium">
+											{location.doctorCount} available
+										</div>
+									</div>
+									<div>
+										<div className="text-gray-500">Wait time</div>
+										<div className="font-medium">{location.waitTime}</div>
+									</div>
+									<div>
+										<div className="text-gray-500">Next slot</div>
+										<div className="font-medium text-green-700">
+											{location.nextAvailable}
+										</div>
+									</div>
+								</div>
+
+								{/* Specialties */}
+								<div className="flex flex-wrap gap-2">
+									{location.specialties.slice(0, 2).map((specialty) => (
+										<span
+											key={specialty}
+											className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-700"
+										>
+											{specialty}
+										</span>
+									))}
+									{location.specialties.length > 2 && (
+										<span className="text-xs text-gray-500">
+											+{location.specialties.length - 2} more
+										</span>
+									)}
+								</div>
+							</div>
+						</article>
+					</Link>
+				))}
+			</div>
+		</section>
 	)
 }

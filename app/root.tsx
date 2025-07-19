@@ -199,8 +199,8 @@ function App() {
 		>
 			<div className="flex min-h-screen flex-col justify-between">
 				{isOnSearchPage ? null : (
-					<header className="container px-4 py-6 md:px-8">
-						<nav className="flex flex-wrap items-center justify-between gap-4 sm:flex-nowrap md:gap-8">
+					<header className="bg-background sticky top-0 z-50 border-b">
+						<nav className="container mx-auto flex flex-wrap items-center justify-between gap-4 py-6 sm:flex-nowrap md:gap-8 md:px-8">
 							<Logo />
 							<div className="hidden w-full max-w-sm sm:block">{searchBar}</div>
 							<div className="flex items-center gap-10">

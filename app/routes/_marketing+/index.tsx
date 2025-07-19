@@ -114,7 +114,7 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 					</motion.div>
 
 					<motion.div
-						className="relative flex h-full w-full items-center justify-end"
+						className="relative z-0 flex h-full w-full items-center justify-end"
 						initial="initial"
 						animate="animate"
 						variants={fadeInUp}
@@ -124,8 +124,7 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 							alt="Healthcare professionals and patients"
 							width={600}
 							height="auto"
-							className="rounded-2xl object-cover"
-							isAboveFold
+							className="-z-10 rounded-2xl object-cover"
 						/>
 					</motion.div>
 				</div>
