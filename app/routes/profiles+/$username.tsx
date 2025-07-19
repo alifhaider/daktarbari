@@ -722,13 +722,19 @@ const ScheduleItem = ({
 			className="overflow-hidden rounded-sm border shadow-md transition-all hover:shadow-lg"
 		>
 			<div className="bg-accent/50 dark:bg-accent/20 flex items-start justify-between border-b p-3">
-				<Link to={`/locations/${schedule.location.id}`}>
-					<h3 className="text-primary font-semibold">
-						{schedule.location.name}
-					</h3>
-					<div className="text-muted-foreground mt-0.5 flex items-center text-xs">
-						<Icon name="map-pin" className="mr-1 h-3 w-3" />
-						{schedule.location.address}
+				<Link
+					to={`/locations/${schedule.location.id}`}
+					title="View Location"
+					className="group hover:text-brand flex items-center gap-2 hover:underline"
+				>
+					<Icon name="map-pin" className="h-6 w-6" />
+					<div>
+						<h3 className="text-primary group-hover:text-brand font-semibold">
+							{schedule.location.name}
+						</h3>
+						<p className="text-muted-foreground group-hover:text-brand mt-0.5 flex items-center text-xs">
+							{schedule.location.address}
+						</p>
 					</div>
 				</Link>
 
